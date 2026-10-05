@@ -29,7 +29,8 @@ import (
 )
 
 type tunnelService struct {
-	Path string
+	Path          string
+	RecordLocator *conf.TunnelServiceLocator
 }
 
 func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (svcSpecificEC bool, exitCode uint32) {
@@ -40,6 +41,8 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 	var adapter *driver.Adapter
 	var luid winipcfg.LUID
 	var config *conf.Config
+	var runtimeInterfaceName string
+	var adapterGUID *windows.GUID
 	var encryptedDNSSession *dohruntime.Session
 	var configuredBootstrap []netip.Addr
 	var err error
@@ -92,7 +95,7 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 			}
 		}
 		if logErr == nil && adapter != nil && config != nil {
-			logErr = runScriptCommand(config.Interface.PreDown, config.Name)
+			logErr = runScriptCommand(config.Interface.PreDown, runtimeInterfaceName)
 		}
 		if watcher != nil {
 			watcher.Destroy()
@@ -101,7 +104,7 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 			adapter.Close()
 		}
 		if logErr == nil && adapter != nil && config != nil {
-			_ = runScriptCommand(config.Interface.PostDown, config.Name)
+			_ = runScriptCommand(config.Interface.PostDown, runtimeInterfaceName)
 		}
 		stopIt <- true
 		log.Println("Shutting down")
@@ -119,7 +122,7 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 		return
 	}
 
-	config, err = conf.LoadFromPath(service.Path)
+	config, runtimeInterfaceName, adapterGUID, err = service.prepareSource()
 	if err != nil {
 		serviceError = services.ErrorLoadConfiguration
 		return
@@ -186,7 +189,7 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 			time.Sleep(time.Second)
 			log.Printf("Retrying adapter creation after failure because system just booted (T+%v): %v", windows.DurationSinceBoot(), err)
 		}
-		adapter, err = driver.CreateAdapter(config.Name, "WireGuard", deterministicGUID(config))
+		adapter, err = driver.CreateAdapter(runtimeInterfaceName, "WireGuard", adapterGUID)
 		if err == nil || !services.StartedAtBoot() {
 			break
 		}
@@ -210,7 +213,7 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 		return
 	}
 
-	err = runScriptCommand(config.Interface.PreUp, config.Name)
+	err = runScriptCommand(config.Interface.PreUp, runtimeInterfaceName)
 	if err != nil {
 		serviceError = services.ErrorRunScript
 		return
@@ -261,7 +264,7 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 		})
 	}
 
-	err = runScriptCommand(config.Interface.PostUp, config.Name)
+	err = runScriptCommand(config.Interface.PostUp, runtimeInterfaceName)
 	if err != nil {
 		serviceError = services.ErrorRunScript
 		return
@@ -309,5 +312,5 @@ func Run(confPath string) error {
 	if err != nil {
 		return err
 	}
-	return svc.Run(serviceName, &tunnelService{confPath})
+	return svc.Run(serviceName, &tunnelService{Path: confPath})
 }

@@ -72,6 +72,8 @@ func usage() {
 		"/uninstalltunnelservice TUNNEL_NAME",
 		"/managerservice",
 		"/tunnelservice CONFIG_PATH",
+		"/wirehushtunnelservice private OWNER_SID TUNNEL_ID",
+		"/wirehushtunnelservice shared TUNNEL_ID",
 		"/ui CMD_READ_HANDLE CMD_WRITE_HANDLE CMD_EVENT_HANDLE LOG_MAPPING_HANDLE",
 		"/dumplog [/tail]",
 		"/update",
@@ -237,6 +239,16 @@ func main() {
 			usage()
 		}
 		err := tunnel.Run(os.Args[2])
+		if err != nil {
+			fatal(err)
+		}
+		return
+	case conf.WireHushTunnelServiceCommand:
+		locator, err := conf.ParseWireHushTunnelServiceArgs(os.Args[1:])
+		if err != nil {
+			fatal(err)
+		}
+		err = tunnel.RunWireHush(locator)
 		if err != nil {
 			fatal(err)
 		}
