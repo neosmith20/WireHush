@@ -30,7 +30,7 @@ func SaveTunnelRecord(record TunnelRecord, overwrite bool) error {
 	if err != nil {
 		return err
 	}
-	return saveTunnelRecordAtRoot(root, record, overwrite, nil)
+	return saveTunnelRecordMutationAtRoot(root, record, overwrite, nil)
 }
 
 // LoadTunnelRecord loads the encrypted record identified by scope, owner, and ID.
@@ -48,7 +48,7 @@ func DeleteTunnelRecord(scope TunnelScope, ownerSID string, id TunnelID) error {
 	if err != nil {
 		return err
 	}
-	return deleteTunnelRecordAtRoot(root, scope, ownerSID, id)
+	return deleteTunnelRecordMutationAtRoot(root, scope, ownerSID, id)
 }
 
 func tunnelRecordDPAPIDescription(id TunnelID) string {
