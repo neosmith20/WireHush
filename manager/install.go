@@ -122,6 +122,164 @@ func UninstallManager() error {
 	return err2
 }
 
+func wireHushTunnelServiceIdentity(locator conf.TunnelServiceLocator) (string, []string, error) {
+	if err := locator.Validate(); err != nil {
+		return "", nil, err
+	}
+	serviceName, err := conf.ServiceNameOfTunnelID(locator.TunnelID)
+	if err != nil {
+		return "", nil, err
+	}
+	args, err := conf.WireHushTunnelServiceArgs(locator)
+	if err != nil {
+		return "", nil, err
+	}
+	return serviceName, args, nil
+}
+
+func wireHushTunnelServiceConfig(record conf.TunnelRecord) mgr.Config {
+	return mgr.Config{
+		ServiceType:  windows.SERVICE_WIN32_OWN_PROCESS,
+		StartType:    mgr.StartManual,
+		ErrorControl: mgr.ErrorNormal,
+		Dependencies: []string{"Nsi", "TcpIp"},
+		DisplayName:  product.TunnelServiceDisplayPrefix + record.Name,
+		SidType:      windows.SERVICE_SID_TYPE_UNRESTRICTED,
+	}
+}
+
+func waitForWireHushTunnelRemoval(m *mgr.Mgr, serviceName string) error {
+	for {
+		service, err := m.OpenService(serviceName)
+		if err == nil {
+			service.Close()
+		} else if err != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
+			if err == windows.ERROR_SERVICE_DOES_NOT_EXIST {
+				return nil
+			}
+			return err
+		}
+		time.Sleep(time.Second / 3)
+	}
+}
+
+func InstallWireHushTunnel(locator conf.TunnelServiceLocator) error {
+	serviceName, args, err := wireHushTunnelServiceIdentity(locator)
+	if err != nil {
+		return err
+	}
+	record, err := conf.LoadTunnelRecord(locator.Scope, locator.OwnerSID, locator.TunnelID)
+	if err != nil {
+		return err
+	}
+	m, err := serviceManager()
+	if err != nil {
+		return err
+	}
+	path, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	service, err := m.OpenService(serviceName)
+	if err == nil {
+		status, statusErr := service.Query()
+		if statusErr != nil && statusErr != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
+			service.Close()
+			return statusErr
+		}
+		if statusErr == nil && status.State != svc.Stopped {
+			service.Close()
+			return errors.New("WireHush tunnel already installed and running")
+		}
+		deleteErr := service.Delete()
+		service.Close()
+		if deleteErr != nil && deleteErr != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
+			return deleteErr
+		}
+		if err := waitForWireHushTunnelRemoval(m, serviceName); err != nil {
+			return err
+		}
+	} else if err == windows.ERROR_SERVICE_MARKED_FOR_DELETE {
+		if err := waitForWireHushTunnelRemoval(m, serviceName); err != nil {
+			return err
+		}
+	} else if err != windows.ERROR_SERVICE_DOES_NOT_EXIST {
+		return err
+	}
+	service, err = m.CreateService(serviceName, path, wireHushTunnelServiceConfig(record), args...)
+	if err != nil {
+		return err
+	}
+	defer service.Close()
+	return service.Start()
+}
+
+func UninstallWireHushTunnel(locator conf.TunnelServiceLocator) error {
+	serviceName, _, err := wireHushTunnelServiceIdentity(locator)
+	if err != nil {
+		return err
+	}
+	m, err := serviceManager()
+	if err != nil {
+		return err
+	}
+	service, err := m.OpenService(serviceName)
+	if err != nil {
+		return err
+	}
+	defer service.Close()
+	service.Control(svc.Stop)
+	err = service.Delete()
+	if err != nil && err != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
+		return err
+	}
+	return nil
+}
+
+func WaitForWireHushTunnelStop(locator conf.TunnelServiceLocator) error {
+	serviceName, _, err := wireHushTunnelServiceIdentity(locator)
+	if err != nil {
+		return err
+	}
+	m, err := serviceManager()
+	if err != nil {
+		return err
+	}
+	return waitForWireHushTunnelRemoval(m, serviceName)
+}
+
+func WireHushTunnelState(locator conf.TunnelServiceLocator) (TunnelState, error) {
+	serviceName, _, err := wireHushTunnelServiceIdentity(locator)
+	if err != nil {
+		return TunnelUnknown, err
+	}
+	m, err := serviceManager()
+	if err != nil {
+		return TunnelUnknown, err
+	}
+	service, err := m.OpenService(serviceName)
+	if err != nil {
+		return TunnelStopped, nil
+	}
+	defer service.Close()
+	status, err := service.Query()
+	if err != nil {
+		return TunnelUnknown, nil
+	}
+	switch status.State {
+	case svc.Stopped:
+		return TunnelStopped, nil
+	case svc.StopPending:
+		return TunnelStopping, nil
+	case svc.Running:
+		return TunnelStarted, nil
+	case svc.StartPending:
+		return TunnelStarting, nil
+	default:
+		return TunnelUnknown, nil
+	}
+}
+
 func InstallTunnel(configPath string) error {
 	m, err := serviceManager()
 	if err != nil {

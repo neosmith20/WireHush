@@ -11,6 +11,7 @@ import (
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/svc/mgr"
 
+	"golang.zx2c4.com/wireguard/windows/conf"
 	"golang.zx2c4.com/wireguard/windows/product"
 )
 
@@ -30,5 +31,107 @@ func TestManagerServiceConfigUsesDemandStart(t *testing.T) {
 	}
 	if config.ErrorControl != mgr.ErrorNormal {
 		t.Fatalf("manager ErrorControl = %d, want %d", config.ErrorControl, mgr.ErrorNormal)
+	}
+}
+
+func wireHushTunnelTestLocator(t *testing.T, scope conf.TunnelScope) conf.TunnelServiceLocator {
+	t.Helper()
+	id, err := conf.ParseTunnelID("12345678-1234-4abc-8def-1234567890ab")
+	if err != nil {
+		t.Fatal(err)
+	}
+	locator := conf.TunnelServiceLocator{Scope: scope, TunnelID: id}
+	if scope == conf.TunnelScopePrivate {
+		locator.OwnerSID = "S-1-5-18"
+	}
+	return locator
+}
+
+func TestWireHushTunnelServiceConfig(t *testing.T) {
+	record := conf.TunnelRecord{Name: "Home"}
+	config := wireHushTunnelServiceConfig(record)
+	if config.StartType != mgr.StartManual {
+		t.Fatalf("StartType = %d, want %d", config.StartType, mgr.StartManual)
+	}
+	if config.StartType == mgr.StartAutomatic {
+		t.Fatal("WireHush tunnel StartType must not be automatic")
+	}
+	if config.ServiceType != windows.SERVICE_WIN32_OWN_PROCESS {
+		t.Fatalf("ServiceType = %d, want %d", config.ServiceType, windows.SERVICE_WIN32_OWN_PROCESS)
+	}
+	if config.ErrorControl != mgr.ErrorNormal {
+		t.Fatalf("ErrorControl = %d, want %d", config.ErrorControl, mgr.ErrorNormal)
+	}
+	if len(config.Dependencies) != 2 || config.Dependencies[0] != "Nsi" || config.Dependencies[1] != "TcpIp" {
+		t.Fatalf("Dependencies = %#v", config.Dependencies)
+	}
+	if config.SidType != windows.SERVICE_SID_TYPE_UNRESTRICTED {
+		t.Fatalf("SidType = %d, want %d", config.SidType, windows.SERVICE_SID_TYPE_UNRESTRICTED)
+	}
+}
+
+func TestWireHushTunnelServiceIdentityUsesLocator(t *testing.T) {
+	private := wireHushTunnelTestLocator(t, conf.TunnelScopePrivate)
+	shared := wireHushTunnelTestLocator(t, conf.TunnelScopeShared)
+	privateName, privateArgs, err := wireHushTunnelServiceIdentity(private)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sharedName, sharedArgs, err := wireHushTunnelServiceIdentity(shared)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantName := "WireHushTunnel$1234567812344abc8def1234567890ab"
+	if privateName != wantName || sharedName != wantName {
+		t.Fatalf("service names = %q, %q", privateName, sharedName)
+	}
+	wantPrivateArgs := []string{"/wirehushtunnelservice", "private", "S-1-5-18", "12345678-1234-4abc-8def-1234567890ab"}
+	wantSharedArgs := []string{"/wirehushtunnelservice", "shared", "12345678-1234-4abc-8def-1234567890ab"}
+	if len(privateArgs) != len(wantPrivateArgs) || len(sharedArgs) != len(wantSharedArgs) {
+		t.Fatalf("arguments = %#v, %#v", privateArgs, sharedArgs)
+	}
+	for i := range wantPrivateArgs {
+		if privateArgs[i] != wantPrivateArgs[i] {
+			t.Fatalf("private arguments = %#v", privateArgs)
+		}
+	}
+	for i := range wantSharedArgs {
+		if sharedArgs[i] != wantSharedArgs[i] {
+			t.Fatalf("shared arguments = %#v", sharedArgs)
+		}
+	}
+}
+
+func TestWireHushTunnelServiceIdentityIgnoresMutableRecordName(t *testing.T) {
+	locator := wireHushTunnelTestLocator(t, conf.TunnelScopePrivate)
+	serviceName, args, err := wireHushTunnelServiceIdentity(locator)
+	if err != nil {
+		t.Fatal(err)
+	}
+	home := wireHushTunnelServiceConfig(conf.TunnelRecord{Name: "Home"})
+	office := wireHushTunnelServiceConfig(conf.TunnelRecord{Name: "Office"})
+	serviceNameAfterRename, argsAfterRename, err := wireHushTunnelServiceIdentity(locator)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if serviceName != serviceNameAfterRename {
+		t.Fatal("mutable record name changed service identity")
+	}
+	if len(args) != len(argsAfterRename) {
+		t.Fatalf("arguments changed from %#v to %#v", args, argsAfterRename)
+	}
+	for i := range args {
+		if args[i] != argsAfterRename[i] {
+			t.Fatalf("arguments changed from %#v to %#v", args, argsAfterRename)
+		}
+	}
+	if home.DisplayName == office.DisplayName {
+		t.Fatal("display name did not retain mutable record name")
+	}
+}
+
+func TestWireHushTunnelServiceIdentityRejectsInvalidLocator(t *testing.T) {
+	if _, _, err := wireHushTunnelServiceIdentity(conf.TunnelServiceLocator{}); err == nil {
+		t.Fatal("invalid locator accepted")
 	}
 }
