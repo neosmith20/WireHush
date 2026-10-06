@@ -22,10 +22,10 @@ type wireHushAdapterIdentity struct {
 }
 
 func wireHushAdapterIdentityForTunnelID(id conf.TunnelID) (wireHushAdapterIdentity, error) {
-	if !id.Valid() {
-		return wireHushAdapterIdentity{}, errors.New("TunnelID is not valid")
+	name, err := conf.WireHushAdapterNameOfTunnelID(id)
+	if err != nil {
+		return wireHushAdapterIdentity{}, err
 	}
-	name := "WireHush-" + id.Token()
 	if len(name) >= driver.AdapterNameMax {
 		return wireHushAdapterIdentity{}, errors.New("WireHush adapter name is too long")
 	}
