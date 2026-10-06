@@ -210,8 +210,12 @@ func InstallWireHushTunnel(locator conf.TunnelServiceLocator) error {
 	if err != nil {
 		return err
 	}
-	defer service.Close()
-	return service.Start()
+	if err := service.Start(); err != nil {
+		service.Close()
+		return err
+	}
+	go trackWireHushTunnelService(locator, service)
+	return nil
 }
 
 func UninstallWireHushTunnel(locator conf.TunnelServiceLocator) error {
