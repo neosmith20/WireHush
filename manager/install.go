@@ -148,11 +148,15 @@ func wireHushTunnelServiceConfig(record conf.TunnelRecord) mgr.Config {
 	}
 }
 
-func waitForWireHushTunnelRemoval(m *mgr.Mgr, serviceName string) error {
+func waitForWireHushTunnelRemoval(m *mgr.Mgr, serviceName, executablePath string, locator conf.TunnelServiceLocator) error {
 	for {
 		service, err := m.OpenService(serviceName)
 		if err == nil {
+			err = verifyWireHushTunnelServiceOwnership(serviceName, service, executablePath, locator)
 			service.Close()
+			if err != nil && err != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
+				return err
+			}
 		} else if err != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
 			if err == windows.ERROR_SERVICE_DOES_NOT_EXIST {
 				return nil
@@ -182,25 +186,43 @@ func InstallWireHushTunnel(locator conf.TunnelServiceLocator) error {
 	}
 	service, err := m.OpenService(serviceName)
 	if err == nil {
-		status, statusErr := service.Query()
-		if statusErr != nil && statusErr != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
+		err = verifyWireHushTunnelServiceOwnership(serviceName, service, path, locator)
+		if err != nil {
 			service.Close()
-			return statusErr
-		}
-		if statusErr == nil && status.State != svc.Stopped {
-			service.Close()
-			return errors.New("WireHush tunnel already installed and running")
-		}
-		deleteErr := service.Delete()
-		service.Close()
-		if deleteErr != nil && deleteErr != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
-			return deleteErr
-		}
-		if err := waitForWireHushTunnelRemoval(m, serviceName); err != nil {
-			return err
+			if err != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
+				return err
+			}
+			if err := waitForWireHushTunnelRemoval(m, serviceName, path, locator); err != nil {
+				return err
+			}
+		} else {
+			status, statusErr := service.Query()
+			if statusErr != nil && statusErr != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
+				service.Close()
+				return statusErr
+			}
+			if statusErr == windows.ERROR_SERVICE_MARKED_FOR_DELETE {
+				service.Close()
+				if err := waitForWireHushTunnelRemoval(m, serviceName, path, locator); err != nil {
+					return err
+				}
+			} else {
+				if statusErr == nil && status.State != svc.Stopped {
+					service.Close()
+					return errors.New("WireHush tunnel already installed and running")
+				}
+				deleteErr := service.Delete()
+				service.Close()
+				if deleteErr != nil && deleteErr != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
+					return deleteErr
+				}
+				if err := waitForWireHushTunnelRemoval(m, serviceName, path, locator); err != nil {
+					return err
+				}
+			}
 		}
 	} else if err == windows.ERROR_SERVICE_MARKED_FOR_DELETE {
-		if err := waitForWireHushTunnelRemoval(m, serviceName); err != nil {
+		if err := waitForWireHushTunnelRemoval(m, serviceName, path, locator); err != nil {
 			return err
 		}
 	} else if err != windows.ERROR_SERVICE_DOES_NOT_EXIST {
@@ -227,8 +249,20 @@ func UninstallWireHushTunnel(locator conf.TunnelServiceLocator) error {
 	if err != nil {
 		return err
 	}
+	path, err := os.Executable()
+	if err != nil {
+		return err
+	}
 	service, err := m.OpenService(serviceName)
 	if err != nil {
+		return err
+	}
+	err = verifyWireHushTunnelServiceOwnership(serviceName, service, path, locator)
+	if err != nil {
+		service.Close()
+		if err == windows.ERROR_SERVICE_MARKED_FOR_DELETE {
+			return nil
+		}
 		return err
 	}
 	defer service.Close()
@@ -256,7 +290,11 @@ func WaitForWireHushTunnelStop(locator conf.TunnelServiceLocator) error {
 	if err != nil {
 		return err
 	}
-	return waitForWireHushTunnelRemoval(m, serviceName)
+	path, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	return waitForWireHushTunnelRemoval(m, serviceName, path, locator)
 }
 
 func WireHushTunnelState(locator conf.TunnelServiceLocator) (TunnelState, error) {
@@ -280,6 +318,17 @@ func WireHushTunnelState(locator conf.TunnelServiceLocator) (TunnelState, error)
 		}
 	}
 	defer service.Close()
+	path, err := os.Executable()
+	if err != nil {
+		return TunnelUnknown, err
+	}
+	err = verifyWireHushTunnelServiceOwnership(serviceName, service, path, locator)
+	if err != nil {
+		if err == windows.ERROR_SERVICE_MARKED_FOR_DELETE {
+			return TunnelStopping, nil
+		}
+		return TunnelUnknown, err
+	}
 	status, err := service.Query()
 	if err != nil {
 		if err == windows.ERROR_SERVICE_MARKED_FOR_DELETE {
