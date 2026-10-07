@@ -24,6 +24,9 @@ func RunV1() error { return svc.Run(product.ManagerServiceName, &wireHushV1Servi
 
 func (service *wireHushV1Service) Execute(_ []string, requests <-chan svc.ChangeRequest, changes chan<- svc.Status) (bool, uint32) {
 	changes <- svc.Status{State: svc.StartPending}
+	if active, err := wireHushMaintenanceActive(wireHushMaintenanceEvent); active || err != nil {
+		return false, uint32(windows.ERROR_BUSY)
+	}
 	root, err := conf.PrepareWireHushMachineData()
 	if err != nil {
 		return false, uint32(windows.ERROR_ACCESS_DENIED)

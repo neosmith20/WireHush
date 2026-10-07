@@ -61,7 +61,11 @@ func wireHushPipeSecurityDescriptor(group *windows.SID) (string, error) {
 }
 
 func listenWireHushPipe() (net.Listener, *windows.SID, error) {
-	group, _, kind, err := windows.LookupSID("", wireHushUsersGroup)
+	computer, err := os.Hostname()
+	if err != nil {
+		return nil, nil, err
+	}
+	group, _, kind, err := windows.LookupSID("", computer+"\\"+wireHushUsersGroup)
 	if err != nil {
 		return nil, nil, err
 	}

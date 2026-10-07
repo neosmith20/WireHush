@@ -249,6 +249,17 @@ func MigrateWireHushLegacyBootstrapSettings() error {
 		} else if err != nil {
 			return err
 		}
+		verifiedBackup, err := readVerifiedTunnelRecordFile(backup)
+		if err != nil {
+			return err
+		}
+		original, err := dpapi.Decrypt(verifiedBackup, "WireHush Legacy Bootstrap "+product)
+		if err != nil {
+			return err
+		}
+		if !bytes.Equal(original, raw) {
+			return errors.New("legacy bootstrap backup failed read-back verification")
+		}
 		if currentExists {
 			continue
 		}
@@ -262,7 +273,21 @@ func MigrateWireHushLegacyBootstrapSettings() error {
 		if err != nil {
 			return err
 		}
-		return saveWireHushBootstrapAtRoot(root, settings)
+		if err := saveWireHushBootstrapAtRoot(root, settings); err != nil {
+			return err
+		}
+		verified, err := loadWireHushBootstrapAtRoot(root)
+		if err != nil {
+			return err
+		}
+		encoded, err := bootstrap.MarshalSettings(verified)
+		if err != nil {
+			return err
+		}
+		if !bytes.Equal(encoded, selected) {
+			return errors.New("migrated bootstrap settings failed read-back verification")
+		}
+		return nil
 	}
 	return nil
 }

@@ -55,3 +55,7 @@ These license files must accompany binary distributions containing the libraries
   copyright and license in `licenses/go-winio-LICENSE.txt`.
 - C# gRPC runtime packages 2.84.0: https://github.com/grpc/grpc-dotnet,
   Apache-2.0; license in `licenses/grpc-dotnet-LICENSE.txt`.
+
+## V1 self-contained runtime packaging
+
+The production build copies resolved Go module and NuGet dependency license and notice files into Notices, including .NET runtime notices, Go's license and patent grant, the stable WinUI component license/notice files, and the WireGuardNT binary license. The C# Google.Protobuf 3.36.2 BSD license is retained in licenses/protobuf-csharp-LICENSE.txt from its package-recorded source commit 2c74169b34066ceb8ddb6b882fcb3fb32d737a55. Unused AI, ML, search, and widgets SDK modules are excluded from the production references.

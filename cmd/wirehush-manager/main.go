@@ -25,10 +25,21 @@ func run(args []string) error {
 	if len(args) == 1 && args[0] == "/managerservice" {
 		return manager.RunV1()
 	}
+	if len(args) == 1 && args[0] == "/installerpreflight" {
+		return manager.PreflightV1Installer()
+	}
 	if len(args) == 1 && args[0] == "/migratelegacy" {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 		return manager.MigrateLegacyV1(ctx)
+	}
+	if len(args) == 1 && (args[0] == "/finalizelegacy" || args[0] == "/shutdownownedservices") {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+		if args[0] == "/finalizelegacy" {
+			return manager.FinalizeLegacyV1(ctx)
+		}
+		return manager.ShutdownOwnedV1Services(ctx)
 	}
 	if len(args) > 0 && args[0] == conf.WireHushTunnelServiceCommand {
 		locator, err := conf.ParseWireHushTunnelServiceArgs(args)

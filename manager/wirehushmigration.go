@@ -176,5 +176,6 @@ func MigrateLegacyV1(ctx context.Context) error {
 	if err := conf.MigrateWireHushLegacyBootstrapSettings(); err != nil {
 		return err
 	}
-	return removeVerifiedWireHushLegacyServices(ctx)
+	// Service registrations remain available for MSI rollback until commit.
+	return nil
 }

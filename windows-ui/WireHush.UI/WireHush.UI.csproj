@@ -10,6 +10,8 @@
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <RootNamespace>WireHush.UI</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon Condition="Exists('Assets/WireHush.ico')">Assets/WireHush.ico</ApplicationIcon>
+    <Version>0.1.0</Version>
     <Platforms>x64;ARM64</Platforms>
     <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
     <UseWinUI>true</UseWinUI>
@@ -22,7 +24,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
+    <!-- Stable WinUI components from SDK 2.5.1, without unused AI/ML/widgets. -->
+    <PackageReference Include="Microsoft.WindowsAppSDK.WinUI" Version="2.3.9" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.InteractiveExperiences" Version="2.1.9" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.Runtime" Version="2.5.1" />
     <ProjectReference Include="../../protocol/csharp/WireHush.Protocol.csproj" />
   </ItemGroup>
 </Project>
