@@ -131,9 +131,8 @@ func trackWireHushTunnelService(locator conf.TunnelServiceLocator, service *mgr.
 	checkForDisabled := func() bool {
 		config, err := service.Config()
 		if err == windows.ERROR_SERVICE_MARKED_FOR_DELETE || (err == nil && config.StartType == windows.SERVICE_DISABLED) {
-			log.Printf("[%s] Found disabled WireHush tunnel service via timeout, so deleting", serviceName)
-			service.Delete()
-			setWireHushTrackedTunnelState(locator.TunnelID, TunnelStopped)
+			log.Printf("[%s] Disabled or externally removed WireHush tunnel service; preserving cleanup evidence", serviceName)
+			setWireHushTrackedTunnelState(locator.TunnelID, TunnelUnknown)
 			return true
 		}
 		return false
@@ -150,9 +149,8 @@ func trackWireHushTunnelService(locator conf.TunnelServiceLocator, service *mgr.
 			if serviceStatus, queryErr := service.Query(); queryErr == nil {
 				tunnelError = wireHushTunnelServiceExitError(serviceStatus)
 			}
-			if tunnelError != nil {
-				service.Delete()
-			}
+			// Failed worker services retain their exit code until an administrator
+			// repairs networking; deleting them would erase cleanup evidence.
 		}
 		if state != lastState {
 			setWireHushTrackedTunnelState(locator.TunnelID, state)

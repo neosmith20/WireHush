@@ -104,7 +104,15 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 			adapter.Close()
 		}
 		if logErr == nil && adapter != nil && config != nil {
-			_ = runScriptCommand(config.Interface.PostDown, runtimeInterfaceName)
+			postDownErr := runScriptCommand(config.Interface.PostDown, runtimeInterfaceName)
+			if service.RecordLocator != nil {
+				logErr = postDownErr
+			}
+		}
+		if service.RecordLocator != nil && logErr != nil {
+			// Cleanup happens after the initial error-code calculation. Never
+			// report successful exit when DNS restoration or a down hook failed.
+			svcSpecificEC, exitCode = services.DetermineErrorCode(logErr, services.ErrorSetNetConfig)
 		}
 		stopIt <- true
 		log.Println("Shutting down")

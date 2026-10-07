@@ -33,6 +33,7 @@ type wireHushManagerControl struct {
 	waitForStop   func(conf.TunnelServiceLocator) error
 	state         func(conf.TunnelServiceLocator) (TunnelState, error)
 	startContext  func(context.Context, conf.TunnelServiceLocator) error
+	stopContext   func(context.Context, conf.TunnelServiceLocator) error
 	waitContext   func(context.Context, conf.TunnelServiceLocator) error
 }
 
@@ -49,11 +50,15 @@ func newWireHushManagerControl() wireHushManagerControl {
 		waitForStop:   WaitForWireHushTunnelStop,
 		state:         WireHushTunnelState,
 		startContext:  InstallWireHushTunnelContext,
+		stopContext:   UninstallWireHushTunnelContext,
 		waitContext:   WaitForWireHushTunnelStopContext,
 	}
 }
 
 func (control wireHushManagerControl) withContext(ctx context.Context) wireHushManagerControl {
+	if control.stopContext != nil {
+		control.stop = func(locator conf.TunnelServiceLocator) error { return control.stopContext(ctx, locator) }
+	}
 	if control.startContext != nil {
 		control.start = func(locator conf.TunnelServiceLocator) error { return control.startContext(ctx, locator) }
 	}

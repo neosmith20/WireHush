@@ -221,6 +221,10 @@ func InstallWireHushTunnelContext(ctx context.Context, locator conf.TunnelServic
 					return err
 				}
 			} else {
+				if statusErr == nil && status.State == svc.Stopped && wireHushTunnelServiceExitError(status) != nil {
+					service.Close()
+					return errWireHushCleanupFailed
+				}
 				if statusErr == nil && status.State != svc.Stopped {
 					service.Close()
 					return errors.New("WireHush tunnel already installed and running")
@@ -258,6 +262,12 @@ func InstallWireHushTunnelContext(ctx context.Context, locator conf.TunnelServic
 }
 
 func UninstallWireHushTunnel(locator conf.TunnelServiceLocator) error {
+	ctx, cancel := context.WithTimeout(context.Background(), wireHushOperationTimeout)
+	defer cancel()
+	return UninstallWireHushTunnelContext(ctx, locator)
+}
+
+func UninstallWireHushTunnelContext(ctx context.Context, locator conf.TunnelServiceLocator) error {
 	serviceName, _, err := wireHushTunnelServiceIdentity(locator)
 	if err != nil {
 		return err
@@ -283,9 +293,7 @@ func UninstallWireHushTunnel(locator conf.TunnelServiceLocator) error {
 		return err
 	}
 	defer service.Close()
-	_, stopErr := service.Control(svc.Stop)
-	deleteErr := service.Delete()
-	return wireHushTunnelUninstallResult(stopErr, deleteErr)
+	return removeWireHushTunnelAfterCleanup(ctx, service.Query, func() error { _, err := service.Control(svc.Stop); return err }, service.Delete)
 }
 
 func wireHushTunnelUninstallResult(stopErr, deleteErr error) error {
@@ -367,6 +375,9 @@ func WireHushTunnelState(locator conf.TunnelServiceLocator) (TunnelState, error)
 func wireHushTunnelStateFromServiceStatus(status svc.Status) TunnelState {
 	switch status.State {
 	case svc.Stopped:
+		if wireHushTunnelServiceExitError(status) != nil {
+			return TunnelUnknown
+		}
 		return TunnelStopped
 	case svc.StopPending:
 		return TunnelStopping
