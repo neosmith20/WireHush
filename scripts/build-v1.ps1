@@ -74,6 +74,7 @@ if (Test-Path -LiteralPath "$deps/go/PATENTS") { Copy-Item -LiteralPath "$deps/g
         Copy-Item -LiteralPath "$deps/dotnet/$name" -Destination "$notices/dotnet-$name"
     }
     if (Get-ChildItem -LiteralPath $app -Recurse -File | Where-Object { $_.Extension -in @('.conf', '.dpapi', '.pdb', '.go', '.cs') }) { throw 'Unexpected source, configuration, or debug file in payload' }
+    if (!(Test-Path -LiteralPath "$app/WireHush.pri") -or !(Test-Path -LiteralPath "$app/Assets/WireHush_Icon.png")) { throw 'Required WinUI XAML or branding resource missing from published payload' }
     if ($target -eq 'x64') { Invoke-Checked "$app/WireHush-Manager.exe" @('/version') }
     $latest = "$repo/.artifacts/v1/$target/latest.json"
     @{ Architecture = $target; Version = $version; App = $app; Commit = (& git rev-parse HEAD) } | ConvertTo-Json | Set-Content -LiteralPath $latest -Encoding utf8
