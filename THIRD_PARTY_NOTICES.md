@@ -35,3 +35,16 @@ In particular, `installer/wireguard.wxs` and the sources under
 `installer/fetcher/` are GPL-2.0-marked; they are not relicensed as
 WireHush-owned code. WireHush's original code remains governed by the
 project [LICENSE](LICENSE).
+
+## gRPC and Protocol Buffers
+
+- Go gRPC v1.84.0: https://github.com/grpc/grpc-go, Apache-2.0;
+  license in `licenses/grpc-go-LICENSE.txt`.
+- Go Protocol Buffers v1.36.12: https://github.com/protocolbuffers/protobuf-go,
+  BSD-3-Clause; copyright and license in `licenses/protobuf-go-LICENSE.txt`.
+- Generated C# Protocol Buffers and gRPC client bindings originate from the
+  project's `protocol/wirehush.proto`. Compiler generators are development-only.
+- Google RPC generated types: https://github.com/googleapis/go-genproto,
+  Apache-2.0; license in `licenses/googleapis-rpc-LICENSE.txt`.
+
+These license files must accompany binary distributions containing the libraries.

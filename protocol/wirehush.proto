@@ -1,0 +1,112 @@
+// SPDX-License-Identifier: MIT
+// Copyright (C) 2026 WireHush. All Rights Reserved.
+syntax = "proto3";
+package wirehush.v1;
+option go_package = "golang.zx2c4.com/wireguard/windows/protocol;protocol";
+option csharp_namespace = "WireHush.Protocol";
+
+// Windows pipe authentication supplies caller identity; no request carries SID,
+// session, authorization claims, a storage path, or a caller-selected new ID.
+service Manager {
+  rpc Handshake(HandshakeRequest) returns (HandshakeReply);
+  rpc Snapshot(Empty) returns (SnapshotReply);
+  rpc ReadConfiguration(TunnelRef) returns (ConfigurationReply);
+  rpc CreateTunnel(CreateTunnelRequest) returns (TunnelSnapshot);
+  rpc UpdateTunnel(UpdateTunnelRequest) returns (Empty);
+  rpc DeleteTunnel(TunnelRef) returns (Empty);
+  rpc StartTunnel(TunnelRef) returns (Empty);
+  rpc StopTunnel(TunnelRef) returns (Empty);
+  rpc ReadBootstrap(Empty) returns (BootstrapSettings);
+  rpc SaveBootstrap(BootstrapSettings) returns (Empty);
+  rpc Subscribe(Empty) returns (stream SnapshotReply);
+  // Stops only this caller's authorized active tunnel when safe; other sessions
+  // and other-user tunnels prevent whole-manager shutdown, never authorize it.
+  rpc ExitSession(Empty) returns (ExitReply);
+}
+
+message Empty {}
+enum Scope {
+  SCOPE_UNSPECIFIED = 0;
+  SCOPE_PRIVATE = 1;
+  SCOPE_SHARED = 2;
+}
+enum TunnelState {
+  TUNNEL_STATE_UNKNOWN = 0;
+  TUNNEL_STATE_STOPPED = 1;
+  TUNNEL_STATE_STARTING = 2;
+  TUNNEL_STATE_CONNECTED = 3;
+  TUNNEL_STATE_STOPPING = 4;
+}
+enum Capability {
+  CAPABILITY_UNSPECIFIED = 0;
+  CAPABILITY_TUNNELS = 1;
+  CAPABILITY_ENCRYPTED_DNS = 2;
+  CAPABILITY_BOOTSTRAP_SETTINGS = 3;
+  CAPABILITY_EVENTS = 4;
+  CAPABILITY_EXPORT = 5;
+  CAPABILITY_SHARED_CREATE = 6;
+  CAPABILITY_SESSION_EXIT = 7;
+}
+message HandshakeRequest {
+  uint32 protocol_major = 1;
+  uint32 protocol_minor = 2;
+}
+message HandshakeReply {
+  uint32 protocol_major = 1;
+  uint32 protocol_minor = 2;
+  string product_version = 3;
+  repeated Capability capabilities = 4;
+  string instance_id = 5;
+  bool may_edit_shared = 6;
+  bool may_edit_machine_settings = 7;
+}
+message TunnelRef {
+  string tunnel_id = 1;
+  Scope scope = 2;
+}
+message TunnelSnapshot {
+  TunnelRef tunnel = 1;
+  string name = 2;
+  TunnelState state = 3;
+  bool encrypted_dns = 4;
+  optional uint64 rx_bytes = 5;
+  optional uint64 tx_bytes = 6;
+  optional int64 latest_handshake_unix = 7;
+  bool may_edit = 8;
+  bool may_export = 9;
+  // Status fields are absent when not established by actual runtime evidence.
+  optional bool dns_ready = 10;
+}
+message SnapshotReply {
+  string instance_id = 1;
+  uint64 revision = 2;
+  repeated TunnelSnapshot tunnels = 3;
+  bool device_busy_for_another_user = 4;
+  bool manager_closing = 5;
+}
+message ConfigurationReply {
+  // Ordinary WG-quick export only; no WireHush metadata is injected.
+  string wg_quick_text = 1;
+}
+message CreateTunnelRequest {
+  Scope scope = 1;
+  string name = 2;
+  string wg_quick_text = 3;
+}
+message UpdateTunnelRequest {
+  TunnelRef tunnel = 1;
+  string name = 2;
+  string wg_quick_text = 3;
+}
+message BootstrapResolver {
+  string address = 1;
+  bool enabled = 2;
+  bool custom = 3;
+}
+message BootstrapSettings {
+  repeated BootstrapResolver resolvers = 1;
+}
+message ExitReply {
+  bool cleanup_complete = 1;
+  bool manager_stopping = 2;
+}
