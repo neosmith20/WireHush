@@ -8,10 +8,46 @@ package conf
 import (
 	"reflect"
 	"slices"
+	"sync/atomic"
 	"testing"
+	"unsafe"
+
+	"golang.org/x/sys/windows"
 )
 
 func TestStorage(t *testing.T) {
+	testRoot := t.TempDir()
+	previousRootDir, previousConfigFileDir := cachedRootDir, cachedConfigFileDir
+	previousEncryptedFileSd := atomic.LoadPointer(&encryptedFileSd)
+	cachedRootDir, cachedConfigFileDir = "", ""
+	PresetRootDirectory(testRoot)
+	t.Cleanup(func() {
+		cachedRootDir, cachedConfigFileDir = previousRootDir, previousConfigFileDir
+		atomic.StorePointer(&encryptedFileSd, previousEncryptedFileSd)
+	})
+	token, err := windows.OpenCurrentProcessToken()
+	if err != nil {
+		t.Fatalf("Unable to open current process token: %s", err.Error())
+	}
+	defer token.Close()
+	user, err := token.GetTokenUser()
+	if err != nil {
+		t.Fatalf("Unable to get current process user: %s", err.Error())
+	}
+	testFileSd, err := windows.SecurityDescriptorFromString("D:PAI(A;;FA;;;" + user.User.Sid.String() + ")")
+	if err != nil {
+		t.Fatalf("Unable to create test file security descriptor: %s", err.Error())
+	}
+	atomic.StorePointer(&encryptedFileSd, unsafe.Pointer(testFileSd))
+
+	root, err := RootDirectory(true)
+	if err != nil {
+		t.Fatalf("Unable to resolve test root: %s", err.Error())
+	}
+	if root != testRoot {
+		t.Fatalf("Storage root = %q, want temporary test root %q", root, testRoot)
+	}
+
 	c, err := FromWgQuick(testInput, "golangTest")
 	if err != nil {
 		t.Errorf("Unable to parse test config: %s", err.Error())

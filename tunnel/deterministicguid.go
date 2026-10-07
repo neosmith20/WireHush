@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	deterministicGUIDLabel         = "Deterministic TunnelMint Windows GUID v1"
-	fixedGUIDLabel                 = "Fixed TunnelMint Windows GUID v1"
+	deterministicGUIDLabel         = "Deterministic WireHush Windows GUID v1"
+	fixedGUIDLabel                 = "Fixed WireHush Windows GUID v1"
 	upstreamDeterministicGUIDLabel = "Deterministic WireGuard Windows GUID v1 jason@zx2c4.com"
 )
 

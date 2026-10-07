@@ -71,6 +71,15 @@ WireHush is not currently ready for production use. Automated tests and reproduc
 
 See [ROADMAP.md](ROADMAP.md) for the initial development plan.
 
+The split Windows V1 candidate uses an ordinary-user .NET 10 WinUI application
+and a separate authenticated Go manager service. Current x64/ARM64 build and
+installation instructions are in [the V1 build guide](docs/wirehush-v1-build.md).
+Follow [owner acceptance](docs/windows-v1-acceptance.md) for the remaining elevated,
+multiuser, real-network and native ARM64 tests. Earlier task reports describe
+historical combined-client candidates and are not current release instructions.
+Exact candidate paths, hashes, commits and validation are in
+[the owner-test handoff](docs/wh036-owner-test-handoff.md).
+
 ## Project Policies
 
 - [Contributing](CONTRIBUTING.md)

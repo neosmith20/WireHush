@@ -1,3 +1,5 @@
+//go:build !wirehush_v1
+
 /* SPDX-License-Identifier: MIT
  *
  * Copyright (C) 2019-2026 WireGuard LLC. All Rights Reserved.
@@ -19,20 +21,6 @@ import (
 	"golang.zx2c4.com/wireguard/windows/conf"
 	"golang.zx2c4.com/wireguard/windows/product"
 )
-
-var cachedServiceManager *mgr.Mgr
-
-func serviceManager() (*mgr.Mgr, error) {
-	if cachedServiceManager != nil {
-		return cachedServiceManager, nil
-	}
-	m, err := mgr.Connect()
-	if err != nil {
-		return nil, err
-	}
-	cachedServiceManager = m
-	return cachedServiceManager, nil
-}
 
 var ErrManagerAlreadyRunning = errors.New("Manager already installed and running")
 
@@ -84,12 +72,7 @@ func InstallManager() error {
 		}
 	}
 
-	config := mgr.Config{
-		ServiceType:  windows.SERVICE_WIN32_OWN_PROCESS,
-		StartType:    mgr.StartAutomatic,
-		ErrorControl: mgr.ErrorNormal,
-		DisplayName:  product.ManagerServiceDisplayName,
-	}
+	config := managerServiceConfig()
 
 	service, err = m.CreateService(serviceName, path, config, "/managerservice")
 	if err != nil {

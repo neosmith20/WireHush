@@ -35,3 +35,27 @@ In particular, `installer/wireguard.wxs` and the sources under
 `installer/fetcher/` are GPL-2.0-marked; they are not relicensed as
 WireHush-owned code. WireHush's original code remains governed by the
 project [LICENSE](LICENSE).
+
+## gRPC and Protocol Buffers
+
+- Go gRPC v1.84.0: https://github.com/grpc/grpc-go, Apache-2.0;
+  license in `licenses/grpc-go-LICENSE.txt`.
+- Go Protocol Buffers v1.36.12: https://github.com/protocolbuffers/protobuf-go,
+  BSD-3-Clause; copyright and license in `licenses/protobuf-go-LICENSE.txt`.
+- Generated C# Protocol Buffers and gRPC client bindings originate from the
+  project's `protocol/wirehush.proto`. Compiler generators are development-only.
+- Google RPC generated types: https://github.com/googleapis/go-genproto,
+  Apache-2.0; license in `licenses/googleapis-rpc-LICENSE.txt`.
+
+These license files must accompany binary distributions containing the libraries.
+
+## Microsoft go-winio
+
+- Microsoft go-winio v0.6.2: https://github.com/microsoft/go-winio, MIT;
+  copyright and license in `licenses/go-winio-LICENSE.txt`.
+- C# gRPC runtime packages 2.84.0: https://github.com/grpc/grpc-dotnet,
+  Apache-2.0; license in `licenses/grpc-dotnet-LICENSE.txt`.
+
+## V1 self-contained runtime packaging
+
+The production build copies resolved Go module and NuGet dependency license and notice files into Notices, including .NET runtime notices, Go's license and patent grant, the stable WinUI component license/notice files, and the WireGuardNT binary license. The C# Google.Protobuf 3.36.2 BSD license is retained in licenses/protobuf-csharp-LICENSE.txt from its package-recorded source commit 2c74169b34066ceb8ddb6b882fcb3fb32d737a55. Unused AI, ML, search, and widgets SDK modules are excluded from the production references.

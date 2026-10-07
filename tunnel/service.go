@@ -29,7 +29,8 @@ import (
 )
 
 type tunnelService struct {
-	Path string
+	Path          string
+	RecordLocator *conf.TunnelServiceLocator
 }
 
 func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (svcSpecificEC bool, exitCode uint32) {
@@ -40,6 +41,8 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 	var adapter *driver.Adapter
 	var luid winipcfg.LUID
 	var config *conf.Config
+	var runtimeInterfaceName string
+	var adapterGUID *windows.GUID
 	var encryptedDNSSession *dohruntime.Session
 	var configuredBootstrap []netip.Addr
 	var err error
@@ -87,12 +90,19 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 		}()
 
 		if encryptedDNSSession != nil {
-			if err := encryptedDNSSession.Close(); err != nil && logErr == nil {
-				logErr = fmt.Errorf("unable to restore encrypted DNS state: %w", err)
+			cleanupErr := encryptedDNSSession.Close()
+			if service.RecordLocator != nil {
+				for retry := 0; cleanupErr != nil && retry < 2; retry++ {
+					time.Sleep(100 * time.Millisecond)
+					cleanupErr = encryptedDNSSession.Close()
+				}
+			}
+			if cleanupErr != nil && logErr == nil {
+				logErr = fmt.Errorf("unable to restore encrypted DNS state: %w", cleanupErr)
 			}
 		}
 		if logErr == nil && adapter != nil && config != nil {
-			logErr = runScriptCommand(config.Interface.PreDown, config.Name)
+			logErr = runScriptCommand(config.Interface.PreDown, runtimeInterfaceName)
 		}
 		if watcher != nil {
 			watcher.Destroy()
@@ -101,25 +111,39 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 			adapter.Close()
 		}
 		if logErr == nil && adapter != nil && config != nil {
-			_ = runScriptCommand(config.Interface.PostDown, config.Name)
+			postDownErr := runScriptCommand(config.Interface.PostDown, runtimeInterfaceName)
+			if service.RecordLocator != nil {
+				logErr = postDownErr
+			}
+		}
+		if service.RecordLocator != nil && logErr != nil {
+			// Cleanup happens after the initial error-code calculation. Never
+			// report successful exit when DNS restoration or a down hook failed.
+			svcSpecificEC, exitCode = services.DetermineErrorCode(logErr, services.ErrorSetNetConfig)
 		}
 		stopIt <- true
 		log.Println("Shutting down")
 	}()
 
 	var logFile string
-	logFile, err = conf.LogFile(true)
-	if err != nil {
-		serviceError = services.ErrorRingloggerOpen
-		return
+	if service.RecordLocator != nil {
+		var protectedLog *os.File
+		protectedLog, err = conf.OpenWireHushLogFile()
+		if err == nil {
+			err = ringlogger.InitWireHushLogger(protectedLog, "TUN")
+		}
+	} else {
+		logFile, err = conf.LogFile(true)
+		if err == nil {
+			err = ringlogger.InitGlobalLogger(logFile, "TUN")
+		}
 	}
-	err = ringlogger.InitGlobalLogger(logFile, "TUN")
 	if err != nil {
 		serviceError = services.ErrorRingloggerOpen
 		return
 	}
 
-	config, err = conf.LoadFromPath(service.Path)
+	config, runtimeInterfaceName, adapterGUID, err = service.prepareSource()
 	if err != nil {
 		serviceError = services.ErrorLoadConfiguration
 		return
@@ -157,7 +181,15 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 
 	log.Println("Resolving DNS names")
 	if encryptedDNSConfigured(config) {
-		configuredBootstrap, err = configuredBootstrapResolvers()
+		if service.RecordLocator != nil {
+			settings, loadErr := conf.LoadWireHushBootstrapSettings()
+			err = loadErr
+			if err == nil {
+				configuredBootstrap, err = settings.EnabledResolvers()
+			}
+		} else {
+			configuredBootstrap, err = configuredBootstrapResolvers()
+		}
 		if err != nil {
 			serviceError = services.ErrorSetNetConfig
 			return
@@ -186,7 +218,7 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 			time.Sleep(time.Second)
 			log.Printf("Retrying adapter creation after failure because system just booted (T+%v): %v", windows.DurationSinceBoot(), err)
 		}
-		adapter, err = driver.CreateAdapter(config.Name, "WireGuard", deterministicGUID(config))
+		adapter, err = driver.CreateAdapter(runtimeInterfaceName, "WireGuard", adapterGUID)
 		if err == nil || !services.StartedAtBoot() {
 			break
 		}
@@ -210,7 +242,7 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 		return
 	}
 
-	err = runScriptCommand(config.Interface.PreUp, config.Name)
+	err = runScriptCommand(config.Interface.PreUp, runtimeInterfaceName)
 	if err != nil {
 		serviceError = services.ErrorRunScript
 		return
@@ -261,7 +293,7 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 		})
 	}
 
-	err = runScriptCommand(config.Interface.PostUp, config.Name)
+	err = runScriptCommand(config.Interface.PostUp, runtimeInterfaceName)
 	if err != nil {
 		serviceError = services.ErrorRunScript
 		return
@@ -309,5 +341,5 @@ func Run(confPath string) error {
 	if err != nil {
 		return err
 	}
-	return svc.Run(serviceName, &tunnelService{confPath})
+	return svc.Run(serviceName, &tunnelService{Path: confPath})
 }

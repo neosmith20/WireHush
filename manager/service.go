@@ -1,3 +1,5 @@
+//go:build !wirehush_v1
+
 /* SPDX-License-Identifier: MIT
  *
  * Copyright (C) 2019-2026 WireGuard LLC. All Rights Reserved.
@@ -62,6 +64,11 @@ func (service *managerService) Execute(args []string, r <-chan svc.ChangeRequest
 	}
 
 	err = watchNewTunnelServices()
+	if err != nil {
+		serviceError = services.ErrorTrackTunnels
+		return
+	}
+	err = trackExistingWireHushTunnelServices()
 	if err != nil {
 		serviceError = services.ErrorTrackTunnels
 		return

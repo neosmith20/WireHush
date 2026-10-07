@@ -8,14 +8,10 @@
 <?if $(var.WIREGUARD_PLATFORM) = "amd64" Or $(var.WIREGUARD_PLATFORM) = "arm64"?>
 	<?define PlatformProgramFilesFolder = "ProgramFiles64Folder"?>
 <?else?>
-	<?define PlatformProgramFilesFolder = "ProgramFilesFolder"?>
+	<?error Unsupported WireHush product platform ?>
 <?endif?>
 <?if $(var.WIREGUARD_PLATFORM) = "amd64"?>
 	<?define UpgradeCode = "a9fd3e3c-7e5b-4d6d-9a6b-6d7f497ba1de"?>
-<?elseif $(var.WIREGUARD_PLATFORM) = "x86"?>
-	<?define UpgradeCode = "f3d63bd7-03ea-4a31-9ef4-f2d7414c1c75"?>
-<?elseif $(var.WIREGUARD_PLATFORM) = "arm"?>
-	<?define UpgradeCode = "24240e99-84f5-442f-9ec6-bf3c574ad8cc"?>
 <?elseif $(var.WIREGUARD_PLATFORM) = "arm64"?>
 	<?define UpgradeCode = "e3b4a4e6-8070-4655-9d64-d0d4b098d2f1"?>
 <?else?>

@@ -20,7 +20,7 @@ DEPLOYMENT_HOST ?= winvm
 DEPLOYMENT_ARCH ?= amd64
 DEPLOYMENT_PATH ?= Desktop
 
-all: amd64/wireguard.exe x86/wireguard.exe arm64/wireguard.exe
+all: amd64/wireguard.exe arm64/wireguard.exe
 
 define download =
 .distfiles/$(1):
@@ -52,18 +52,11 @@ $(eval $(call download,wireguard-nt.zip,https://download.wireguard.com/wireguard
 resources_amd64.syso: $(RESOURCE_FILES)
 	x86_64-w64-mingw32-windres $(RCFLAGS) -I .deps/wireguard-nt/bin/amd64 -i $< -o $@
 
-resources_386.syso: $(RESOURCE_FILES)
-	i686-w64-mingw32-windres $(RCFLAGS) -I .deps/wireguard-nt/bin/x86 -i $< -o $@
-
 resources_arm64.syso: $(RESOURCE_FILES)
 	aarch64-w64-mingw32-windres $(RCFLAGS) -I .deps/wireguard-nt/bin/arm64 -i $< -o $@
 
 amd64/wireguard.exe: export GOARCH := amd64
 amd64/wireguard.exe: resources_amd64.syso $(SOURCE_FILES)
-	go build $(GOFLAGS) -o $@
-
-x86/wireguard.exe: export GOARCH := 386
-x86/wireguard.exe: resources_386.syso $(SOURCE_FILES)
 	go build $(GOFLAGS) -o $@
 
 arm64/wireguard.exe: export GOARCH := arm64

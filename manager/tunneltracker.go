@@ -1,3 +1,5 @@
+//go:build !wirehush_v1
+
 /* SPDX-License-Identifier: MIT
  *
  * Copyright (C) 2019-2026 WireGuard LLC. All Rights Reserved.
@@ -8,12 +10,9 @@ package manager
 import (
 	"fmt"
 	"log"
-	"runtime"
 	"sync"
-	"sync/atomic"
 	"syscall"
 	"time"
-	"unsafe"
 
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/svc"
@@ -42,87 +41,6 @@ func trackedTunnelsGlobalState() (state TunnelState) {
 		}
 	}
 	return
-}
-
-type serviceSubscriptionState struct {
-	service *mgr.Service
-	cb      func(status uint32) bool
-	done    sync.WaitGroup
-	once    uint32
-}
-
-var serviceSubscriptionCallbackPtr = windows.NewCallback(func(notification uint32, context uintptr) uintptr {
-	state := (*serviceSubscriptionState)(unsafe.Pointer(context))
-	if atomic.LoadUint32(&state.once) != 0 {
-		return 0
-	}
-	if notification == 0 {
-		status, err := state.service.Query()
-		if err == nil {
-			notification = svcStateToNotifyState(uint32(status.State))
-		}
-	}
-	if state.cb(notification) && atomic.CompareAndSwapUint32(&state.once, 0, 1) {
-		state.done.Done()
-	}
-	return 0
-})
-
-func svcStateToNotifyState(s uint32) uint32 {
-	switch s {
-	case windows.SERVICE_STOPPED:
-		return windows.SERVICE_NOTIFY_STOPPED
-	case windows.SERVICE_START_PENDING:
-		return windows.SERVICE_NOTIFY_START_PENDING
-	case windows.SERVICE_STOP_PENDING:
-		return windows.SERVICE_NOTIFY_STOP_PENDING
-	case windows.SERVICE_RUNNING:
-		return windows.SERVICE_NOTIFY_RUNNING
-	case windows.SERVICE_CONTINUE_PENDING:
-		return windows.SERVICE_NOTIFY_CONTINUE_PENDING
-	case windows.SERVICE_PAUSE_PENDING:
-		return windows.SERVICE_NOTIFY_PAUSE_PENDING
-	case windows.SERVICE_PAUSED:
-		return windows.SERVICE_NOTIFY_PAUSED
-	case windows.SERVICE_NO_CHANGE:
-		return 0
-	default:
-		return 0
-	}
-}
-
-func notifyStateToTunState(s uint32) TunnelState {
-	if s&(windows.SERVICE_NOTIFY_STOPPED|windows.SERVICE_NOTIFY_DELETED) != 0 {
-		return TunnelStopped
-	} else if s&(windows.SERVICE_NOTIFY_DELETE_PENDING|windows.SERVICE_NOTIFY_STOP_PENDING) != 0 {
-		return TunnelStopping
-	} else if s&windows.SERVICE_NOTIFY_RUNNING != 0 {
-		return TunnelStarted
-	} else if s&windows.SERVICE_NOTIFY_START_PENDING != 0 {
-		return TunnelStarting
-	} else {
-		return TunnelUnknown
-	}
-}
-
-func trackService(service *mgr.Service, callback func(status uint32) bool) error {
-	var subscription uintptr
-	state := &serviceSubscriptionState{service: service, cb: callback}
-	state.done.Add(1)
-	err := windows.SubscribeServiceChangeNotifications(service.Handle, windows.SC_EVENT_STATUS_CHANGE, serviceSubscriptionCallbackPtr, uintptr(unsafe.Pointer(state)), &subscription)
-	if err != nil {
-		return err
-	}
-	defer runtime.KeepAlive(state)
-	defer windows.UnsubscribeServiceChangeNotifications(subscription)
-	status, err := service.Query()
-	if err == nil {
-		if callback(svcStateToNotifyState(uint32(status.State))) {
-			return nil
-		}
-	}
-	state.done.Wait()
-	return nil
 }
 
 func trackTunnelService(tunnelName string, service *mgr.Service) {
@@ -242,6 +160,22 @@ func trackExistingTunnels() error {
 		}
 		service, err := m.OpenService(serviceName)
 		if err != nil {
+			continue
+		}
+		config, err := service.Config()
+		if err != nil {
+			service.Close()
+			log.Printf("[%s] Unable to read legacy tunnel service configuration: %v", name, err)
+			continue
+		}
+		legacy, err := legacyTunnelServiceCommandLineRecognized(config.BinaryPathName)
+		if err != nil {
+			service.Close()
+			log.Printf("[%s] Unable to classify legacy tunnel service command line: %v", name, err)
+			continue
+		}
+		if !legacy {
+			service.Close()
 			continue
 		}
 		go trackTunnelService(name, service)

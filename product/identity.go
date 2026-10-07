@@ -17,9 +17,9 @@ const (
 	LegacyDataDirectoryName   = "TunnelMint"
 	LegacyAdminRegistryKey    = `Software\TunnelMint`
 
-	ManagerServiceName         = LegacyManagerServiceName
+	ManagerServiceName         = "WireHushManager"
 	ManagerServiceDisplayName  = "WireHush Manager"
-	TunnelServicePrefix        = LegacyTunnelServicePrefix
+	TunnelServicePrefix        = "WireHushTunnel$"
 	TunnelServiceDisplayPrefix = "WireHush Tunnel: "
 
 	DataDirectoryName = LegacyDataDirectoryName

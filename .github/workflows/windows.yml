@@ -1,54 +1,34 @@
-name: Windows validation
-
+name: WireHush V1 candidate
 on:
   push:
-    branches: [main]
+    branches: [main, blueprint/wirehush-v1]
   pull_request:
-    branches: [main]
-
+    branches: [main, blueprint/wirehush-v1]
+  workflow_dispatch:
 permissions:
   contents: read
-
 jobs:
-  focused-tests-and-build:
+  validate-and-package:
     runs-on: windows-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
-      - name: Check out source
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.27.x'
-          cache: true
-
-      - name: Run focused WireHush tests
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Fetch checksum-pinned build tools
         shell: pwsh
-        run: |
-          go test -vet=off ./bootstrap ./dnsproxy ./doh ./dohruntime ./product
-          # These packages contain deterministic Task 013/015 hardening tests.
-          # Privileged adapter, DPAPI, service, and storage tests stay out of
-          # hosted CI because they require an installed/elevated Windows VM.
-          go test -vet=off ./tunnel ./tunnel/firewall ./manager ./ui
-          go test -vet=off ./conf -run 'Test(DNSParsing|DNSRoundTripPreservesDoH|DNSRoundTripPreservesDoHWithSearchSuffix|DNSRejectsMixedPlainAndDoH|DNSRejectsMultipleDoH|DNSURLValidation|FromWgQuick|ResolveEndpointsWith)'
-
-      - name: Build Windows client
-        shell: cmd
-        run: cmd /c build.bat
-
-      - name: Smoke test TLS with build overlay
-        shell: cmd
-        run: |
-          set PATH=%CD%\.deps\go\bin;%PATH%
-          set GOPATH=%CD%\.deps\gopath
-          set GOROOT=%CD%\.deps\go
-          go test -overlay .overlay/overlay.json ./doh -run TestTLSClientHelloDoesNotPanic
-
-      - name: Smoke test built client startup
-        shell: cmd
-        run: amd64\wirehush.exe /update
-
-      # Installer linking depends on the Windows Installer ICE service and is
-      # kept as a separate release-build step until GitHub-hosted runners offer
-      # a deterministic ICE environment.
+        run: ./scripts/bootstrap-v1.ps1
+      - name: Run V1 regression and safety checks
+        shell: pwsh
+        run: ./scripts/test-v1.ps1 -Race
+      - name: Package x64 and ARM64 owner-test candidates
+        shell: pwsh
+        run: ./scripts/build-v1.ps1 -SkipBootstrap -Installer
+      - name: Upload unsigned candidates and validation evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: wirehush-v1-owner-test
+          path: |
+            .artifacts/v1/*/*/*.msi
+            .artifacts/v1/*/*/*SHA256SUMS.txt
+            .artifacts/v1/*/latest.json
+            .artifacts/v1/validation.txt
+          if-no-files-found: error

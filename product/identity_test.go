@@ -26,8 +26,26 @@ func TestRuntimeIdentityIsWireHushOwned(t *testing.T) {
 }
 
 func TestLegacyPersistentIdentityIsExplicit(t *testing.T) {
-	if ManagerServiceName != LegacyManagerServiceName || TunnelServicePrefix != LegacyTunnelServicePrefix {
-		t.Fatal("service compatibility identifiers changed")
+	if LegacyManagerServiceName != "TunnelMintManager" {
+		t.Fatalf("unexpected legacy manager service name %q", LegacyManagerServiceName)
+	}
+	if LegacyTunnelServicePrefix != "TunnelMintTunnel$" {
+		t.Fatalf("unexpected legacy tunnel service prefix %q", LegacyTunnelServicePrefix)
+	}
+	if ManagerServiceName != "WireHushManager" {
+		t.Fatalf("unexpected manager service name %q", ManagerServiceName)
+	}
+	if TunnelServicePrefix != "WireHushTunnel$" {
+		t.Fatalf("unexpected tunnel service prefix %q", TunnelServicePrefix)
+	}
+	if ManagerServiceName == LegacyManagerServiceName || TunnelServicePrefix == LegacyTunnelServicePrefix {
+		t.Fatal("active service identity aliases a legacy service identity")
+	}
+	if ManagerServiceDisplayName != "WireHush Manager" {
+		t.Fatalf("unexpected manager display name %q", ManagerServiceDisplayName)
+	}
+	if TunnelServiceDisplayPrefix != "WireHush Tunnel: " {
+		t.Fatalf("unexpected tunnel service display prefix %q", TunnelServiceDisplayPrefix)
 	}
 	if DataDirectoryName != LegacyDataDirectoryName || AdminRegistryKey != LegacyAdminRegistryKey {
 		t.Fatal("data compatibility identifiers changed")
