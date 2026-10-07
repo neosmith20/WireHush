@@ -6,6 +6,7 @@
 package manager
 
 import (
+	"context"
 	"errors"
 
 	"golang.org/x/sys/windows"
@@ -31,6 +32,8 @@ type wireHushManagerControl struct {
 	stop          func(conf.TunnelServiceLocator) error
 	waitForStop   func(conf.TunnelServiceLocator) error
 	state         func(conf.TunnelServiceLocator) (TunnelState, error)
+	startContext  func(context.Context, conf.TunnelServiceLocator) error
+	waitContext   func(context.Context, conf.TunnelServiceLocator) error
 }
 
 func newWireHushManagerControl() wireHushManagerControl {
@@ -45,7 +48,30 @@ func newWireHushManagerControl() wireHushManagerControl {
 		stop:          UninstallWireHushTunnel,
 		waitForStop:   WaitForWireHushTunnelStop,
 		state:         WireHushTunnelState,
+		startContext:  InstallWireHushTunnelContext,
+		waitContext:   WaitForWireHushTunnelStopContext,
 	}
+}
+
+func (control wireHushManagerControl) withContext(ctx context.Context) wireHushManagerControl {
+	if control.startContext != nil {
+		control.start = func(locator conf.TunnelServiceLocator) error { return control.startContext(ctx, locator) }
+	}
+	if control.waitContext != nil {
+		control.waitForStop = func(locator conf.TunnelServiceLocator) error { return control.waitContext(ctx, locator) }
+	}
+	return control
+}
+
+func authorizeWireHushRecordScripts(caller wireHushCaller, record conf.TunnelRecord) error {
+	config, err := wireHushStoredConfigFromRecord(record)
+	if err != nil {
+		return err
+	}
+	if !caller.Administrator && (config.Interface.PreUp != "" || config.Interface.PostUp != "" || config.Interface.PreDown != "" || config.Interface.PostDown != "") {
+		return errWireHushAccessDenied
+	}
+	return nil
 }
 
 func wireHushMetadataFromRecord(record conf.TunnelRecord) wireHushTunnelMetadata {
@@ -143,8 +169,11 @@ func (control wireHushManagerControl) RuntimeTunnelConfig(caller wireHushCaller,
 }
 
 func (control wireHushManagerControl) StartTunnel(caller wireHushCaller, locator conf.TunnelServiceLocator) error {
-	_, canonical, err := control.resolveAuthorizedTunnel(caller, locator, wireHushTunnelControl)
+	record, canonical, err := control.resolveAuthorizedTunnel(caller, locator, wireHushTunnelControl)
 	if err != nil {
+		return err
+	}
+	if err := authorizeWireHushRecordScripts(caller, record); err != nil {
 		return err
 	}
 	return control.start(canonical)
@@ -181,6 +210,9 @@ func (control wireHushManagerControl) CreateTunnelRecord(caller wireHushCaller, 
 	if err := authorizeWireHushTunnel(caller, candidate, wireHushTunnelRecordMutation); err != nil {
 		return err
 	}
+	if err := authorizeWireHushRecordScripts(caller, record); err != nil {
+		return err
+	}
 	return control.saveRecord(record, false)
 }
 
@@ -195,6 +227,9 @@ func (control wireHushManagerControl) SaveTunnelRecord(caller wireHushCaller, lo
 	}
 	if candidate != canonical {
 		return errors.New("tunnel record identity cannot change during update")
+	}
+	if err := authorizeWireHushRecordScripts(caller, record); err != nil {
+		return err
 	}
 	return control.saveRecord(record, true)
 }

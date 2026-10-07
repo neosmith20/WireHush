@@ -31,8 +31,10 @@ Each authenticated connection is bound to its Windows token SID, effective group
 membership, and session. One frontend per Windows session uses a session-local
 single-instance mechanism. Closing one session cannot stop another user's private
 tunnel or stop a manager still needed by another connected session. An application
-exit stops only the caller's authorized active tunnel and keeps the UI visible
-until cleanup completes. Closing IPC is never treated as intentional exit.
+exit, when it is the last connected session, stops only the caller's authorized
+active tunnel and keeps the UI visible
+until cleanup completes. With other connected sessions, exit detaches only the
+caller and preserves their active networking. Closing IPC is never treated as intentional exit.
 With no clients and no active tunnel, the manager exits after 30 seconds. Unknown
 network state prevents idle exit. Manager recovery inventories SCM truth before
 admitting mutations. No automatic reconnect across OS reboot is enabled in V1.
@@ -53,7 +55,7 @@ configuration read/export, private/shared create, identity-preserving update,
 delete, start, stop, bootstrap settings, event subscription, and session exit.
 Requests are limited to 1 MiB. Ordinary unary calls have a maximum 10-second
 deadline; service startup and pipe connection use 10 and 5 seconds respectively.
-Long-lived subscriptions are cancellable and heartbeat every 5 seconds. Cleanup
+Long-lived subscriptions are cancellable and publish snapshots every second. Cleanup
 must be bounded, propagate failure, and preserve records on incomplete stop.
 
 Use standard gRPC codes: InvalidArgument, Unauthenticated, PermissionDenied,

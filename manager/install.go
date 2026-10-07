@@ -171,6 +171,17 @@ func waitForWireHushTunnelRemovalContext(ctx context.Context, m *mgr.Mgr, servic
 }
 
 func InstallWireHushTunnel(locator conf.TunnelServiceLocator) error {
+	ctx, cancel := context.WithTimeout(context.Background(), wireHushOperationTimeout)
+	defer cancel()
+	return InstallWireHushTunnelContext(ctx, locator)
+}
+
+func InstallWireHushTunnelContext(ctx context.Context, locator conf.TunnelServiceLocator) error {
+	ctx, cancel := context.WithTimeout(ctx, wireHushOperationTimeout)
+	defer cancel()
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	serviceName, args, err := wireHushTunnelServiceIdentity(locator)
 	if err != nil {
 		return err
@@ -195,7 +206,7 @@ func InstallWireHushTunnel(locator conf.TunnelServiceLocator) error {
 			if err != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
 				return err
 			}
-			if err := waitForWireHushTunnelRemoval(m, serviceName, path, locator); err != nil {
+			if err := waitForWireHushTunnelRemovalContext(ctx, m, serviceName, path, locator); err != nil {
 				return err
 			}
 		} else {
@@ -206,7 +217,7 @@ func InstallWireHushTunnel(locator conf.TunnelServiceLocator) error {
 			}
 			if statusErr == windows.ERROR_SERVICE_MARKED_FOR_DELETE {
 				service.Close()
-				if err := waitForWireHushTunnelRemoval(m, serviceName, path, locator); err != nil {
+				if err := waitForWireHushTunnelRemovalContext(ctx, m, serviceName, path, locator); err != nil {
 					return err
 				}
 			} else {
@@ -219,16 +230,19 @@ func InstallWireHushTunnel(locator conf.TunnelServiceLocator) error {
 				if deleteErr != nil && deleteErr != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
 					return deleteErr
 				}
-				if err := waitForWireHushTunnelRemoval(m, serviceName, path, locator); err != nil {
+				if err := waitForWireHushTunnelRemovalContext(ctx, m, serviceName, path, locator); err != nil {
 					return err
 				}
 			}
 		}
 	} else if err == windows.ERROR_SERVICE_MARKED_FOR_DELETE {
-		if err := waitForWireHushTunnelRemoval(m, serviceName, path, locator); err != nil {
+		if err := waitForWireHushTunnelRemovalContext(ctx, m, serviceName, path, locator); err != nil {
 			return err
 		}
 	} else if err != windows.ERROR_SERVICE_DOES_NOT_EXIST {
+		return err
+	}
+	if err := ctx.Err(); err != nil {
 		return err
 	}
 	service, err = m.CreateService(serviceName, path, wireHushTunnelServiceConfig(record), args...)

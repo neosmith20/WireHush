@@ -64,8 +64,11 @@ func (mutations *wireHushMutations) Start(ctx context.Context, caller wireHushCa
 		return err
 	}
 	defer mutations.leave()
-	_, canonical, err := mutations.control.resolveAuthorizedTunnel(caller, locator, wireHushTunnelControl)
+	record, canonical, err := mutations.control.resolveAuthorizedTunnel(caller, locator, wireHushTunnelControl)
 	if err != nil {
+		return err
+	}
+	if err := authorizeWireHushRecordScripts(caller, record); err != nil {
 		return err
 	}
 	active, err := mutations.inventory()
@@ -92,7 +95,7 @@ func (mutations *wireHushMutations) Start(ctx context.Context, caller wireHushCa
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	return mutations.control.start(canonical)
+	return mutations.control.withContext(ctx).start(canonical)
 }
 
 func (mutations *wireHushMutations) Stop(ctx context.Context, caller wireHushCaller, locator conf.TunnelServiceLocator) error {
@@ -103,7 +106,7 @@ func (mutations *wireHushMutations) Stop(ctx context.Context, caller wireHushCal
 		return err
 	}
 	defer mutations.leave()
-	return mutations.control.StopTunnel(caller, locator)
+	return mutations.control.withContext(ctx).StopTunnel(caller, locator)
 }
 
 func (mutations *wireHushMutations) Create(ctx context.Context, caller wireHushCaller, scope conf.TunnelScope, name, text string) (wireHushTunnelMetadata, error) {
@@ -160,5 +163,5 @@ func (mutations *wireHushMutations) Delete(ctx context.Context, caller wireHushC
 		return err
 	}
 	defer mutations.leave()
-	return mutations.control.DeleteTunnelRecord(caller, locator)
+	return mutations.control.withContext(ctx).DeleteTunnelRecord(caller, locator)
 }

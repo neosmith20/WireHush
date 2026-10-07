@@ -15,6 +15,7 @@ import (
 
 	"github.com/Microsoft/go-winio"
 	"golang.org/x/sys/windows"
+	"golang.zx2c4.com/wireguard/windows/conf"
 	"golang.zx2c4.com/wireguard/windows/protocol"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -53,6 +54,59 @@ func TestWireHushPipeAuthorizationAndDescriptor(t *testing.T) {
 	}
 	if _, err := wireHushPipeSecurityDescriptor(nil); err == nil {
 		t.Fatal("missing group widened pipe descriptor")
+	}
+}
+
+func TestWireHushGRPCSessionUsesAuthenticatedCaller(t *testing.T) {
+	user, err := windows.GetCurrentProcessToken().GetTokenUser()
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := fmt.Sprintf(`\\.\pipe\WireHush.RPC.Test.%d.%d`, windows.GetCurrentProcessId(), time.Now().UnixNano())
+	listener, err := winio.ListenPipe(path, &winio.PipeConfig{SecurityDescriptor: "O:" + user.User.Sid.String() + "G:" + user.User.Sid.String() + "D:P(A;;GA;;;" + user.User.Sid.String() + ")"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	group, err := windows.CreateWellKnownSid(windows.WinBuiltinUsersSid)
+	if err != nil {
+		listener.Close()
+		t.Fatal(err)
+	}
+	service, _, _ := testWireHushRPC(t)
+	service.sessions = make(map[*wireHushRPCSession]bool)
+	server := grpc.NewServer(grpc.Creds(wireHushPipeCredentials{group: group}), grpc.StatsHandler(service), grpc.UnaryInterceptor(service.unary))
+	protocol.RegisterManagerServer(server, service)
+	done := make(chan struct{})
+	go func() { defer close(done); server.Serve(listener) }()
+	defer func() { server.Stop(); listener.Close(); <-done }()
+	client, err := grpc.NewClient("passthrough:///wirehush-rpc-test", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) {
+		return winio.DialPipeAccessImpLevel(ctx, path, wireHushPipeClientAccess, winio.PipeImpLevelIdentification)
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	rpc := protocol.NewManagerClient(client)
+	if _, err := rpc.Handshake(ctx, &protocol.HandshakeRequest{ProtocolMajor: protocol.Major}); err != nil {
+		t.Fatal(err)
+	}
+	fixture := wireHushControlRecord(t, "12345678-1234-4abc-8def-1234567890ab", conf.TunnelScopePrivate, wireHushAuthOwnerSID, "Fixture")
+	created, err := rpc.CreateTunnel(ctx, &protocol.CreateTunnelRequest{Name: "Authenticated", Scope: protocol.Scope_SCOPE_PRIVATE, WgQuickText: fixture.WGQuickText})
+	if err != nil {
+		t.Fatal(err)
+	}
+	id, err := conf.ParseTunnelID(created.Tunnel.TunnelId)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record, err := service.mutations.control.loadRecord(conf.TunnelScopePrivate, user.User.Sid.String(), id)
+	if err != nil || record.OwnerSID != user.User.Sid.String() {
+		t.Fatalf("authenticated creation identity was not derived from the Windows token: %v", err)
+	}
+	if _, err := rpc.Snapshot(ctx, &protocol.Empty{}); err != nil {
+		t.Fatal(err)
 	}
 }
 
