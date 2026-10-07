@@ -18,7 +18,7 @@ jobs:
         run: ./scripts/bootstrap-v1.ps1
       - name: Run V1 regression and safety checks
         shell: pwsh
-        run: ./scripts/test-v1.ps1
+        run: ./scripts/test-v1.ps1 -Race
       - name: Package x64 and ARM64 owner-test candidates
         shell: pwsh
         run: ./scripts/build-v1.ps1 -SkipBootstrap -Installer
