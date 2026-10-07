@@ -53,18 +53,28 @@ func NewRinglogger(filename, tag string) (*Ringlogger, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = file.Truncate(int64(unsafe.Sizeof(logMem{})))
+	return newRingloggerFromFile(file, tag)
+}
+
+func newRingloggerFromFile(file *os.File, tag string) (*Ringlogger, error) {
+	if len(tag) > maxTagLength {
+		file.Close()
+		return nil, windows.ERROR_LABEL_TOO_LONG
+	}
+	err := file.Truncate(int64(unsafe.Sizeof(logMem{})))
 	if err != nil {
 		file.Close()
 		return nil, err
 	}
 	mapping, err := windows.CreateFileMapping(windows.Handle(file.Fd()), nil, windows.PAGE_READWRITE, 0, 0, nil)
 	if err != nil && err != windows.ERROR_ALREADY_EXISTS {
+		file.Close()
 		return nil, err
 	}
 	rl, err := newRingloggerFromMappingHandle(mapping, tag, windows.FILE_MAP_WRITE)
 	if err != nil {
 		windows.CloseHandle(mapping)
+		file.Close()
 		return nil, err
 	}
 	rl.file = file

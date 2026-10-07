@@ -18,6 +18,30 @@ type closeFunc func() error
 
 func (f closeFunc) Close() error { return f() }
 
+func TestCloseRetriesFailedDNSRestorationInsteadOfFalseSuccess(t *testing.T) {
+	fail, restored, proxyClosed := true, 0, 0
+	s := &Session{restore: func() error {
+		restored++
+		if fail {
+			return errors.New("DNS restore failed")
+		}
+		return nil
+	}, proxy: closeFunc(func() error { proxyClosed++; return nil })}
+	if err := s.Close(); err == nil {
+		t.Fatal("failed restoration was acknowledged")
+	}
+	if err := s.Close(); err == nil {
+		t.Fatal("retry forgot failed DNS restoration")
+	}
+	fail = false
+	if err := s.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Close(); err != nil || restored != 3 || proxyClosed != 1 {
+		t.Fatal("cleanup was not idempotent after successful restoration")
+	}
+}
+
 func TestActivateOrdersStagesAndOwnsRoutes(t *testing.T) {
 	var events []string
 	var restored, closed bool

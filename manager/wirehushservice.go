@@ -10,7 +10,9 @@ import (
 	"golang.zx2c4.com/wireguard/windows/conf"
 	"golang.zx2c4.com/wireguard/windows/product"
 	"golang.zx2c4.com/wireguard/windows/protocol"
+	"golang.zx2c4.com/wireguard/windows/ringlogger"
 	"google.golang.org/grpc"
+	"log"
 	"time"
 )
 
@@ -27,6 +29,13 @@ func (service *wireHushV1Service) Execute(_ []string, requests <-chan svc.Change
 		return false, uint32(windows.ERROR_ACCESS_DENIED)
 	}
 	conf.PresetRootDirectory(root)
+	logFile, err := conf.OpenWireHushLogFile()
+	if err != nil {
+		return false, uint32(windows.ERROR_ACCESS_DENIED)
+	}
+	if err := ringlogger.InitWireHushLogger(logFile, "MGR"); err != nil {
+		return false, uint32(windows.ERROR_SERVICE_SPECIFIC_ERROR)
+	}
 	server, err := newWireHushRPCServer()
 	if err != nil {
 		return false, uint32(windows.ERROR_SERVICE_SPECIFIC_ERROR)
@@ -58,15 +67,18 @@ func (service *wireHushV1Service) Execute(_ []string, requests <-chan svc.Change
 	}
 	current := svc.Status{State: svc.Running, Accepts: svc.AcceptStop | svc.AcceptShutdown}
 	changes <- current
+	log.Println("manager-ready")
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 	var idleSince time.Time
 	for {
 		select {
 		case <-server.stopRequested:
+			log.Println("manager-session-exit")
 			changes <- svc.Status{State: svc.StopPending}
 			return false, 0
 		case <-serveError:
+			log.Println("manager-transport-failed")
 			// Unexpected manager transport failure does not kill independent tunnels.
 			return false, uint32(windows.ERROR_SERVICE_SPECIFIC_ERROR)
 		case request := <-requests:
@@ -87,6 +99,7 @@ func (service *wireHushV1Service) Execute(_ []string, requests <-chan svc.Change
 				// Stop failure is observable as Running; operator may retry. It is
 				// never reported as successful cleanup, and configs remain intact.
 				changes <- current
+				log.Println("manager-stop-failed")
 			}
 		case now := <-ticker.C:
 			server.sessionsLock.Lock()
@@ -113,6 +126,7 @@ func (service *wireHushV1Service) Execute(_ []string, requests <-chan svc.Change
 				idle := server.commitIdleExit(ctx)
 				cancel()
 				if idle {
+					log.Println("manager-idle-exit")
 					changes <- svc.Status{State: svc.StopPending}
 					return false, 0
 				}

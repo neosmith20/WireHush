@@ -90,8 +90,15 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 		}()
 
 		if encryptedDNSSession != nil {
-			if err := encryptedDNSSession.Close(); err != nil && logErr == nil {
-				logErr = fmt.Errorf("unable to restore encrypted DNS state: %w", err)
+			cleanupErr := encryptedDNSSession.Close()
+			if service.RecordLocator != nil {
+				for retry := 0; cleanupErr != nil && retry < 2; retry++ {
+					time.Sleep(100 * time.Millisecond)
+					cleanupErr = encryptedDNSSession.Close()
+				}
+			}
+			if cleanupErr != nil && logErr == nil {
+				logErr = fmt.Errorf("unable to restore encrypted DNS state: %w", cleanupErr)
 			}
 		}
 		if logErr == nil && adapter != nil && config != nil {
@@ -119,12 +126,18 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 	}()
 
 	var logFile string
-	logFile, err = conf.LogFile(true)
-	if err != nil {
-		serviceError = services.ErrorRingloggerOpen
-		return
+	if service.RecordLocator != nil {
+		var protectedLog *os.File
+		protectedLog, err = conf.OpenWireHushLogFile()
+		if err == nil {
+			err = ringlogger.InitWireHushLogger(protectedLog, "TUN")
+		}
+	} else {
+		logFile, err = conf.LogFile(true)
+		if err == nil {
+			err = ringlogger.InitGlobalLogger(logFile, "TUN")
+		}
 	}
-	err = ringlogger.InitGlobalLogger(logFile, "TUN")
 	if err != nil {
 		serviceError = services.ErrorRingloggerOpen
 		return
@@ -168,7 +181,15 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 
 	log.Println("Resolving DNS names")
 	if encryptedDNSConfigured(config) {
-		configuredBootstrap, err = configuredBootstrapResolvers()
+		if service.RecordLocator != nil {
+			settings, loadErr := conf.LoadWireHushBootstrapSettings()
+			err = loadErr
+			if err == nil {
+				configuredBootstrap, err = settings.EnabledResolvers()
+			}
+		} else {
+			configuredBootstrap, err = configuredBootstrapResolvers()
+		}
 		if err != nil {
 			serviceError = services.ErrorSetNetConfig
 			return

@@ -276,7 +276,7 @@ func (s *Session) Close() error {
 	s.opMu.Lock()
 	defer s.opMu.Unlock()
 	s.mu.Lock()
-	if s.closed && len(s.routes) == 0 {
+	if s.closed && len(s.routes) == 0 && s.restore == nil && s.proxy == nil {
 		s.mu.Unlock()
 		return nil
 	}
@@ -286,14 +286,20 @@ func (s *Session) Close() error {
 	s.mu.Unlock()
 
 	var firstErr error
+	var retainedRestore func() error
+	var retainedProxy io.Closer
 	if restore != nil {
 		if err := restore(); err != nil {
 			firstErr = err
+			retainedRestore = restore
 		}
 	}
 	if proxy != nil {
-		if err := proxy.Close(); err != nil && firstErr == nil {
-			firstErr = err
+		if err := proxy.Close(); err != nil {
+			retainedProxy = proxy
+			if firstErr == nil {
+				firstErr = err
+			}
 		}
 	}
 	var retained []netip.Prefix
@@ -308,6 +314,7 @@ func (s *Session) Close() error {
 		}
 	}
 	s.mu.Lock()
+	s.restore, s.proxy = retainedRestore, retainedProxy
 	s.routes = retained
 	if len(retained) == 0 {
 		s.delRoute = nil

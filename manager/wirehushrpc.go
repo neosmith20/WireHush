@@ -48,8 +48,7 @@ func newWireHushRPCServer() (*wireHushRPCServer, error) {
 	if err != nil {
 		return nil, err
 	}
-	legacy := &ManagerService{}
-	return &wireHushRPCServer{mutations: newWireHushMutations(), instance: id.String(), sessions: make(map[*wireHushRPCSession]bool), stopRequested: make(chan struct{}, 1), shutdown: make(chan struct{}), readBootstrap: legacy.BootstrapSettings, saveBootstrap: legacy.SaveBootstrapSettings}, nil
+	return &wireHushRPCServer{mutations: newWireHushMutations(), instance: id.String(), sessions: make(map[*wireHushRPCSession]bool), stopRequested: make(chan struct{}, 1), shutdown: make(chan struct{}), readBootstrap: conf.LoadWireHushBootstrapSettings, saveBootstrap: conf.SaveWireHushBootstrapSettings}, nil
 }
 
 func (server *wireHushRPCServer) TagConn(ctx context.Context, _ *stats.ConnTagInfo) context.Context {
@@ -135,6 +134,8 @@ func wireHushRPCError(err error) error {
 		return status.Error(codes.FailedPrecondition, "Stop this tunnel before editing it")
 	case errors.Is(err, errWireHushClosing):
 		return status.Error(codes.Unavailable, "WireHush is closing")
+	case errors.Is(err, errWireHushCleanupFailed):
+		return status.Error(codes.FailedPrecondition, "Tunnel cleanup failed; an administrator must verify networking before retrying")
 	case errors.Is(err, errWireHushTunnelServiceOwnershipConflict):
 		return status.Error(codes.FailedPrecondition, "A service ownership conflict requires administrator repair")
 	default:
