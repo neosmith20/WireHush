@@ -1,3 +1,5 @@
+//go:build !wirehush_v1
+
 /* SPDX-License-Identifier: MIT
  *
  * Copyright (C) 2019-2026 WireGuard LLC. All Rights Reserved.
@@ -19,16 +21,6 @@ import (
 type Tunnel struct {
 	Name string
 }
-
-type TunnelState int
-
-const (
-	TunnelUnknown TunnelState = iota
-	TunnelStarted
-	TunnelStopped
-	TunnelStarting
-	TunnelStopping
-)
 
 type NotificationType int
 

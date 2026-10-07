@@ -77,7 +77,10 @@ func listenWireHushPipe() (net.Listener, *windows.SID, error) {
 		return nil, nil, err
 	}
 	listener, err := winio.ListenPipe(protocol.PipePath, &winio.PipeConfig{SecurityDescriptor: sddl, InputBufferSize: 65536, OutputBufferSize: 65536})
-	return listener, group, err
+	if err != nil {
+		return nil, nil, err
+	}
+	return boundedWireHushListener(listener, wireHushMaximumConnections), group, nil
 }
 
 type wireHushPipeCredentials struct{ group *windows.SID }

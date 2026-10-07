@@ -110,8 +110,8 @@ func TestWireHushTunnelServiceIdentityIgnoresMutableRecordName(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	home := wireHushTunnelServiceConfig(conf.TunnelRecord{Name: "Home"})
-	office := wireHushTunnelServiceConfig(conf.TunnelRecord{Name: "Office"})
+	home := wireHushTunnelServiceConfig(conf.TunnelRecord{TunnelID: locator.TunnelID, Scope: locator.Scope, OwnerSID: locator.OwnerSID, Name: "Home"})
+	office := wireHushTunnelServiceConfig(conf.TunnelRecord{TunnelID: locator.TunnelID, Scope: locator.Scope, OwnerSID: locator.OwnerSID, Name: "Office"})
 	serviceNameAfterRename, argsAfterRename, err := wireHushTunnelServiceIdentity(locator)
 	if err != nil {
 		t.Fatal(err)
@@ -127,8 +127,8 @@ func TestWireHushTunnelServiceIdentityIgnoresMutableRecordName(t *testing.T) {
 			t.Fatalf("arguments changed from %#v to %#v", args, argsAfterRename)
 		}
 	}
-	if home.DisplayName == office.DisplayName {
-		t.Fatal("display name did not retain mutable record name")
+	if home.DisplayName != office.DisplayName {
+		t.Fatal("SCM display name exposed a mutable record name")
 	}
 }
 

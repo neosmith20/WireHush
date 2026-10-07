@@ -33,7 +33,7 @@ foreach ($target in $targets) {
     $app = "$repo/.artifacts/v1/$target/$run/app"
     New-Item -ItemType Directory -Path $app -Force | Out-Null
     Invoke-Checked "$deps/bin/$prefix-w64-mingw32-windres.exe" @('-I', "$deps/wireguard-nt/bin/$goArch", '-I', "$repo/cmd/wirehush-manager", '-I', (Split-Path $icon), "-DWIREHUSH_VERSION_ARRAY=$($version.Replace('.', ',')),0", "-DWIREHUSH_VERSION=$version", '-i', "$repo/cmd/wirehush-manager/resources.rc", '-o', "$repo/cmd/wirehush-manager/resources_$goArch.syso", '-O', 'coff')
-    Invoke-Checked $go @('build', '-overlay', '.overlay/overlay.json', '-tags', 'load_wgnt_from_rsrc', '-trimpath', '-buildvcs=false', '-ldflags=-s -w', '-o', "$app/WireHush-Manager.exe", './cmd/wirehush-manager')
+    Invoke-Checked $go @('build', '-overlay', '.overlay/overlay.json', '-tags', 'wirehush_v1,load_wgnt_from_rsrc', '-trimpath', '-buildvcs=false', '-ldflags=-s -w', '-o', "$app/WireHush-Manager.exe", './cmd/wirehush-manager')
     Invoke-Checked $dotnet @('restore', 'windows-ui/WireHush.UI/WireHush.UI.csproj', "-p:Platform=$target", '--locked-mode', '--nologo')
 Invoke-Checked $dotnet @('publish', 'windows-ui/WireHush.UI/WireHush.UI.csproj', '-c', 'Release', "-p:Platform=$target", '-r', "win-$target", "-p:Version=$version", '-p:DebugType=None', '-p:DebugSymbols=false', '--no-restore', '-o', $app, '--nologo')
     $notices = Join-Path $app 'Notices'
@@ -60,7 +60,7 @@ if (Test-Path -LiteralPath "$deps/go/PATENTS") { Copy-Item -LiteralPath "$deps/g
             }
         }
     }
-    $modules = & $go list -deps -f '{{if .Module}}{{.Module.Path}}|{{.Module.Version}}|{{.Module.Dir}}{{end}}' ./cmd/wirehush-manager
+    $modules = & $go list -tags wirehush_v1,load_wgnt_from_rsrc -deps -f '{{if .Module}}{{.Module.Path}}|{{.Module.Version}}|{{.Module.Dir}}{{end}}' ./cmd/wirehush-manager
     if ($LASTEXITCODE) { throw 'Dependency license inventory failed' }
     foreach ($module in $modules | Where-Object { $_ } | Sort-Object -Unique) {
         $parts = $module.Split('|')

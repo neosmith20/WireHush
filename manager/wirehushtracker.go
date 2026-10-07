@@ -165,8 +165,10 @@ func trackWireHushTunnelService(locator conf.TunnelServiceLocator, service *mgr.
 		return state == TunnelStopped
 	})
 	if err != nil && !checkForDisabled() {
-		setWireHushTrackedTunnelState(locator.TunnelID, TunnelStopped)
-		log.Printf("[%s] Unable to continue monitoring WireHush tunnel service, so stopping: %v", serviceName, err)
-		service.Control(svc.Stop)
+		// Losing an observer is not authorization to disrupt a live VPN. SCM
+		// inventory remains authoritative; admission fails closed if it cannot
+		// query that truth. Leave the independent worker running.
+		setWireHushTrackedTunnelState(locator.TunnelID, TunnelUnknown)
+		log.Print("tunnel-observer-unavailable")
 	}
 }

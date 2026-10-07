@@ -117,3 +117,4 @@ DNS leak capture, two-user isolation, installer upgrade/uninstall, sleep/wake,
 network changes, and native ARM64 execution require actual evidence; compile-only
 checks do not count. No final tag, publication, signing claim, or owner acceptance
 is made before the final acceptance stage.
+Production builds use the wirehush_v1 build tag to exclude inherited IPC, UI-launch, and updater entry points. A dependency gate rejects gob, Walk, the inherited UI, and updater packages. Pipe admission is bounded to 32 connections, 16 streams per connection, and 64 KiB headers. SCM observer loss preserves independent workers. Worker display names contain opaque IDs instead of tunnel labels; worker configuration access is protected before private locator binding.

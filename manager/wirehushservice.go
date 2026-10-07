@@ -48,7 +48,7 @@ func (service *wireHushV1Service) Execute(_ []string, requests <-chan svc.Change
 		return false, uint32(windows.ERROR_ACCESS_DENIED)
 	}
 	defer listener.Close()
-	transport := grpc.NewServer(grpc.Creds(wireHushPipeCredentials{group: group}), grpc.StatsHandler(server), grpc.UnaryInterceptor(server.unary), grpc.MaxRecvMsgSize(protocol.MaximumMessageBytes), grpc.MaxSendMsgSize(protocol.MaximumMessageBytes), grpc.MaxConcurrentStreams(16), grpc.ConnectionTimeout(protocol.PipeTimeout))
+	transport := grpc.NewServer(grpc.Creds(wireHushPipeCredentials{group: group}), grpc.StatsHandler(server), grpc.UnaryInterceptor(server.unary), grpc.MaxRecvMsgSize(protocol.MaximumMessageBytes), grpc.MaxSendMsgSize(protocol.MaximumMessageBytes), grpc.MaxConcurrentStreams(16), grpc.MaxHeaderListSize(64<<10), grpc.ConnectionTimeout(protocol.PipeTimeout))
 	protocol.RegisterManagerServer(transport, server)
 	serveError := make(chan error, 1)
 	go func() { serveError <- transport.Serve(listener) }()

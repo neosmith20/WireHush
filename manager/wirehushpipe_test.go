@@ -77,7 +77,7 @@ func TestWireHushGRPCSessionUsesAuthenticatedCaller(t *testing.T) {
 	server := grpc.NewServer(grpc.Creds(wireHushPipeCredentials{group: group}), grpc.StatsHandler(service), grpc.UnaryInterceptor(service.unary))
 	protocol.RegisterManagerServer(server, service)
 	done := make(chan struct{})
-	go func() { defer close(done); server.Serve(listener) }()
+	go func() { defer close(done); server.Serve(boundedWireHushListener(listener, wireHushMaximumConnections)) }()
 	defer func() { server.Stop(); listener.Close(); <-done }()
 	client, err := grpc.NewClient("passthrough:///wirehush-rpc-test", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) {
 		return winio.DialPipeAccessImpLevel(ctx, path, wireHushPipeClientAccess, winio.PipeImpLevelIdentification)
@@ -157,7 +157,7 @@ func TestWireHushGRPCNamedPipeAuthenticatesWindowsToken(t *testing.T) {
 	service := &wireHushTransportTestServer{identities: make(chan wireHushPipeIdentity, 2)}
 	protocol.RegisterManagerServer(server, service)
 	done := make(chan struct{})
-	go func() { defer close(done); server.Serve(listener) }()
+	go func() { defer close(done); server.Serve(boundedWireHushListener(listener, wireHushMaximumConnections)) }()
 	defer func() {
 		server.Stop()
 		listener.Close()
