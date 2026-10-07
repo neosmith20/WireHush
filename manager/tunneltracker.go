@@ -244,9 +244,33 @@ func trackExistingTunnels() error {
 		if err != nil {
 			continue
 		}
+		config, err := service.Config()
+		if err != nil {
+			service.Close()
+			log.Printf("[%s] Unable to read legacy tunnel service configuration: %v", name, err)
+			continue
+		}
+		legacy, err := legacyTunnelServiceCommandLineRecognized(config.BinaryPathName)
+		if err != nil {
+			service.Close()
+			log.Printf("[%s] Unable to classify legacy tunnel service command line: %v", name, err)
+			continue
+		}
+		if !legacy {
+			service.Close()
+			continue
+		}
 		go trackTunnelService(name, service)
 	}
 	return nil
+}
+
+func legacyTunnelServiceCommandLineRecognized(binaryPathName string) (bool, error) {
+	args, err := windows.DecomposeCommandLine(binaryPathName)
+	if err != nil {
+		return false, err
+	}
+	return len(args) >= 2 && args[1] == "/tunnelservice", nil
 }
 
 var servicesSubscriptionWatcherCallbackPtr = windows.NewCallback(func(notification uint32, context uintptr) uintptr {

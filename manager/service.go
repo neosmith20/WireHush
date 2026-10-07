@@ -66,6 +66,11 @@ func (service *managerService) Execute(args []string, r <-chan svc.ChangeRequest
 		serviceError = services.ErrorTrackTunnels
 		return
 	}
+	err = trackExistingWireHushTunnelServices()
+	if err != nil {
+		serviceError = services.ErrorTrackTunnels
+		return
+	}
 
 	conf.RegisterStoreChangeCallback(func() { conf.MigrateUnencryptedConfigs(changeTunnelServiceConfigFilePath) })
 	conf.RegisterStoreChangeCallback(IPCServerNotifyTunnelsChange)
