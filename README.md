@@ -77,6 +77,8 @@ installation instructions are in [the V1 build guide](docs/wirehush-v1-build.md)
 Follow [owner acceptance](docs/windows-v1-acceptance.md) for the remaining elevated,
 multiuser, real-network and native ARM64 tests. Earlier task reports describe
 historical combined-client candidates and are not current release instructions.
+Exact candidate paths, hashes, commits and validation are in
+[the owner-test handoff](docs/wh036-owner-test-handoff.md).
 
 ## Project Policies
 
