@@ -8,6 +8,8 @@ package manager
 import (
 	"errors"
 
+	"golang.org/x/sys/windows"
+
 	"golang.zx2c4.com/wireguard/windows/conf"
 )
 
@@ -153,7 +155,14 @@ func (control wireHushManagerControl) StopTunnel(caller wireHushCaller, locator 
 	if err != nil {
 		return err
 	}
-	return control.stop(canonical)
+	return control.stopAndWait(canonical)
+}
+
+func (control wireHushManagerControl) stopAndWait(locator conf.TunnelServiceLocator) error {
+	if err := control.stop(locator); err != nil && !errors.Is(err, windows.ERROR_SERVICE_DOES_NOT_EXIST) {
+		return err
+	}
+	return control.waitForStop(locator)
 }
 
 func (control wireHushManagerControl) WaitForTunnelStop(caller wireHushCaller, locator conf.TunnelServiceLocator) error {
@@ -195,7 +204,7 @@ func (control wireHushManagerControl) DeleteTunnelRecord(caller wireHushCaller, 
 	if err != nil {
 		return err
 	}
-	if err := control.stop(canonical); err != nil {
+	if err := control.stopAndWait(canonical); err != nil {
 		return err
 	}
 	return control.deleteRecord(canonical.Scope, canonical.OwnerSID, canonical.TunnelID)

@@ -6,6 +6,7 @@
 package manager
 
 import (
+	"context"
 	"errors"
 	"log"
 	"os"
@@ -149,22 +150,20 @@ func wireHushTunnelServiceConfig(record conf.TunnelRecord) mgr.Config {
 }
 
 func waitForWireHushTunnelRemoval(m *mgr.Mgr, serviceName, executablePath string, locator conf.TunnelServiceLocator) error {
-	for {
+	ctx, cancel := context.WithTimeout(context.Background(), wireHushOperationTimeout)
+	defer cancel()
+	return waitForWireHushTunnelRemovalContext(ctx, m, serviceName, executablePath, locator)
+}
+
+func waitForWireHushTunnelRemovalContext(ctx context.Context, m *mgr.Mgr, serviceName, executablePath string, locator conf.TunnelServiceLocator) error {
+	return pollWireHushTunnelRemoval(ctx, func() error {
 		service, err := m.OpenService(serviceName)
 		if err == nil {
 			err = verifyWireHushTunnelServiceOwnership(serviceName, service, executablePath, locator)
 			service.Close()
-			if err != nil && err != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
-				return err
-			}
-		} else if err != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
-			if err == windows.ERROR_SERVICE_DOES_NOT_EXIST {
-				return nil
-			}
-			return err
 		}
-		time.Sleep(time.Second / 3)
-	}
+		return err
+	})
 }
 
 func InstallWireHushTunnel(locator conf.TunnelServiceLocator) error {
@@ -282,6 +281,14 @@ func wireHushTunnelUninstallResult(stopErr, deleteErr error) error {
 }
 
 func WaitForWireHushTunnelStop(locator conf.TunnelServiceLocator) error {
+	ctx, cancel := context.WithTimeout(context.Background(), wireHushOperationTimeout)
+	defer cancel()
+	return WaitForWireHushTunnelStopContext(ctx, locator)
+}
+
+// WaitForWireHushTunnelStopContext waits for verified service removal without
+// allowing a caller deadline to become an unbounded cleanup wait.
+func WaitForWireHushTunnelStopContext(ctx context.Context, locator conf.TunnelServiceLocator) error {
 	serviceName, _, err := wireHushTunnelServiceIdentity(locator)
 	if err != nil {
 		return err
@@ -294,7 +301,7 @@ func WaitForWireHushTunnelStop(locator conf.TunnelServiceLocator) error {
 	if err != nil {
 		return err
 	}
-	return waitForWireHushTunnelRemoval(m, serviceName, path, locator)
+	return waitForWireHushTunnelRemovalContext(ctx, m, serviceName, path, locator)
 }
 
 func WireHushTunnelState(locator conf.TunnelServiceLocator) (TunnelState, error) {
