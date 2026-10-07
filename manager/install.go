@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/sys/windows"
@@ -22,8 +23,11 @@ import (
 )
 
 var cachedServiceManager *mgr.Mgr
+var cachedServiceManagerLock sync.Mutex
 
 func serviceManager() (*mgr.Mgr, error) {
+	cachedServiceManagerLock.Lock()
+	defer cachedServiceManagerLock.Unlock()
 	if cachedServiceManager != nil {
 		return cachedServiceManager, nil
 	}
