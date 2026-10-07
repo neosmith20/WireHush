@@ -39,6 +39,8 @@ try {
     if ($LASTEXITCODE) { throw 'Installer safety test compilation failed' }
     & "$repo/.artifacts/v1/installer-safety-test.exe"
     if ($LASTEXITCODE) { throw 'Installer safety tests failed' }
+    & "$repo/.deps/dotnet/dotnet.exe" run --project windows-ui/WireHush.UI.SafetyTests -c Release
+    if ($LASTEXITCODE) { throw 'UI measurement safety tests failed' }
     & git diff --check
     if ($LASTEXITCODE) { throw 'Diff check failed' }
     Write-Host 'PASS: V1 automated validation. Privileged and real-network acceptance remains separate.'

@@ -15,6 +15,8 @@ internal sealed class GrpcManagerClient : IManagerClient
     private Task? _events;
     private volatile bool _connected;
     public bool Connected => _connected;
+    public bool DeviceBusyForAnotherUser { get { lock (_gate) return _snapshot.DeviceBusyForAnotherUser; } }
+    private string _managerVersion = "Unavailable";
     public bool MayEditMachineSettings { get; private set; }
     public event Action? SnapshotChanged;
     public event Action? ConnectionLost;
@@ -27,6 +29,9 @@ internal sealed class GrpcManagerClient : IManagerClient
         _rpc = new P.Manager.ManagerClient(_channel);
         var handshake = await Rpc.HandshakeAsync(new P.HandshakeRequest { ProtocolMajor = 1, ProtocolMinor = 0 }, deadline: Deadline, cancellationToken: cancellationToken);
         if (handshake.ProtocolMajor != 1) throw new InvalidOperationException("The installed UI and Manager versions do not match.");
+        foreach (var capability in new[] { P.Capability.Tunnels, P.Capability.EncryptedDns, P.Capability.BootstrapSettings, P.Capability.Events, P.Capability.Export, P.Capability.SharedCreate, P.Capability.SessionExit })
+            if (!handshake.Capabilities.Contains(capability)) throw new InvalidOperationException("Install matching UI and Manager versions to use the required V1 features.");
+        _managerVersion = Version.TryParse(handshake.ProductVersion, out var version) ? version.ToString() : "Unavailable";
         MayEditMachineSettings = handshake.MayEditMachineSettings;
         var snapshot = await Rpc.SnapshotAsync(new P.Empty(), deadline: Deadline, cancellationToken: cancellationToken);
         lock (_gate) _snapshot = snapshot;
@@ -77,7 +82,7 @@ internal sealed class GrpcManagerClient : IManagerClient
     public Task<IReadOnlyList<TunnelSummary>> ListTunnelsAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        lock (_gate) return Task.FromResult<IReadOnlyList<TunnelSummary>>(_snapshot.Tunnels.Select(t => new TunnelSummary(t.Name, State(t.State), t.Tunnel.TunnelId, t.MayEdit)).ToArray());
+        lock (_gate) return Task.FromResult<IReadOnlyList<TunnelSummary>>(_snapshot.Tunnels.Select(t => new TunnelSummary(t.Name, State(t.State), t.Tunnel.TunnelId, t.MayEdit, t.Tunnel.Scope == P.Scope.Private ? "Private" : "Shared")).ToArray());
     }
     public Task<TunnelDetails> GetTunnelAsync(string id, CancellationToken cancellationToken) => GetRuntimeAsync(id, cancellationToken);
     public Task<TunnelDetails> GetRuntimeAsync(string id, CancellationToken cancellationToken)
@@ -94,7 +99,7 @@ internal sealed class GrpcManagerClient : IManagerClient
             network?.EndpointDisplay ?? "", network?.AllowedIps.ToArray() ?? [], network is { HasListenPort: true } ? (int)network.ListenPort : null, network?.InterfaceName ?? "", null,
             tunnel.HasLatestHandshakeUnix ? DateTimeOffset.FromUnixTimeSeconds(tunnel.LatestHandshakeUnix) : null,
             tunnel.RxBytes, tunnel.TxBytes,
-            new DnsDetails(tunnel.EncryptedDns ? "DNS over HTTPS (DoH)" : network?.DnsServers.Count > 0 ? "DNS" : "Not reported", string.Join(", ", network?.DnsServers.ToArray() ?? []), "", [], false, tunnel.HasDnsReady && tunnel.DnsReady),
+            new DnsDetails(tunnel.EncryptedDns ? "DNS over HTTPS (DoH)" : network is null ? "Unavailable" : network.DnsServers.Count > 0 ? "DNS" : "Not configured", string.Join(", ", network?.DnsServers.ToArray() ?? []), "", [], false, tunnel.HasDnsReady && tunnel.DnsReady),
             peers, id, tunnel.MayEdit, tunnel.HasRxBytes && tunnel.HasTxBytes);
         return Task.FromResult(details);
     }
@@ -128,7 +133,7 @@ internal sealed class GrpcManagerClient : IManagerClient
     public Task<IReadOnlyList<string>> GetLogSnapshotAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        lock (_gate) return Task.FromResult<IReadOnlyList<string>>([$"Time (UTC): {DateTimeOffset.UtcNow:O}", $"Architecture: {System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture}", $"Authenticated manager connection: {Connected}", $"Visible tunnel count: {_snapshot.Tunnels.Count}", $"Manager closing: {_snapshot.ManagerClosing}", "Tunnel identities, configuration, addresses, endpoints and owners are omitted."]);
+        lock (_gate) return Task.FromResult<IReadOnlyList<string>>([$"Time (UTC): {DateTimeOffset.UtcNow:O}", $"UI version: {typeof(App).Assembly.GetName().Version}", $"Manager version: {_managerVersion}", "Protocol: 1.0", $"Runtime: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}", $"Architecture: {System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture}", $"Authenticated manager connection: {Connected}", $"Visible tunnel count: {_snapshot.Tunnels.Count}", $"Manager closing: {_snapshot.ManagerClosing}", "Tunnel identities, configuration, addresses, endpoints and owners are omitted."]);
     }
     public async Task ShutdownAsync(CancellationToken cancellationToken)
     {

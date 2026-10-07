@@ -54,6 +54,7 @@ internal static class WireHushService
         {
             var error = Marshal.GetLastWin32Error();
             if (error == 1060) throw new InvalidOperationException("WireHush Manager is not installed.");
+            if (error == 5) throw new InvalidOperationException("Your Windows account needs WireHush Users access. Sign out and back in after an administrator grants access.");
             throw new InvalidOperationException("WireHush Manager access was denied or unavailable.");
         }
         return handle;

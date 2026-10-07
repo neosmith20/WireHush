@@ -4,7 +4,7 @@ namespace WireHush.UI.Models;
 
 public sealed record TunnelSummary(
     string Name,
-    string State, string Id, bool MayEdit);
+    string State, string Id, bool MayEdit, string ScopeLabel);
 
 public sealed record PeerDetails(
     string PublicKeyDisplay,

@@ -1,5 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
+using System.Security.Principal;
+using System.Runtime.InteropServices;
 
 namespace WireHush.UI;
 
@@ -18,6 +20,13 @@ public partial class App : Application
     {
         try
         {
+            using var identity = WindowsIdentity.GetCurrent();
+            if (new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator))
+            {
+                MessageBox(IntPtr.Zero, "Start WireHush normally, without Run as administrator. The installed Manager handles privileged operations.", "WireHush", 0x30);
+                Exit();
+                return;
+            }
             var activation = AppInstance.GetCurrent().GetActivatedEventArgs();
             var session = System.Diagnostics.Process.GetCurrentProcess().SessionId;
             _instance = AppInstance.FindOrRegisterForKey($"WireHush.UI.Session.{session}");
@@ -34,4 +43,6 @@ public partial class App : Application
         }
         catch { Services.UiStartupLog.Write("ui-startup-failed"); Exit(); }
     }
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int MessageBox(IntPtr window, string text, string title, uint flags);
 }

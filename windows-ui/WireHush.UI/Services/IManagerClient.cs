@@ -6,6 +6,7 @@ public interface IManagerClient : IAsyncDisposable
 {
     bool MayEditMachineSettings { get; }
     bool Connected { get; }
+    bool DeviceBusyForAnotherUser { get; }
     event Action? SnapshotChanged;
     event Action? ConnectionLost;
     Task ConnectAsync(CancellationToken cancellationToken);

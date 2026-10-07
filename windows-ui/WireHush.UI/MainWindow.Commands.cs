@@ -13,7 +13,12 @@ public sealed partial class MainWindow
         // A repeated close/settings/menu click cannot open overlapping dialogs
         // and crash the process before networking cleanup is acknowledged.
         if (!await _dialogGate.WaitAsync(0)) return ContentDialogResult.None;
-        try { return await dialog.ShowAsync(); }
+        try
+        {
+            dialog.MaxWidth = Math.Min(900, Math.Max(320, RootGrid.ActualWidth - 80));
+            dialog.MaxHeight = Math.Min(720, Math.Max(320, RootGrid.ActualHeight - 80));
+            return await dialog.ShowAsync();
+        }
         finally { _dialogGate.Release(); }
     }
     private async Task EditTunnelAsync(string id)
