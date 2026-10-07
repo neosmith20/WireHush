@@ -65,6 +65,9 @@ func inventoryWireHushServices() ([]wireHushTrackedTunnel, error) {
 			continue
 		}
 		result = append(result, wireHushTrackedTunnel{Locator: locator, State: state})
+		if err := wireHushWorkerConfigMatches(config); err != nil {
+			return nil, err
+		}
 	}
 	return result, nil
 }

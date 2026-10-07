@@ -91,6 +91,11 @@ func trackExistingWireHushTunnelServices() error {
 			continue
 		}
 		status, err := service.Query()
+		if err := wireHushWorkerConfigMatches(config); err != nil {
+			service.Close()
+			log.Print("Rejected incompatible WireHush worker service binding")
+			continue
+		}
 		if err != nil {
 			service.Close()
 			if err != windows.ERROR_SERVICE_MARKED_FOR_DELETE {

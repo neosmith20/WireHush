@@ -8,7 +8,9 @@ package manager
 import (
 	"errors"
 	"fmt"
+	"strings"
 
+	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/svc/mgr"
 
 	"golang.zx2c4.com/wireguard/windows/conf"
@@ -38,5 +40,15 @@ func verifyWireHushTunnelServiceOwnership(serviceName string, service *mgr.Servi
 	if err != nil {
 		return err
 	}
+	if err := wireHushWorkerConfigMatches(config); err != nil {
+		return err
+	}
 	return wireHushServiceCommandMatchesLocator(serviceName, config.BinaryPathName, executablePath, expected)
+}
+
+func wireHushWorkerConfigMatches(config mgr.Config) error {
+	if config.ServiceType != windows.SERVICE_WIN32_OWN_PROCESS || !strings.EqualFold(config.ServiceStartName, "LocalSystem") {
+		return errWireHushTunnelServiceOwnershipConflict
+	}
+	return nil
 }

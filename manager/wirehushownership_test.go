@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"golang.org/x/sys/windows"
+	"golang.org/x/sys/windows/svc/mgr"
 
 	"golang.zx2c4.com/wireguard/windows/conf"
 )
@@ -79,5 +80,29 @@ func TestWireHushOwnershipConflictSentinel(t *testing.T) {
 	}
 	if errors.Is(windows.ERROR_SERVICE_DOES_NOT_EXIST, errWireHushTunnelServiceOwnershipConflict) {
 		t.Fatal("service absence is an ownership conflict")
+	}
+}
+
+func TestWireHushWorkerConfigMatches(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		kind    uint32
+		account string
+		valid   bool
+	}{
+		{"system", windows.SERVICE_WIN32_OWN_PROCESS, "LocalSystem", true},
+		{"system case", windows.SERVICE_WIN32_OWN_PROCESS, "localsystem", true},
+		{"network service", windows.SERVICE_WIN32_OWN_PROCESS, "NT AUTHORITY\\NetworkService", false},
+		{"human", windows.SERVICE_WIN32_OWN_PROCESS, "machine\\user", false},
+		{"empty account", windows.SERVICE_WIN32_OWN_PROCESS, "", false},
+		{"shared process", windows.SERVICE_WIN32_SHARE_PROCESS, "LocalSystem", false},
+		{"interactive", windows.SERVICE_WIN32_OWN_PROCESS | windows.SERVICE_INTERACTIVE_PROCESS, "LocalSystem", false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			err := wireHushWorkerConfigMatches(mgr.Config{ServiceType: test.kind, ServiceStartName: test.account})
+			if (err == nil) != test.valid {
+				t.Fatalf("valid = %v, want %v", err == nil, test.valid)
+			}
+		})
 	}
 }
