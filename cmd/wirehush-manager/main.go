@@ -4,10 +4,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
 	"os"
+	"time"
 
 	"golang.zx2c4.com/wireguard/windows/conf"
 	"golang.zx2c4.com/wireguard/windows/manager"
@@ -23,11 +25,10 @@ func run(args []string) error {
 	if len(args) == 1 && args[0] == "/managerservice" {
 		return manager.RunV1()
 	}
-	if len(args) == 1 && args[0] == "/installmanagerservice" {
-		return manager.InstallManager()
-	}
-	if len(args) == 1 && args[0] == "/uninstallmanagerservice" {
-		return manager.UninstallManager()
+	if len(args) == 1 && args[0] == "/migratelegacy" {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+		return manager.MigrateLegacyV1(ctx)
 	}
 	if len(args) > 0 && args[0] == conf.WireHushTunnelServiceCommand {
 		locator, err := conf.ParseWireHushTunnelServiceArgs(args)

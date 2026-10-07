@@ -181,7 +181,14 @@ func readVerifiedTunnelRecordFile(path string) ([]byte, error) {
 		return nil, errors.New("unable to create file from verified record handle")
 	}
 	defer file.Close()
-	return io.ReadAll(file)
+	data, err := io.ReadAll(io.LimitReader(file, 4*1024*1024+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(data) > 4*1024*1024 {
+		return nil, errors.New("protected file exceeds the storage size limit")
+	}
+	return data, nil
 }
 
 func openVerifiedTunnelRecordFile(path string, access uint32) (windows.Handle, error) {
@@ -205,6 +212,10 @@ func openVerifiedTunnelRecordFile(path string, access uint32) (windows.Handle, e
 	if info.FileAttributes&windows.FILE_ATTRIBUTE_REPARSE_POINT != 0 {
 		windows.CloseHandle(handle)
 		return 0, errors.New("tunnel record path is a reparse point")
+	}
+	if info.NumberOfLinks != 1 {
+		windows.CloseHandle(handle)
+		return 0, errors.New("protected file has multiple hard links")
 	}
 	if err := verifyFinalPath(handle, path); err != nil {
 		windows.CloseHandle(handle)
