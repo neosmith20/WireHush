@@ -6,9 +6,11 @@
 package manager
 
 import (
+	"errors"
 	"testing"
 
 	"golang.org/x/sys/windows"
+	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/mgr"
 
 	"golang.zx2c4.com/wireguard/windows/conf"
@@ -133,5 +135,47 @@ func TestWireHushTunnelServiceIdentityIgnoresMutableRecordName(t *testing.T) {
 func TestWireHushTunnelServiceIdentityRejectsInvalidLocator(t *testing.T) {
 	if _, _, err := wireHushTunnelServiceIdentity(conf.TunnelServiceLocator{}); err == nil {
 		t.Fatal("invalid locator accepted")
+	}
+}
+
+func TestWireHushTunnelStateFromServiceStatus(t *testing.T) {
+	for _, test := range []struct {
+		state svc.State
+		want  TunnelState
+	}{
+		{svc.Stopped, TunnelStopped},
+		{svc.StopPending, TunnelStopping},
+		{svc.Running, TunnelStarted},
+		{svc.StartPending, TunnelStarting},
+		{svc.Paused, TunnelUnknown},
+	} {
+		if got := wireHushTunnelStateFromServiceStatus(svc.Status{State: test.state}); got != test.want {
+			t.Fatalf("state %d = %d, want %d", test.state, got, test.want)
+		}
+	}
+}
+
+func TestWireHushTunnelUninstallResult(t *testing.T) {
+	stopErr := errors.New("stop failure")
+	deleteErr := errors.New("delete failure")
+	for _, test := range []struct {
+		name      string
+		stopErr   error
+		deleteErr error
+		want      error
+	}{
+		{"both nil", nil, nil, nil},
+		{"stop inactive", windows.ERROR_SERVICE_NOT_ACTIVE, nil, nil},
+		{"stop marked for delete", windows.ERROR_SERVICE_MARKED_FOR_DELETE, nil, nil},
+		{"stop error", stopErr, nil, stopErr},
+		{"delete marked for delete", nil, windows.ERROR_SERVICE_MARKED_FOR_DELETE, nil},
+		{"delete overrides stop", stopErr, deleteErr, deleteErr},
+		{"delete error", nil, deleteErr, deleteErr},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if got := wireHushTunnelUninstallResult(test.stopErr, test.deleteErr); !errors.Is(got, test.want) {
+				t.Fatalf("result = %v, want %v", got, test.want)
+			}
+		})
 	}
 }

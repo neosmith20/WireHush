@@ -232,10 +232,17 @@ func UninstallWireHushTunnel(locator conf.TunnelServiceLocator) error {
 		return err
 	}
 	defer service.Close()
-	service.Control(svc.Stop)
-	err = service.Delete()
-	if err != nil && err != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
-		return err
+	_, stopErr := service.Control(svc.Stop)
+	deleteErr := service.Delete()
+	return wireHushTunnelUninstallResult(stopErr, deleteErr)
+}
+
+func wireHushTunnelUninstallResult(stopErr, deleteErr error) error {
+	if deleteErr != nil && deleteErr != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
+		return deleteErr
+	}
+	if stopErr != nil && stopErr != windows.ERROR_SERVICE_NOT_ACTIVE && stopErr != windows.ERROR_SERVICE_MARKED_FOR_DELETE {
+		return stopErr
 	}
 	return nil
 }
@@ -263,24 +270,38 @@ func WireHushTunnelState(locator conf.TunnelServiceLocator) (TunnelState, error)
 	}
 	service, err := m.OpenService(serviceName)
 	if err != nil {
-		return TunnelStopped, nil
+		switch err {
+		case windows.ERROR_SERVICE_DOES_NOT_EXIST:
+			return TunnelStopped, nil
+		case windows.ERROR_SERVICE_MARKED_FOR_DELETE:
+			return TunnelStopping, nil
+		default:
+			return TunnelUnknown, err
+		}
 	}
 	defer service.Close()
 	status, err := service.Query()
 	if err != nil {
-		return TunnelUnknown, nil
+		if err == windows.ERROR_SERVICE_MARKED_FOR_DELETE {
+			return TunnelStopping, nil
+		}
+		return TunnelUnknown, err
 	}
+	return wireHushTunnelStateFromServiceStatus(status), nil
+}
+
+func wireHushTunnelStateFromServiceStatus(status svc.Status) TunnelState {
 	switch status.State {
 	case svc.Stopped:
-		return TunnelStopped, nil
+		return TunnelStopped
 	case svc.StopPending:
-		return TunnelStopping, nil
+		return TunnelStopping
 	case svc.Running:
-		return TunnelStarted, nil
+		return TunnelStarted
 	case svc.StartPending:
-		return TunnelStarting, nil
+		return TunnelStarting
 	default:
-		return TunnelUnknown, nil
+		return TunnelUnknown
 	}
 }
 
