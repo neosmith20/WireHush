@@ -6,6 +6,7 @@ package manager
 import (
 	"context"
 	"errors"
+	"net/url"
 	"os"
 	"sync"
 	"sync/atomic"
@@ -235,6 +236,9 @@ func (server *wireHushRPCServer) Snapshot(ctx context.Context, _ *protocol.Empty
 				return nil, err
 			}
 			tunnel := &protocol.TunnelSnapshot{Tunnel: wireHushProtocolReference(locator), Name: entry.Name, State: wireHushProtocolState(state), EncryptedDns: len(config.Interface.DNSOverHTTPS) > 0, MayEdit: scope == conf.TunnelScopePrivate || caller.Administrator, MayExport: scope == conf.TunnelScopePrivate || caller.Administrator}
+			if tunnel.MayExport {
+				tunnel.Network = wireHushNetworkDetails(config, locator)
+			}
 			if state == TunnelStarted {
 				runtime, err := server.mutations.control.runtimeConfig(locator)
 				if err == nil {
@@ -245,6 +249,19 @@ func (server *wireHushRPCServer) Snapshot(ctx context.Context, _ *protocol.Empty
 						tx += uint64(p.TxBytes)
 						if stamp := int64(p.LastHandshakeTime) / int64(time.Second); stamp > last {
 							last = stamp
+						}
+						if tunnel.Network != nil {
+							for _, visible := range tunnel.Network.Peers {
+								if visible.PublicKey != p.PublicKey.String() {
+									continue
+								}
+								peerRx, peerTx := uint64(p.RxBytes), uint64(p.TxBytes)
+								visible.RxBytes, visible.TxBytes = &peerRx, &peerTx
+								stamp := int64(p.LastHandshakeTime) / int64(time.Second)
+								if stamp != 0 {
+									visible.LatestHandshakeUnix = &stamp
+								}
+							}
 						}
 					}
 					tunnel.RxBytes = &rx
@@ -270,6 +287,52 @@ func (server *wireHushRPCServer) Snapshot(ctx context.Context, _ *protocol.Empty
 	}
 	reply.Revision = server.revision.Add(1)
 	return reply, nil
+}
+
+func wireHushNetworkDetails(config *conf.Config, locator conf.TunnelServiceLocator) *protocol.TunnelNetwork {
+	name, _ := conf.WireHushAdapterNameOfTunnelID(locator.TunnelID)
+	network := &protocol.TunnelNetwork{InterfaceName: name}
+	for _, address := range config.Interface.Addresses {
+		if address.Addr().Is4() {
+			network.Ipv4Addresses = append(network.Ipv4Addresses, address.String())
+		} else {
+			network.Ipv6Addresses = append(network.Ipv6Addresses, address.String())
+		}
+	}
+	if config.Interface.ListenPort != 0 {
+		port := uint32(config.Interface.ListenPort)
+		network.ListenPort = &port
+	}
+	for _, address := range config.Interface.DNS {
+		network.DnsServers = append(network.DnsServers, address.String())
+	}
+	for _, raw := range config.Interface.DNSOverHTTPS {
+		if resolver, err := url.Parse(raw); err == nil {
+			resolver.User = nil
+			resolver.RawQuery = ""
+			resolver.Fragment = ""
+			network.DnsServers = append(network.DnsServers, resolver.String())
+		}
+	}
+	for _, p := range config.Peers {
+		peer := &protocol.TunnelPeer{PublicKey: p.PublicKey.String()}
+		if !p.Endpoint.IsEmpty() {
+			peer.EndpointDisplay = p.Endpoint.String()
+			if network.EndpointDisplay == "" {
+				network.EndpointDisplay = peer.EndpointDisplay
+			}
+		}
+		for _, route := range p.AllowedIPs {
+			peer.AllowedIps = append(peer.AllowedIps, route.String())
+			network.AllowedIps = append(network.AllowedIps, route.String())
+		}
+		if p.PersistentKeepalive != 0 {
+			seconds := uint32(p.PersistentKeepalive)
+			peer.KeepaliveSeconds = &seconds
+		}
+		network.Peers = append(network.Peers, peer)
+	}
+	return network
 }
 
 func (server *wireHushRPCServer) ReadConfiguration(ctx context.Context, reference *protocol.TunnelRef) (*protocol.ConfigurationReply, error) {

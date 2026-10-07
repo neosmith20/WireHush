@@ -96,6 +96,35 @@ func TestWireHushRPCSharedMemberCannotExportOrModify(t *testing.T) {
 	if snapshot.Tunnels[0].MayEdit || snapshot.Tunnels[0].MayExport {
 		t.Fatal("shared member received forbidden capabilities")
 	}
+	if snapshot.Tunnels[0].Network != nil {
+		t.Fatal("shared member received configuration-derived details")
+	}
+}
+
+func TestWireHushRPCNetworkDetailsAreAuthorizedAndKeyFree(t *testing.T) {
+	record := wireHushControlRecord(t, "12345678-1234-4abc-8def-1234567890ab", conf.TunnelScopePrivate, wireHushAuthOwnerSID, "Private")
+	server, ctx, _ := testWireHushRPC(t, record)
+	server.Handshake(ctx, &protocol.HandshakeRequest{ProtocolMajor: 1})
+	snapshot, err := server.Snapshot(ctx, &protocol.Empty{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	network := snapshot.Tunnels[0].Network
+	if network == nil || len(network.Ipv4Addresses) != 1 || network.Ipv4Addresses[0] != "10.0.0.2/32" {
+		t.Fatal("owner did not receive actual configured network details")
+	}
+	if strings.Contains(snapshot.String(), "PrivateKey") || strings.Contains(snapshot.String(), "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=") {
+		t.Fatal("snapshot exported a private key")
+	}
+	config, err := wireHushStoredConfigFromRecord(record)
+	if err != nil {
+		t.Fatal(err)
+	}
+	config.Interface.DNSOverHTTPS = []string{"https://user:secret@dns.example/dns-query?credential=private#secret"}
+	network = wireHushNetworkDetails(config, wireHushControlLocator(record))
+	if len(network.DnsServers) != 1 || network.DnsServers[0] != "https://dns.example/dns-query" {
+		t.Fatal("DNS display exposed credentials or query parameters")
+	}
 }
 
 func TestWireHushRPCFailureMessagesRedactSecrets(t *testing.T) {

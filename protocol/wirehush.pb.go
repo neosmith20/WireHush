@@ -436,7 +436,10 @@ type TunnelSnapshot struct {
 	MayEdit             bool                   `protobuf:"varint,8,opt,name=may_edit,json=mayEdit,proto3" json:"may_edit,omitempty"`
 	MayExport           bool                   `protobuf:"varint,9,opt,name=may_export,json=mayExport,proto3" json:"may_export,omitempty"`
 	// Status fields are absent when not established by actual runtime evidence.
-	DnsReady      *bool `protobuf:"varint,10,opt,name=dns_ready,json=dnsReady,proto3,oneof" json:"dns_ready,omitempty"`
+	DnsReady *bool `protobuf:"varint,10,opt,name=dns_ready,json=dnsReady,proto3,oneof" json:"dns_ready,omitempty"`
+	// Configuration-derived details require configuration-read authorization.
+	// Shared ordinary members receive basic metadata/runtime totals only.
+	Network       *TunnelNetwork `protobuf:"bytes,11,opt,name=network,proto3" json:"network,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -541,6 +544,205 @@ func (x *TunnelSnapshot) GetDnsReady() bool {
 	return false
 }
 
+func (x *TunnelSnapshot) GetNetwork() *TunnelNetwork {
+	if x != nil {
+		return x.Network
+	}
+	return nil
+}
+
+type TunnelNetwork struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Ipv4Addresses   []string               `protobuf:"bytes,1,rep,name=ipv4_addresses,json=ipv4Addresses,proto3" json:"ipv4_addresses,omitempty"`
+	Ipv6Addresses   []string               `protobuf:"bytes,2,rep,name=ipv6_addresses,json=ipv6Addresses,proto3" json:"ipv6_addresses,omitempty"`
+	AllowedIps      []string               `protobuf:"bytes,3,rep,name=allowed_ips,json=allowedIps,proto3" json:"allowed_ips,omitempty"`
+	EndpointDisplay string                 `protobuf:"bytes,4,opt,name=endpoint_display,json=endpointDisplay,proto3" json:"endpoint_display,omitempty"`
+	ListenPort      *uint32                `protobuf:"varint,5,opt,name=listen_port,json=listenPort,proto3,oneof" json:"listen_port,omitempty"`
+	InterfaceName   string                 `protobuf:"bytes,6,opt,name=interface_name,json=interfaceName,proto3" json:"interface_name,omitempty"`
+	DnsServers      []string               `protobuf:"bytes,7,rep,name=dns_servers,json=dnsServers,proto3" json:"dns_servers,omitempty"`
+	Peers           []*TunnelPeer          `protobuf:"bytes,8,rep,name=peers,proto3" json:"peers,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *TunnelNetwork) Reset() {
+	*x = TunnelNetwork{}
+	mi := &file_protocol_wirehush_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TunnelNetwork) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TunnelNetwork) ProtoMessage() {}
+
+func (x *TunnelNetwork) ProtoReflect() protoreflect.Message {
+	mi := &file_protocol_wirehush_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TunnelNetwork.ProtoReflect.Descriptor instead.
+func (*TunnelNetwork) Descriptor() ([]byte, []int) {
+	return file_protocol_wirehush_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *TunnelNetwork) GetIpv4Addresses() []string {
+	if x != nil {
+		return x.Ipv4Addresses
+	}
+	return nil
+}
+
+func (x *TunnelNetwork) GetIpv6Addresses() []string {
+	if x != nil {
+		return x.Ipv6Addresses
+	}
+	return nil
+}
+
+func (x *TunnelNetwork) GetAllowedIps() []string {
+	if x != nil {
+		return x.AllowedIps
+	}
+	return nil
+}
+
+func (x *TunnelNetwork) GetEndpointDisplay() string {
+	if x != nil {
+		return x.EndpointDisplay
+	}
+	return ""
+}
+
+func (x *TunnelNetwork) GetListenPort() uint32 {
+	if x != nil && x.ListenPort != nil {
+		return *x.ListenPort
+	}
+	return 0
+}
+
+func (x *TunnelNetwork) GetInterfaceName() string {
+	if x != nil {
+		return x.InterfaceName
+	}
+	return ""
+}
+
+func (x *TunnelNetwork) GetDnsServers() []string {
+	if x != nil {
+		return x.DnsServers
+	}
+	return nil
+}
+
+func (x *TunnelNetwork) GetPeers() []*TunnelPeer {
+	if x != nil {
+		return x.Peers
+	}
+	return nil
+}
+
+type TunnelPeer struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	PublicKey           string                 `protobuf:"bytes,1,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	EndpointDisplay     string                 `protobuf:"bytes,2,opt,name=endpoint_display,json=endpointDisplay,proto3" json:"endpoint_display,omitempty"`
+	AllowedIps          []string               `protobuf:"bytes,3,rep,name=allowed_ips,json=allowedIps,proto3" json:"allowed_ips,omitempty"`
+	KeepaliveSeconds    *uint32                `protobuf:"varint,4,opt,name=keepalive_seconds,json=keepaliveSeconds,proto3,oneof" json:"keepalive_seconds,omitempty"`
+	RxBytes             *uint64                `protobuf:"varint,5,opt,name=rx_bytes,json=rxBytes,proto3,oneof" json:"rx_bytes,omitempty"`
+	TxBytes             *uint64                `protobuf:"varint,6,opt,name=tx_bytes,json=txBytes,proto3,oneof" json:"tx_bytes,omitempty"`
+	LatestHandshakeUnix *int64                 `protobuf:"varint,7,opt,name=latest_handshake_unix,json=latestHandshakeUnix,proto3,oneof" json:"latest_handshake_unix,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *TunnelPeer) Reset() {
+	*x = TunnelPeer{}
+	mi := &file_protocol_wirehush_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TunnelPeer) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TunnelPeer) ProtoMessage() {}
+
+func (x *TunnelPeer) ProtoReflect() protoreflect.Message {
+	mi := &file_protocol_wirehush_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TunnelPeer.ProtoReflect.Descriptor instead.
+func (*TunnelPeer) Descriptor() ([]byte, []int) {
+	return file_protocol_wirehush_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *TunnelPeer) GetPublicKey() string {
+	if x != nil {
+		return x.PublicKey
+	}
+	return ""
+}
+
+func (x *TunnelPeer) GetEndpointDisplay() string {
+	if x != nil {
+		return x.EndpointDisplay
+	}
+	return ""
+}
+
+func (x *TunnelPeer) GetAllowedIps() []string {
+	if x != nil {
+		return x.AllowedIps
+	}
+	return nil
+}
+
+func (x *TunnelPeer) GetKeepaliveSeconds() uint32 {
+	if x != nil && x.KeepaliveSeconds != nil {
+		return *x.KeepaliveSeconds
+	}
+	return 0
+}
+
+func (x *TunnelPeer) GetRxBytes() uint64 {
+	if x != nil && x.RxBytes != nil {
+		return *x.RxBytes
+	}
+	return 0
+}
+
+func (x *TunnelPeer) GetTxBytes() uint64 {
+	if x != nil && x.TxBytes != nil {
+		return *x.TxBytes
+	}
+	return 0
+}
+
+func (x *TunnelPeer) GetLatestHandshakeUnix() int64 {
+	if x != nil && x.LatestHandshakeUnix != nil {
+		return *x.LatestHandshakeUnix
+	}
+	return 0
+}
+
 type SnapshotReply struct {
 	state                    protoimpl.MessageState `protogen:"open.v1"`
 	InstanceId               string                 `protobuf:"bytes,1,opt,name=instance_id,json=instanceId,proto3" json:"instance_id,omitempty"`
@@ -554,7 +756,7 @@ type SnapshotReply struct {
 
 func (x *SnapshotReply) Reset() {
 	*x = SnapshotReply{}
-	mi := &file_protocol_wirehush_proto_msgTypes[5]
+	mi := &file_protocol_wirehush_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -566,7 +768,7 @@ func (x *SnapshotReply) String() string {
 func (*SnapshotReply) ProtoMessage() {}
 
 func (x *SnapshotReply) ProtoReflect() protoreflect.Message {
-	mi := &file_protocol_wirehush_proto_msgTypes[5]
+	mi := &file_protocol_wirehush_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -579,7 +781,7 @@ func (x *SnapshotReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotReply.ProtoReflect.Descriptor instead.
 func (*SnapshotReply) Descriptor() ([]byte, []int) {
-	return file_protocol_wirehush_proto_rawDescGZIP(), []int{5}
+	return file_protocol_wirehush_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *SnapshotReply) GetInstanceId() string {
@@ -627,7 +829,7 @@ type ConfigurationReply struct {
 
 func (x *ConfigurationReply) Reset() {
 	*x = ConfigurationReply{}
-	mi := &file_protocol_wirehush_proto_msgTypes[6]
+	mi := &file_protocol_wirehush_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -639,7 +841,7 @@ func (x *ConfigurationReply) String() string {
 func (*ConfigurationReply) ProtoMessage() {}
 
 func (x *ConfigurationReply) ProtoReflect() protoreflect.Message {
-	mi := &file_protocol_wirehush_proto_msgTypes[6]
+	mi := &file_protocol_wirehush_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -652,7 +854,7 @@ func (x *ConfigurationReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfigurationReply.ProtoReflect.Descriptor instead.
 func (*ConfigurationReply) Descriptor() ([]byte, []int) {
-	return file_protocol_wirehush_proto_rawDescGZIP(), []int{6}
+	return file_protocol_wirehush_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ConfigurationReply) GetWgQuickText() string {
@@ -673,7 +875,7 @@ type CreateTunnelRequest struct {
 
 func (x *CreateTunnelRequest) Reset() {
 	*x = CreateTunnelRequest{}
-	mi := &file_protocol_wirehush_proto_msgTypes[7]
+	mi := &file_protocol_wirehush_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -685,7 +887,7 @@ func (x *CreateTunnelRequest) String() string {
 func (*CreateTunnelRequest) ProtoMessage() {}
 
 func (x *CreateTunnelRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protocol_wirehush_proto_msgTypes[7]
+	mi := &file_protocol_wirehush_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -698,7 +900,7 @@ func (x *CreateTunnelRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTunnelRequest.ProtoReflect.Descriptor instead.
 func (*CreateTunnelRequest) Descriptor() ([]byte, []int) {
-	return file_protocol_wirehush_proto_rawDescGZIP(), []int{7}
+	return file_protocol_wirehush_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *CreateTunnelRequest) GetScope() Scope {
@@ -733,7 +935,7 @@ type UpdateTunnelRequest struct {
 
 func (x *UpdateTunnelRequest) Reset() {
 	*x = UpdateTunnelRequest{}
-	mi := &file_protocol_wirehush_proto_msgTypes[8]
+	mi := &file_protocol_wirehush_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -745,7 +947,7 @@ func (x *UpdateTunnelRequest) String() string {
 func (*UpdateTunnelRequest) ProtoMessage() {}
 
 func (x *UpdateTunnelRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protocol_wirehush_proto_msgTypes[8]
+	mi := &file_protocol_wirehush_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -758,7 +960,7 @@ func (x *UpdateTunnelRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTunnelRequest.ProtoReflect.Descriptor instead.
 func (*UpdateTunnelRequest) Descriptor() ([]byte, []int) {
-	return file_protocol_wirehush_proto_rawDescGZIP(), []int{8}
+	return file_protocol_wirehush_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *UpdateTunnelRequest) GetTunnel() *TunnelRef {
@@ -793,7 +995,7 @@ type BootstrapResolver struct {
 
 func (x *BootstrapResolver) Reset() {
 	*x = BootstrapResolver{}
-	mi := &file_protocol_wirehush_proto_msgTypes[9]
+	mi := &file_protocol_wirehush_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -805,7 +1007,7 @@ func (x *BootstrapResolver) String() string {
 func (*BootstrapResolver) ProtoMessage() {}
 
 func (x *BootstrapResolver) ProtoReflect() protoreflect.Message {
-	mi := &file_protocol_wirehush_proto_msgTypes[9]
+	mi := &file_protocol_wirehush_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -818,7 +1020,7 @@ func (x *BootstrapResolver) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BootstrapResolver.ProtoReflect.Descriptor instead.
 func (*BootstrapResolver) Descriptor() ([]byte, []int) {
-	return file_protocol_wirehush_proto_rawDescGZIP(), []int{9}
+	return file_protocol_wirehush_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *BootstrapResolver) GetAddress() string {
@@ -851,7 +1053,7 @@ type BootstrapSettings struct {
 
 func (x *BootstrapSettings) Reset() {
 	*x = BootstrapSettings{}
-	mi := &file_protocol_wirehush_proto_msgTypes[10]
+	mi := &file_protocol_wirehush_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -863,7 +1065,7 @@ func (x *BootstrapSettings) String() string {
 func (*BootstrapSettings) ProtoMessage() {}
 
 func (x *BootstrapSettings) ProtoReflect() protoreflect.Message {
-	mi := &file_protocol_wirehush_proto_msgTypes[10]
+	mi := &file_protocol_wirehush_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -876,7 +1078,7 @@ func (x *BootstrapSettings) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BootstrapSettings.ProtoReflect.Descriptor instead.
 func (*BootstrapSettings) Descriptor() ([]byte, []int) {
-	return file_protocol_wirehush_proto_rawDescGZIP(), []int{10}
+	return file_protocol_wirehush_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *BootstrapSettings) GetResolvers() []*BootstrapResolver {
@@ -896,7 +1098,7 @@ type ExitReply struct {
 
 func (x *ExitReply) Reset() {
 	*x = ExitReply{}
-	mi := &file_protocol_wirehush_proto_msgTypes[11]
+	mi := &file_protocol_wirehush_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -908,7 +1110,7 @@ func (x *ExitReply) String() string {
 func (*ExitReply) ProtoMessage() {}
 
 func (x *ExitReply) ProtoReflect() protoreflect.Message {
-	mi := &file_protocol_wirehush_proto_msgTypes[11]
+	mi := &file_protocol_wirehush_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -921,7 +1123,7 @@ func (x *ExitReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExitReply.ProtoReflect.Descriptor instead.
 func (*ExitReply) Descriptor() ([]byte, []int) {
-	return file_protocol_wirehush_proto_rawDescGZIP(), []int{11}
+	return file_protocol_wirehush_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ExitReply) GetCleanupComplete() bool {
@@ -958,7 +1160,7 @@ const file_protocol_wirehush_proto_rawDesc = "" +
 	"\x19may_edit_machine_settings\x18\a \x01(\bR\x16mayEditMachineSettings\"R\n" +
 	"\tTunnelRef\x12\x1b\n" +
 	"\ttunnel_id\x18\x01 \x01(\tR\btunnelId\x12(\n" +
-	"\x05scope\x18\x02 \x01(\x0e2\x12.wirehush.v1.ScopeR\x05scope\"\xc0\x03\n" +
+	"\x05scope\x18\x02 \x01(\x0e2\x12.wirehush.v1.ScopeR\x05scope\"\xf6\x03\n" +
 	"\x0eTunnelSnapshot\x12.\n" +
 	"\x06tunnel\x18\x01 \x01(\v2\x16.wirehush.v1.TunnelRefR\x06tunnel\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12.\n" +
@@ -971,12 +1173,41 @@ const file_protocol_wirehush_proto_rawDesc = "" +
 	"\n" +
 	"may_export\x18\t \x01(\bR\tmayExport\x12 \n" +
 	"\tdns_ready\x18\n" +
-	" \x01(\bH\x03R\bdnsReady\x88\x01\x01B\v\n" +
+	" \x01(\bH\x03R\bdnsReady\x88\x01\x01\x124\n" +
+	"\anetwork\x18\v \x01(\v2\x1a.wirehush.v1.TunnelNetworkR\anetworkB\v\n" +
 	"\t_rx_bytesB\v\n" +
 	"\t_tx_bytesB\x18\n" +
 	"\x16_latest_handshake_unixB\f\n" +
 	"\n" +
-	"_dns_ready\"\xec\x01\n" +
+	"_dns_ready\"\xd6\x02\n" +
+	"\rTunnelNetwork\x12%\n" +
+	"\x0eipv4_addresses\x18\x01 \x03(\tR\ripv4Addresses\x12%\n" +
+	"\x0eipv6_addresses\x18\x02 \x03(\tR\ripv6Addresses\x12\x1f\n" +
+	"\vallowed_ips\x18\x03 \x03(\tR\n" +
+	"allowedIps\x12)\n" +
+	"\x10endpoint_display\x18\x04 \x01(\tR\x0fendpointDisplay\x12$\n" +
+	"\vlisten_port\x18\x05 \x01(\rH\x00R\n" +
+	"listenPort\x88\x01\x01\x12%\n" +
+	"\x0einterface_name\x18\x06 \x01(\tR\rinterfaceName\x12\x1f\n" +
+	"\vdns_servers\x18\a \x03(\tR\n" +
+	"dnsServers\x12-\n" +
+	"\x05peers\x18\b \x03(\v2\x17.wirehush.v1.TunnelPeerR\x05peersB\x0e\n" +
+	"\f_listen_port\"\xec\x02\n" +
+	"\n" +
+	"TunnelPeer\x12\x1d\n" +
+	"\n" +
+	"public_key\x18\x01 \x01(\tR\tpublicKey\x12)\n" +
+	"\x10endpoint_display\x18\x02 \x01(\tR\x0fendpointDisplay\x12\x1f\n" +
+	"\vallowed_ips\x18\x03 \x03(\tR\n" +
+	"allowedIps\x120\n" +
+	"\x11keepalive_seconds\x18\x04 \x01(\rH\x00R\x10keepaliveSeconds\x88\x01\x01\x12\x1e\n" +
+	"\brx_bytes\x18\x05 \x01(\x04H\x01R\arxBytes\x88\x01\x01\x12\x1e\n" +
+	"\btx_bytes\x18\x06 \x01(\x04H\x02R\atxBytes\x88\x01\x01\x127\n" +
+	"\x15latest_handshake_unix\x18\a \x01(\x03H\x03R\x13latestHandshakeUnix\x88\x01\x01B\x14\n" +
+	"\x12_keepalive_secondsB\v\n" +
+	"\t_rx_bytesB\v\n" +
+	"\t_tx_bytesB\x18\n" +
+	"\x16_latest_handshake_unix\"\xec\x01\n" +
 	"\rSnapshotReply\x12\x1f\n" +
 	"\vinstance_id\x18\x01 \x01(\tR\n" +
 	"instanceId\x12\x1a\n" +
@@ -1051,7 +1282,7 @@ func file_protocol_wirehush_proto_rawDescGZIP() []byte {
 }
 
 var file_protocol_wirehush_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_protocol_wirehush_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_protocol_wirehush_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_protocol_wirehush_proto_goTypes = []any{
 	(Scope)(0),                  // 0: wirehush.v1.Scope
 	(TunnelState)(0),            // 1: wirehush.v1.TunnelState
@@ -1061,52 +1292,56 @@ var file_protocol_wirehush_proto_goTypes = []any{
 	(*HandshakeReply)(nil),      // 5: wirehush.v1.HandshakeReply
 	(*TunnelRef)(nil),           // 6: wirehush.v1.TunnelRef
 	(*TunnelSnapshot)(nil),      // 7: wirehush.v1.TunnelSnapshot
-	(*SnapshotReply)(nil),       // 8: wirehush.v1.SnapshotReply
-	(*ConfigurationReply)(nil),  // 9: wirehush.v1.ConfigurationReply
-	(*CreateTunnelRequest)(nil), // 10: wirehush.v1.CreateTunnelRequest
-	(*UpdateTunnelRequest)(nil), // 11: wirehush.v1.UpdateTunnelRequest
-	(*BootstrapResolver)(nil),   // 12: wirehush.v1.BootstrapResolver
-	(*BootstrapSettings)(nil),   // 13: wirehush.v1.BootstrapSettings
-	(*ExitReply)(nil),           // 14: wirehush.v1.ExitReply
+	(*TunnelNetwork)(nil),       // 8: wirehush.v1.TunnelNetwork
+	(*TunnelPeer)(nil),          // 9: wirehush.v1.TunnelPeer
+	(*SnapshotReply)(nil),       // 10: wirehush.v1.SnapshotReply
+	(*ConfigurationReply)(nil),  // 11: wirehush.v1.ConfigurationReply
+	(*CreateTunnelRequest)(nil), // 12: wirehush.v1.CreateTunnelRequest
+	(*UpdateTunnelRequest)(nil), // 13: wirehush.v1.UpdateTunnelRequest
+	(*BootstrapResolver)(nil),   // 14: wirehush.v1.BootstrapResolver
+	(*BootstrapSettings)(nil),   // 15: wirehush.v1.BootstrapSettings
+	(*ExitReply)(nil),           // 16: wirehush.v1.ExitReply
 }
 var file_protocol_wirehush_proto_depIdxs = []int32{
 	2,  // 0: wirehush.v1.HandshakeReply.capabilities:type_name -> wirehush.v1.Capability
 	0,  // 1: wirehush.v1.TunnelRef.scope:type_name -> wirehush.v1.Scope
 	6,  // 2: wirehush.v1.TunnelSnapshot.tunnel:type_name -> wirehush.v1.TunnelRef
 	1,  // 3: wirehush.v1.TunnelSnapshot.state:type_name -> wirehush.v1.TunnelState
-	7,  // 4: wirehush.v1.SnapshotReply.tunnels:type_name -> wirehush.v1.TunnelSnapshot
-	0,  // 5: wirehush.v1.CreateTunnelRequest.scope:type_name -> wirehush.v1.Scope
-	6,  // 6: wirehush.v1.UpdateTunnelRequest.tunnel:type_name -> wirehush.v1.TunnelRef
-	12, // 7: wirehush.v1.BootstrapSettings.resolvers:type_name -> wirehush.v1.BootstrapResolver
-	4,  // 8: wirehush.v1.Manager.Handshake:input_type -> wirehush.v1.HandshakeRequest
-	3,  // 9: wirehush.v1.Manager.Snapshot:input_type -> wirehush.v1.Empty
-	6,  // 10: wirehush.v1.Manager.ReadConfiguration:input_type -> wirehush.v1.TunnelRef
-	10, // 11: wirehush.v1.Manager.CreateTunnel:input_type -> wirehush.v1.CreateTunnelRequest
-	11, // 12: wirehush.v1.Manager.UpdateTunnel:input_type -> wirehush.v1.UpdateTunnelRequest
-	6,  // 13: wirehush.v1.Manager.DeleteTunnel:input_type -> wirehush.v1.TunnelRef
-	6,  // 14: wirehush.v1.Manager.StartTunnel:input_type -> wirehush.v1.TunnelRef
-	6,  // 15: wirehush.v1.Manager.StopTunnel:input_type -> wirehush.v1.TunnelRef
-	3,  // 16: wirehush.v1.Manager.ReadBootstrap:input_type -> wirehush.v1.Empty
-	13, // 17: wirehush.v1.Manager.SaveBootstrap:input_type -> wirehush.v1.BootstrapSettings
-	3,  // 18: wirehush.v1.Manager.Subscribe:input_type -> wirehush.v1.Empty
-	3,  // 19: wirehush.v1.Manager.ExitSession:input_type -> wirehush.v1.Empty
-	5,  // 20: wirehush.v1.Manager.Handshake:output_type -> wirehush.v1.HandshakeReply
-	8,  // 21: wirehush.v1.Manager.Snapshot:output_type -> wirehush.v1.SnapshotReply
-	9,  // 22: wirehush.v1.Manager.ReadConfiguration:output_type -> wirehush.v1.ConfigurationReply
-	7,  // 23: wirehush.v1.Manager.CreateTunnel:output_type -> wirehush.v1.TunnelSnapshot
-	3,  // 24: wirehush.v1.Manager.UpdateTunnel:output_type -> wirehush.v1.Empty
-	3,  // 25: wirehush.v1.Manager.DeleteTunnel:output_type -> wirehush.v1.Empty
-	3,  // 26: wirehush.v1.Manager.StartTunnel:output_type -> wirehush.v1.Empty
-	3,  // 27: wirehush.v1.Manager.StopTunnel:output_type -> wirehush.v1.Empty
-	13, // 28: wirehush.v1.Manager.ReadBootstrap:output_type -> wirehush.v1.BootstrapSettings
-	3,  // 29: wirehush.v1.Manager.SaveBootstrap:output_type -> wirehush.v1.Empty
-	8,  // 30: wirehush.v1.Manager.Subscribe:output_type -> wirehush.v1.SnapshotReply
-	14, // 31: wirehush.v1.Manager.ExitSession:output_type -> wirehush.v1.ExitReply
-	20, // [20:32] is the sub-list for method output_type
-	8,  // [8:20] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	8,  // 4: wirehush.v1.TunnelSnapshot.network:type_name -> wirehush.v1.TunnelNetwork
+	9,  // 5: wirehush.v1.TunnelNetwork.peers:type_name -> wirehush.v1.TunnelPeer
+	7,  // 6: wirehush.v1.SnapshotReply.tunnels:type_name -> wirehush.v1.TunnelSnapshot
+	0,  // 7: wirehush.v1.CreateTunnelRequest.scope:type_name -> wirehush.v1.Scope
+	6,  // 8: wirehush.v1.UpdateTunnelRequest.tunnel:type_name -> wirehush.v1.TunnelRef
+	14, // 9: wirehush.v1.BootstrapSettings.resolvers:type_name -> wirehush.v1.BootstrapResolver
+	4,  // 10: wirehush.v1.Manager.Handshake:input_type -> wirehush.v1.HandshakeRequest
+	3,  // 11: wirehush.v1.Manager.Snapshot:input_type -> wirehush.v1.Empty
+	6,  // 12: wirehush.v1.Manager.ReadConfiguration:input_type -> wirehush.v1.TunnelRef
+	12, // 13: wirehush.v1.Manager.CreateTunnel:input_type -> wirehush.v1.CreateTunnelRequest
+	13, // 14: wirehush.v1.Manager.UpdateTunnel:input_type -> wirehush.v1.UpdateTunnelRequest
+	6,  // 15: wirehush.v1.Manager.DeleteTunnel:input_type -> wirehush.v1.TunnelRef
+	6,  // 16: wirehush.v1.Manager.StartTunnel:input_type -> wirehush.v1.TunnelRef
+	6,  // 17: wirehush.v1.Manager.StopTunnel:input_type -> wirehush.v1.TunnelRef
+	3,  // 18: wirehush.v1.Manager.ReadBootstrap:input_type -> wirehush.v1.Empty
+	15, // 19: wirehush.v1.Manager.SaveBootstrap:input_type -> wirehush.v1.BootstrapSettings
+	3,  // 20: wirehush.v1.Manager.Subscribe:input_type -> wirehush.v1.Empty
+	3,  // 21: wirehush.v1.Manager.ExitSession:input_type -> wirehush.v1.Empty
+	5,  // 22: wirehush.v1.Manager.Handshake:output_type -> wirehush.v1.HandshakeReply
+	10, // 23: wirehush.v1.Manager.Snapshot:output_type -> wirehush.v1.SnapshotReply
+	11, // 24: wirehush.v1.Manager.ReadConfiguration:output_type -> wirehush.v1.ConfigurationReply
+	7,  // 25: wirehush.v1.Manager.CreateTunnel:output_type -> wirehush.v1.TunnelSnapshot
+	3,  // 26: wirehush.v1.Manager.UpdateTunnel:output_type -> wirehush.v1.Empty
+	3,  // 27: wirehush.v1.Manager.DeleteTunnel:output_type -> wirehush.v1.Empty
+	3,  // 28: wirehush.v1.Manager.StartTunnel:output_type -> wirehush.v1.Empty
+	3,  // 29: wirehush.v1.Manager.StopTunnel:output_type -> wirehush.v1.Empty
+	15, // 30: wirehush.v1.Manager.ReadBootstrap:output_type -> wirehush.v1.BootstrapSettings
+	3,  // 31: wirehush.v1.Manager.SaveBootstrap:output_type -> wirehush.v1.Empty
+	10, // 32: wirehush.v1.Manager.Subscribe:output_type -> wirehush.v1.SnapshotReply
+	16, // 33: wirehush.v1.Manager.ExitSession:output_type -> wirehush.v1.ExitReply
+	22, // [22:34] is the sub-list for method output_type
+	10, // [10:22] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_protocol_wirehush_proto_init() }
@@ -1115,13 +1350,15 @@ func file_protocol_wirehush_proto_init() {
 		return
 	}
 	file_protocol_wirehush_proto_msgTypes[4].OneofWrappers = []any{}
+	file_protocol_wirehush_proto_msgTypes[5].OneofWrappers = []any{}
+	file_protocol_wirehush_proto_msgTypes[6].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_protocol_wirehush_proto_rawDesc), len(file_protocol_wirehush_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   12,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

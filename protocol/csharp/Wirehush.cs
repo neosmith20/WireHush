@@ -32,59 +32,71 @@ namespace WireHush.Protocol {
             "IAMoDjIXLndpcmVodXNoLnYxLkNhcGFiaWxpdHkSEwoLaW5zdGFuY2VfaWQY",
             "BSABKAkSFwoPbWF5X2VkaXRfc2hhcmVkGAYgASgIEiEKGW1heV9lZGl0X21h",
             "Y2hpbmVfc2V0dGluZ3MYByABKAgiQQoJVHVubmVsUmVmEhEKCXR1bm5lbF9p",
-            "ZBgBIAEoCRIhCgVzY29wZRgCIAEoDjISLndpcmVodXNoLnYxLlNjb3BlItgC",
+            "ZBgBIAEoCRIhCgVzY29wZRgCIAEoDjISLndpcmVodXNoLnYxLlNjb3BlIoUD",
             "Cg5UdW5uZWxTbmFwc2hvdBImCgZ0dW5uZWwYASABKAsyFi53aXJlaHVzaC52",
             "MS5UdW5uZWxSZWYSDAoEbmFtZRgCIAEoCRInCgVzdGF0ZRgDIAEoDjIYLndp",
             "cmVodXNoLnYxLlR1bm5lbFN0YXRlEhUKDWVuY3J5cHRlZF9kbnMYBCABKAgS",
             "FQoIcnhfYnl0ZXMYBSABKARIAIgBARIVCgh0eF9ieXRlcxgGIAEoBEgBiAEB",
             "EiIKFWxhdGVzdF9oYW5kc2hha2VfdW5peBgHIAEoA0gCiAEBEhAKCG1heV9l",
             "ZGl0GAggASgIEhIKCm1heV9leHBvcnQYCSABKAgSFgoJZG5zX3JlYWR5GAog",
-            "ASgISAOIAQFCCwoJX3J4X2J5dGVzQgsKCV90eF9ieXRlc0IYChZfbGF0ZXN0",
-            "X2hhbmRzaGFrZV91bml4QgwKCl9kbnNfcmVhZHkiowEKDVNuYXBzaG90UmVw",
-            "bHkSEwoLaW5zdGFuY2VfaWQYASABKAkSEAoIcmV2aXNpb24YAiABKAQSLAoH",
-            "dHVubmVscxgDIAMoCzIbLndpcmVodXNoLnYxLlR1bm5lbFNuYXBzaG90EiQK",
-            "HGRldmljZV9idXN5X2Zvcl9hbm90aGVyX3VzZXIYBCABKAgSFwoPbWFuYWdl",
-            "cl9jbG9zaW5nGAUgASgIIisKEkNvbmZpZ3VyYXRpb25SZXBseRIVCg13Z19x",
-            "dWlja190ZXh0GAEgASgJIl0KE0NyZWF0ZVR1bm5lbFJlcXVlc3QSIQoFc2Nv",
-            "cGUYASABKA4yEi53aXJlaHVzaC52MS5TY29wZRIMCgRuYW1lGAIgASgJEhUK",
-            "DXdnX3F1aWNrX3RleHQYAyABKAkiYgoTVXBkYXRlVHVubmVsUmVxdWVzdBIm",
-            "CgZ0dW5uZWwYASABKAsyFi53aXJlaHVzaC52MS5UdW5uZWxSZWYSDAoEbmFt",
-            "ZRgCIAEoCRIVCg13Z19xdWlja190ZXh0GAMgASgJIkUKEUJvb3RzdHJhcFJl",
-            "c29sdmVyEg8KB2FkZHJlc3MYASABKAkSDwoHZW5hYmxlZBgCIAEoCBIOCgZj",
-            "dXN0b20YAyABKAgiRgoRQm9vdHN0cmFwU2V0dGluZ3MSMQoJcmVzb2x2ZXJz",
-            "GAEgAygLMh4ud2lyZWh1c2gudjEuQm9vdHN0cmFwUmVzb2x2ZXIiPwoJRXhp",
-            "dFJlcGx5EhgKEGNsZWFudXBfY29tcGxldGUYASABKAgSGAoQbWFuYWdlcl9z",
-            "dG9wcGluZxgCIAEoCCpDCgVTY29wZRIVChFTQ09QRV9VTlNQRUNJRklFRBAA",
-            "EhEKDVNDT1BFX1BSSVZBVEUQARIQCgxTQ09QRV9TSEFSRUQQAiqTAQoLVHVu",
-            "bmVsU3RhdGUSGAoUVFVOTkVMX1NUQVRFX1VOS05PV04QABIYChRUVU5ORUxf",
-            "U1RBVEVfU1RPUFBFRBABEhkKFVRVTk5FTF9TVEFURV9TVEFSVElORxACEhoK",
-            "FlRVTk5FTF9TVEFURV9DT05ORUNURUQQAxIZChVUVU5ORUxfU1RBVEVfU1RP",
-            "UFBJTkcQBCrqAQoKQ2FwYWJpbGl0eRIaChZDQVBBQklMSVRZX1VOU1BFQ0lG",
-            "SUVEEAASFgoSQ0FQQUJJTElUWV9UVU5ORUxTEAESHAoYQ0FQQUJJTElUWV9F",
-            "TkNSWVBURURfRE5TEAISIQodQ0FQQUJJTElUWV9CT09UU1RSQVBfU0VUVElO",
-            "R1MQAxIVChFDQVBBQklMSVRZX0VWRU5UUxAEEhUKEUNBUEFCSUxJVFlfRVhQ",
-            "T1JUEAUSHAoYQ0FQQUJJTElUWV9TSEFSRURfQ1JFQVRFEAYSGwoXQ0FQQUJJ",
-            "TElUWV9TRVNTSU9OX0VYSVQQBzKmBgoHTWFuYWdlchJHCglIYW5kc2hha2US",
-            "HS53aXJlaHVzaC52MS5IYW5kc2hha2VSZXF1ZXN0Ghsud2lyZWh1c2gudjEu",
-            "SGFuZHNoYWtlUmVwbHkSOgoIU25hcHNob3QSEi53aXJlaHVzaC52MS5FbXB0",
-            "eRoaLndpcmVodXNoLnYxLlNuYXBzaG90UmVwbHkSTAoRUmVhZENvbmZpZ3Vy",
-            "YXRpb24SFi53aXJlaHVzaC52MS5UdW5uZWxSZWYaHy53aXJlaHVzaC52MS5D",
-            "b25maWd1cmF0aW9uUmVwbHkSTQoMQ3JlYXRlVHVubmVsEiAud2lyZWh1c2gu",
-            "djEuQ3JlYXRlVHVubmVsUmVxdWVzdBobLndpcmVodXNoLnYxLlR1bm5lbFNu",
-            "YXBzaG90EkQKDFVwZGF0ZVR1bm5lbBIgLndpcmVodXNoLnYxLlVwZGF0ZVR1",
-            "bm5lbFJlcXVlc3QaEi53aXJlaHVzaC52MS5FbXB0eRI6CgxEZWxldGVUdW5u",
-            "ZWwSFi53aXJlaHVzaC52MS5UdW5uZWxSZWYaEi53aXJlaHVzaC52MS5FbXB0",
-            "eRI5CgtTdGFydFR1bm5lbBIWLndpcmVodXNoLnYxLlR1bm5lbFJlZhoSLndp",
-            "cmVodXNoLnYxLkVtcHR5EjgKClN0b3BUdW5uZWwSFi53aXJlaHVzaC52MS5U",
-            "dW5uZWxSZWYaEi53aXJlaHVzaC52MS5FbXB0eRJDCg1SZWFkQm9vdHN0cmFw",
-            "EhIud2lyZWh1c2gudjEuRW1wdHkaHi53aXJlaHVzaC52MS5Cb290c3RyYXBT",
-            "ZXR0aW5ncxJDCg1TYXZlQm9vdHN0cmFwEh4ud2lyZWh1c2gudjEuQm9vdHN0",
-            "cmFwU2V0dGluZ3MaEi53aXJlaHVzaC52MS5FbXB0eRI9CglTdWJzY3JpYmUS",
-            "Ei53aXJlaHVzaC52MS5FbXB0eRoaLndpcmVodXNoLnYxLlNuYXBzaG90UmVw",
-            "bHkwARI5CgtFeGl0U2Vzc2lvbhISLndpcmVodXNoLnYxLkVtcHR5GhYud2ly",
-            "ZWh1c2gudjEuRXhpdFJlcGx5QkpaNGdvbGFuZy56eDJjNC5jb20vd2lyZWd1",
-            "YXJkL3dpbmRvd3MvcHJvdG9jb2w7cHJvdG9jb2yqAhFXaXJlSHVzaC5Qcm90",
-            "b2NvbGIGcHJvdG8z"));
+            "ASgISAOIAQESKwoHbmV0d29yaxgLIAEoCzIaLndpcmVodXNoLnYxLlR1bm5l",
+            "bE5ldHdvcmtCCwoJX3J4X2J5dGVzQgsKCV90eF9ieXRlc0IYChZfbGF0ZXN0",
+            "X2hhbmRzaGFrZV91bml4QgwKCl9kbnNfcmVhZHki7QEKDVR1bm5lbE5ldHdv",
+            "cmsSFgoOaXB2NF9hZGRyZXNzZXMYASADKAkSFgoOaXB2Nl9hZGRyZXNzZXMY",
+            "AiADKAkSEwoLYWxsb3dlZF9pcHMYAyADKAkSGAoQZW5kcG9pbnRfZGlzcGxh",
+            "eRgEIAEoCRIYCgtsaXN0ZW5fcG9ydBgFIAEoDUgAiAEBEhYKDmludGVyZmFj",
+            "ZV9uYW1lGAYgASgJEhMKC2Ruc19zZXJ2ZXJzGAcgAygJEiYKBXBlZXJzGAgg",
+            "AygLMhcud2lyZWh1c2gudjEuVHVubmVsUGVlckIOCgxfbGlzdGVuX3BvcnQi",
+            "iwIKClR1bm5lbFBlZXISEgoKcHVibGljX2tleRgBIAEoCRIYChBlbmRwb2lu",
+            "dF9kaXNwbGF5GAIgASgJEhMKC2FsbG93ZWRfaXBzGAMgAygJEh4KEWtlZXBh",
+            "bGl2ZV9zZWNvbmRzGAQgASgNSACIAQESFQoIcnhfYnl0ZXMYBSABKARIAYgB",
+            "ARIVCgh0eF9ieXRlcxgGIAEoBEgCiAEBEiIKFWxhdGVzdF9oYW5kc2hha2Vf",
+            "dW5peBgHIAEoA0gDiAEBQhQKEl9rZWVwYWxpdmVfc2Vjb25kc0ILCglfcnhf",
+            "Ynl0ZXNCCwoJX3R4X2J5dGVzQhgKFl9sYXRlc3RfaGFuZHNoYWtlX3VuaXgi",
+            "owEKDVNuYXBzaG90UmVwbHkSEwoLaW5zdGFuY2VfaWQYASABKAkSEAoIcmV2",
+            "aXNpb24YAiABKAQSLAoHdHVubmVscxgDIAMoCzIbLndpcmVodXNoLnYxLlR1",
+            "bm5lbFNuYXBzaG90EiQKHGRldmljZV9idXN5X2Zvcl9hbm90aGVyX3VzZXIY",
+            "BCABKAgSFwoPbWFuYWdlcl9jbG9zaW5nGAUgASgIIisKEkNvbmZpZ3VyYXRp",
+            "b25SZXBseRIVCg13Z19xdWlja190ZXh0GAEgASgJIl0KE0NyZWF0ZVR1bm5l",
+            "bFJlcXVlc3QSIQoFc2NvcGUYASABKA4yEi53aXJlaHVzaC52MS5TY29wZRIM",
+            "CgRuYW1lGAIgASgJEhUKDXdnX3F1aWNrX3RleHQYAyABKAkiYgoTVXBkYXRl",
+            "VHVubmVsUmVxdWVzdBImCgZ0dW5uZWwYASABKAsyFi53aXJlaHVzaC52MS5U",
+            "dW5uZWxSZWYSDAoEbmFtZRgCIAEoCRIVCg13Z19xdWlja190ZXh0GAMgASgJ",
+            "IkUKEUJvb3RzdHJhcFJlc29sdmVyEg8KB2FkZHJlc3MYASABKAkSDwoHZW5h",
+            "YmxlZBgCIAEoCBIOCgZjdXN0b20YAyABKAgiRgoRQm9vdHN0cmFwU2V0dGlu",
+            "Z3MSMQoJcmVzb2x2ZXJzGAEgAygLMh4ud2lyZWh1c2gudjEuQm9vdHN0cmFw",
+            "UmVzb2x2ZXIiPwoJRXhpdFJlcGx5EhgKEGNsZWFudXBfY29tcGxldGUYASAB",
+            "KAgSGAoQbWFuYWdlcl9zdG9wcGluZxgCIAEoCCpDCgVTY29wZRIVChFTQ09Q",
+            "RV9VTlNQRUNJRklFRBAAEhEKDVNDT1BFX1BSSVZBVEUQARIQCgxTQ09QRV9T",
+            "SEFSRUQQAiqTAQoLVHVubmVsU3RhdGUSGAoUVFVOTkVMX1NUQVRFX1VOS05P",
+            "V04QABIYChRUVU5ORUxfU1RBVEVfU1RPUFBFRBABEhkKFVRVTk5FTF9TVEFU",
+            "RV9TVEFSVElORxACEhoKFlRVTk5FTF9TVEFURV9DT05ORUNURUQQAxIZChVU",
+            "VU5ORUxfU1RBVEVfU1RPUFBJTkcQBCrqAQoKQ2FwYWJpbGl0eRIaChZDQVBB",
+            "QklMSVRZX1VOU1BFQ0lGSUVEEAASFgoSQ0FQQUJJTElUWV9UVU5ORUxTEAES",
+            "HAoYQ0FQQUJJTElUWV9FTkNSWVBURURfRE5TEAISIQodQ0FQQUJJTElUWV9C",
+            "T09UU1RSQVBfU0VUVElOR1MQAxIVChFDQVBBQklMSVRZX0VWRU5UUxAEEhUK",
+            "EUNBUEFCSUxJVFlfRVhQT1JUEAUSHAoYQ0FQQUJJTElUWV9TSEFSRURfQ1JF",
+            "QVRFEAYSGwoXQ0FQQUJJTElUWV9TRVNTSU9OX0VYSVQQBzKmBgoHTWFuYWdl",
+            "chJHCglIYW5kc2hha2USHS53aXJlaHVzaC52MS5IYW5kc2hha2VSZXF1ZXN0",
+            "Ghsud2lyZWh1c2gudjEuSGFuZHNoYWtlUmVwbHkSOgoIU25hcHNob3QSEi53",
+            "aXJlaHVzaC52MS5FbXB0eRoaLndpcmVodXNoLnYxLlNuYXBzaG90UmVwbHkS",
+            "TAoRUmVhZENvbmZpZ3VyYXRpb24SFi53aXJlaHVzaC52MS5UdW5uZWxSZWYa",
+            "Hy53aXJlaHVzaC52MS5Db25maWd1cmF0aW9uUmVwbHkSTQoMQ3JlYXRlVHVu",
+            "bmVsEiAud2lyZWh1c2gudjEuQ3JlYXRlVHVubmVsUmVxdWVzdBobLndpcmVo",
+            "dXNoLnYxLlR1bm5lbFNuYXBzaG90EkQKDFVwZGF0ZVR1bm5lbBIgLndpcmVo",
+            "dXNoLnYxLlVwZGF0ZVR1bm5lbFJlcXVlc3QaEi53aXJlaHVzaC52MS5FbXB0",
+            "eRI6CgxEZWxldGVUdW5uZWwSFi53aXJlaHVzaC52MS5UdW5uZWxSZWYaEi53",
+            "aXJlaHVzaC52MS5FbXB0eRI5CgtTdGFydFR1bm5lbBIWLndpcmVodXNoLnYx",
+            "LlR1bm5lbFJlZhoSLndpcmVodXNoLnYxLkVtcHR5EjgKClN0b3BUdW5uZWwS",
+            "Fi53aXJlaHVzaC52MS5UdW5uZWxSZWYaEi53aXJlaHVzaC52MS5FbXB0eRJD",
+            "Cg1SZWFkQm9vdHN0cmFwEhIud2lyZWh1c2gudjEuRW1wdHkaHi53aXJlaHVz",
+            "aC52MS5Cb290c3RyYXBTZXR0aW5ncxJDCg1TYXZlQm9vdHN0cmFwEh4ud2ly",
+            "ZWh1c2gudjEuQm9vdHN0cmFwU2V0dGluZ3MaEi53aXJlaHVzaC52MS5FbXB0",
+            "eRI9CglTdWJzY3JpYmUSEi53aXJlaHVzaC52MS5FbXB0eRoaLndpcmVodXNo",
+            "LnYxLlNuYXBzaG90UmVwbHkwARI5CgtFeGl0U2Vzc2lvbhISLndpcmVodXNo",
+            "LnYxLkVtcHR5GhYud2lyZWh1c2gudjEuRXhpdFJlcGx5QkpaNGdvbGFuZy56",
+            "eDJjNC5jb20vd2lyZWd1YXJkL3dpbmRvd3MvcHJvdG9jb2w7cHJvdG9jb2yq",
+            "AhFXaXJlSHVzaC5Qcm90b2NvbGIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::WireHush.Protocol.Scope), typeof(global::WireHush.Protocol.TunnelState), typeof(global::WireHush.Protocol.Capability), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -92,7 +104,9 @@ namespace WireHush.Protocol {
             new pbr::GeneratedClrTypeInfo(typeof(global::WireHush.Protocol.HandshakeRequest), global::WireHush.Protocol.HandshakeRequest.Parser, new[]{ "ProtocolMajor", "ProtocolMinor" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::WireHush.Protocol.HandshakeReply), global::WireHush.Protocol.HandshakeReply.Parser, new[]{ "ProtocolMajor", "ProtocolMinor", "ProductVersion", "Capabilities", "InstanceId", "MayEditShared", "MayEditMachineSettings" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::WireHush.Protocol.TunnelRef), global::WireHush.Protocol.TunnelRef.Parser, new[]{ "TunnelId", "Scope" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::WireHush.Protocol.TunnelSnapshot), global::WireHush.Protocol.TunnelSnapshot.Parser, new[]{ "Tunnel", "Name", "State", "EncryptedDns", "RxBytes", "TxBytes", "LatestHandshakeUnix", "MayEdit", "MayExport", "DnsReady" }, new[]{ "RxBytes", "TxBytes", "LatestHandshakeUnix", "DnsReady" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::WireHush.Protocol.TunnelSnapshot), global::WireHush.Protocol.TunnelSnapshot.Parser, new[]{ "Tunnel", "Name", "State", "EncryptedDns", "RxBytes", "TxBytes", "LatestHandshakeUnix", "MayEdit", "MayExport", "DnsReady", "Network" }, new[]{ "RxBytes", "TxBytes", "LatestHandshakeUnix", "DnsReady" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::WireHush.Protocol.TunnelNetwork), global::WireHush.Protocol.TunnelNetwork.Parser, new[]{ "Ipv4Addresses", "Ipv6Addresses", "AllowedIps", "EndpointDisplay", "ListenPort", "InterfaceName", "DnsServers", "Peers" }, new[]{ "ListenPort" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::WireHush.Protocol.TunnelPeer), global::WireHush.Protocol.TunnelPeer.Parser, new[]{ "PublicKey", "EndpointDisplay", "AllowedIps", "KeepaliveSeconds", "RxBytes", "TxBytes", "LatestHandshakeUnix" }, new[]{ "KeepaliveSeconds", "RxBytes", "TxBytes", "LatestHandshakeUnix" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::WireHush.Protocol.SnapshotReply), global::WireHush.Protocol.SnapshotReply.Parser, new[]{ "InstanceId", "Revision", "Tunnels", "DeviceBusyForAnotherUser", "ManagerClosing" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::WireHush.Protocol.ConfigurationReply), global::WireHush.Protocol.ConfigurationReply.Parser, new[]{ "WgQuickText" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::WireHush.Protocol.CreateTunnelRequest), global::WireHush.Protocol.CreateTunnelRequest.Parser, new[]{ "Scope", "Name", "WgQuickText" }, null, null, null, null),
@@ -1223,6 +1237,7 @@ namespace WireHush.Protocol {
       mayEdit_ = other.mayEdit_;
       mayExport_ = other.mayExport_;
       dnsReady_ = other.dnsReady_;
+      network_ = other.network_ != null ? other.network_.Clone() : null;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -1415,6 +1430,22 @@ namespace WireHush.Protocol {
       _hasBits0 &= ~8;
     }
 
+    /// <summary>Field number for the "network" field.</summary>
+    public const int NetworkFieldNumber = 11;
+    private global::WireHush.Protocol.TunnelNetwork network_;
+    /// <summary>
+    /// Configuration-derived details require configuration-read authorization.
+    /// Shared ordinary members receive basic metadata/runtime totals only.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::WireHush.Protocol.TunnelNetwork Network {
+      get { return network_; }
+      set {
+        network_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -1440,6 +1471,7 @@ namespace WireHush.Protocol {
       if (MayEdit != other.MayEdit) return false;
       if (MayExport != other.MayExport) return false;
       if (DnsReady != other.DnsReady) return false;
+      if (!object.Equals(Network, other.Network)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -1457,6 +1489,7 @@ namespace WireHush.Protocol {
       if (MayEdit != false) hash ^= MayEdit.GetHashCode();
       if (MayExport != false) hash ^= MayExport.GetHashCode();
       if (HasDnsReady) hash ^= DnsReady.GetHashCode();
+      if (network_ != null) hash ^= Network.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -1515,6 +1548,10 @@ namespace WireHush.Protocol {
         output.WriteRawTag(80);
         output.WriteBool(DnsReady);
       }
+      if (network_ != null) {
+        output.WriteRawTag(90);
+        output.WriteMessage(Network);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1565,6 +1602,10 @@ namespace WireHush.Protocol {
         output.WriteRawTag(80);
         output.WriteBool(DnsReady);
       }
+      if (network_ != null) {
+        output.WriteRawTag(90);
+        output.WriteMessage(Network);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1604,6 +1645,9 @@ namespace WireHush.Protocol {
       }
       if (HasDnsReady) {
         size += 1 + 1;
+      }
+      if (network_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Network);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1649,6 +1693,12 @@ namespace WireHush.Protocol {
       }
       if (other.HasDnsReady) {
         DnsReady = other.DnsReady;
+      }
+      if (other.network_ != null) {
+        if (network_ == null) {
+          Network = new global::WireHush.Protocol.TunnelNetwork();
+        }
+        Network.MergeFrom(other.Network);
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -1710,6 +1760,13 @@ namespace WireHush.Protocol {
           }
           case 80: {
             DnsReady = input.ReadBool();
+            break;
+          }
+          case 90: {
+            if (network_ == null) {
+              Network = new global::WireHush.Protocol.TunnelNetwork();
+            }
+            input.ReadMessage(Network);
             break;
           }
         }
@@ -1774,6 +1831,903 @@ namespace WireHush.Protocol {
             DnsReady = input.ReadBool();
             break;
           }
+          case 90: {
+            if (network_ == null) {
+              Network = new global::WireHush.Protocol.TunnelNetwork();
+            }
+            input.ReadMessage(Network);
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class TunnelNetwork : pb::IMessage<TunnelNetwork>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<TunnelNetwork> _parser = new pb::MessageParser<TunnelNetwork>(() => new TunnelNetwork());
+    private pb::UnknownFieldSet _unknownFields;
+    private int _hasBits0;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<TunnelNetwork> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::WireHush.Protocol.WirehushReflection.Descriptor.MessageTypes[5]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public TunnelNetwork() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public TunnelNetwork(TunnelNetwork other) : this() {
+      _hasBits0 = other._hasBits0;
+      ipv4Addresses_ = other.ipv4Addresses_.Clone();
+      ipv6Addresses_ = other.ipv6Addresses_.Clone();
+      allowedIps_ = other.allowedIps_.Clone();
+      endpointDisplay_ = other.endpointDisplay_;
+      listenPort_ = other.listenPort_;
+      interfaceName_ = other.interfaceName_;
+      dnsServers_ = other.dnsServers_.Clone();
+      peers_ = other.peers_.Clone();
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public TunnelNetwork Clone() {
+      return new TunnelNetwork(this);
+    }
+
+    /// <summary>Field number for the "ipv4_addresses" field.</summary>
+    public const int Ipv4AddressesFieldNumber = 1;
+    private static readonly pb::FieldCodec<string> _repeated_ipv4Addresses_codec
+        = pb::FieldCodec.ForString(10);
+    private readonly pbc::RepeatedField<string> ipv4Addresses_ = new pbc::RepeatedField<string>();
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pbc::RepeatedField<string> Ipv4Addresses {
+      get { return ipv4Addresses_; }
+    }
+
+    /// <summary>Field number for the "ipv6_addresses" field.</summary>
+    public const int Ipv6AddressesFieldNumber = 2;
+    private static readonly pb::FieldCodec<string> _repeated_ipv6Addresses_codec
+        = pb::FieldCodec.ForString(18);
+    private readonly pbc::RepeatedField<string> ipv6Addresses_ = new pbc::RepeatedField<string>();
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pbc::RepeatedField<string> Ipv6Addresses {
+      get { return ipv6Addresses_; }
+    }
+
+    /// <summary>Field number for the "allowed_ips" field.</summary>
+    public const int AllowedIpsFieldNumber = 3;
+    private static readonly pb::FieldCodec<string> _repeated_allowedIps_codec
+        = pb::FieldCodec.ForString(26);
+    private readonly pbc::RepeatedField<string> allowedIps_ = new pbc::RepeatedField<string>();
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pbc::RepeatedField<string> AllowedIps {
+      get { return allowedIps_; }
+    }
+
+    /// <summary>Field number for the "endpoint_display" field.</summary>
+    public const int EndpointDisplayFieldNumber = 4;
+    private string endpointDisplay_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string EndpointDisplay {
+      get { return endpointDisplay_; }
+      set {
+        endpointDisplay_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "listen_port" field.</summary>
+    public const int ListenPortFieldNumber = 5;
+    private readonly static uint ListenPortDefaultValue = 0;
+
+    private uint listenPort_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint ListenPort {
+      get { if ((_hasBits0 & 1) != 0) { return listenPort_; } else { return ListenPortDefaultValue; } }
+      set {
+        _hasBits0 |= 1;
+        listenPort_ = value;
+      }
+    }
+    /// <summary>Gets whether the "listen_port" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasListenPort {
+      get { return (_hasBits0 & 1) != 0; }
+    }
+    /// <summary>Clears the value of the "listen_port" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearListenPort() {
+      _hasBits0 &= ~1;
+    }
+
+    /// <summary>Field number for the "interface_name" field.</summary>
+    public const int InterfaceNameFieldNumber = 6;
+    private string interfaceName_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string InterfaceName {
+      get { return interfaceName_; }
+      set {
+        interfaceName_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "dns_servers" field.</summary>
+    public const int DnsServersFieldNumber = 7;
+    private static readonly pb::FieldCodec<string> _repeated_dnsServers_codec
+        = pb::FieldCodec.ForString(58);
+    private readonly pbc::RepeatedField<string> dnsServers_ = new pbc::RepeatedField<string>();
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pbc::RepeatedField<string> DnsServers {
+      get { return dnsServers_; }
+    }
+
+    /// <summary>Field number for the "peers" field.</summary>
+    public const int PeersFieldNumber = 8;
+    private static readonly pb::FieldCodec<global::WireHush.Protocol.TunnelPeer> _repeated_peers_codec
+        = pb::FieldCodec.ForMessage(66, global::WireHush.Protocol.TunnelPeer.Parser);
+    private readonly pbc::RepeatedField<global::WireHush.Protocol.TunnelPeer> peers_ = new pbc::RepeatedField<global::WireHush.Protocol.TunnelPeer>();
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pbc::RepeatedField<global::WireHush.Protocol.TunnelPeer> Peers {
+      get { return peers_; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as TunnelNetwork);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(TunnelNetwork other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if(!ipv4Addresses_.Equals(other.ipv4Addresses_)) return false;
+      if(!ipv6Addresses_.Equals(other.ipv6Addresses_)) return false;
+      if(!allowedIps_.Equals(other.allowedIps_)) return false;
+      if (EndpointDisplay != other.EndpointDisplay) return false;
+      if (ListenPort != other.ListenPort) return false;
+      if (InterfaceName != other.InterfaceName) return false;
+      if(!dnsServers_.Equals(other.dnsServers_)) return false;
+      if(!peers_.Equals(other.peers_)) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      hash ^= ipv4Addresses_.GetHashCode();
+      hash ^= ipv6Addresses_.GetHashCode();
+      hash ^= allowedIps_.GetHashCode();
+      if (EndpointDisplay.Length != 0) hash ^= EndpointDisplay.GetHashCode();
+      if (HasListenPort) hash ^= ListenPort.GetHashCode();
+      if (InterfaceName.Length != 0) hash ^= InterfaceName.GetHashCode();
+      hash ^= dnsServers_.GetHashCode();
+      hash ^= peers_.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      ipv4Addresses_.WriteTo(output, _repeated_ipv4Addresses_codec);
+      ipv6Addresses_.WriteTo(output, _repeated_ipv6Addresses_codec);
+      allowedIps_.WriteTo(output, _repeated_allowedIps_codec);
+      if (EndpointDisplay.Length != 0) {
+        output.WriteRawTag(34);
+        output.WriteString(EndpointDisplay);
+      }
+      if (HasListenPort) {
+        output.WriteRawTag(40);
+        output.WriteUInt32(ListenPort);
+      }
+      if (InterfaceName.Length != 0) {
+        output.WriteRawTag(50);
+        output.WriteString(InterfaceName);
+      }
+      dnsServers_.WriteTo(output, _repeated_dnsServers_codec);
+      peers_.WriteTo(output, _repeated_peers_codec);
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      ipv4Addresses_.WriteTo(ref output, _repeated_ipv4Addresses_codec);
+      ipv6Addresses_.WriteTo(ref output, _repeated_ipv6Addresses_codec);
+      allowedIps_.WriteTo(ref output, _repeated_allowedIps_codec);
+      if (EndpointDisplay.Length != 0) {
+        output.WriteRawTag(34);
+        output.WriteString(EndpointDisplay);
+      }
+      if (HasListenPort) {
+        output.WriteRawTag(40);
+        output.WriteUInt32(ListenPort);
+      }
+      if (InterfaceName.Length != 0) {
+        output.WriteRawTag(50);
+        output.WriteString(InterfaceName);
+      }
+      dnsServers_.WriteTo(ref output, _repeated_dnsServers_codec);
+      peers_.WriteTo(ref output, _repeated_peers_codec);
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      size += ipv4Addresses_.CalculateSize(_repeated_ipv4Addresses_codec);
+      size += ipv6Addresses_.CalculateSize(_repeated_ipv6Addresses_codec);
+      size += allowedIps_.CalculateSize(_repeated_allowedIps_codec);
+      if (EndpointDisplay.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(EndpointDisplay);
+      }
+      if (HasListenPort) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ListenPort);
+      }
+      if (InterfaceName.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(InterfaceName);
+      }
+      size += dnsServers_.CalculateSize(_repeated_dnsServers_codec);
+      size += peers_.CalculateSize(_repeated_peers_codec);
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(TunnelNetwork other) {
+      if (other == null) {
+        return;
+      }
+      ipv4Addresses_.Add(other.ipv4Addresses_);
+      ipv6Addresses_.Add(other.ipv6Addresses_);
+      allowedIps_.Add(other.allowedIps_);
+      if (other.EndpointDisplay.Length != 0) {
+        EndpointDisplay = other.EndpointDisplay;
+      }
+      if (other.HasListenPort) {
+        ListenPort = other.ListenPort;
+      }
+      if (other.InterfaceName.Length != 0) {
+        InterfaceName = other.InterfaceName;
+      }
+      dnsServers_.Add(other.dnsServers_);
+      peers_.Add(other.peers_);
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            ipv4Addresses_.AddEntriesFrom(input, _repeated_ipv4Addresses_codec);
+            break;
+          }
+          case 18: {
+            ipv6Addresses_.AddEntriesFrom(input, _repeated_ipv6Addresses_codec);
+            break;
+          }
+          case 26: {
+            allowedIps_.AddEntriesFrom(input, _repeated_allowedIps_codec);
+            break;
+          }
+          case 34: {
+            EndpointDisplay = input.ReadString();
+            break;
+          }
+          case 40: {
+            ListenPort = input.ReadUInt32();
+            break;
+          }
+          case 50: {
+            InterfaceName = input.ReadString();
+            break;
+          }
+          case 58: {
+            dnsServers_.AddEntriesFrom(input, _repeated_dnsServers_codec);
+            break;
+          }
+          case 66: {
+            peers_.AddEntriesFrom(input, _repeated_peers_codec);
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            ipv4Addresses_.AddEntriesFrom(ref input, _repeated_ipv4Addresses_codec);
+            break;
+          }
+          case 18: {
+            ipv6Addresses_.AddEntriesFrom(ref input, _repeated_ipv6Addresses_codec);
+            break;
+          }
+          case 26: {
+            allowedIps_.AddEntriesFrom(ref input, _repeated_allowedIps_codec);
+            break;
+          }
+          case 34: {
+            EndpointDisplay = input.ReadString();
+            break;
+          }
+          case 40: {
+            ListenPort = input.ReadUInt32();
+            break;
+          }
+          case 50: {
+            InterfaceName = input.ReadString();
+            break;
+          }
+          case 58: {
+            dnsServers_.AddEntriesFrom(ref input, _repeated_dnsServers_codec);
+            break;
+          }
+          case 66: {
+            peers_.AddEntriesFrom(ref input, _repeated_peers_codec);
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class TunnelPeer : pb::IMessage<TunnelPeer>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<TunnelPeer> _parser = new pb::MessageParser<TunnelPeer>(() => new TunnelPeer());
+    private pb::UnknownFieldSet _unknownFields;
+    private int _hasBits0;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<TunnelPeer> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::WireHush.Protocol.WirehushReflection.Descriptor.MessageTypes[6]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public TunnelPeer() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public TunnelPeer(TunnelPeer other) : this() {
+      _hasBits0 = other._hasBits0;
+      publicKey_ = other.publicKey_;
+      endpointDisplay_ = other.endpointDisplay_;
+      allowedIps_ = other.allowedIps_.Clone();
+      keepaliveSeconds_ = other.keepaliveSeconds_;
+      rxBytes_ = other.rxBytes_;
+      txBytes_ = other.txBytes_;
+      latestHandshakeUnix_ = other.latestHandshakeUnix_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public TunnelPeer Clone() {
+      return new TunnelPeer(this);
+    }
+
+    /// <summary>Field number for the "public_key" field.</summary>
+    public const int PublicKeyFieldNumber = 1;
+    private string publicKey_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string PublicKey {
+      get { return publicKey_; }
+      set {
+        publicKey_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "endpoint_display" field.</summary>
+    public const int EndpointDisplayFieldNumber = 2;
+    private string endpointDisplay_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string EndpointDisplay {
+      get { return endpointDisplay_; }
+      set {
+        endpointDisplay_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "allowed_ips" field.</summary>
+    public const int AllowedIpsFieldNumber = 3;
+    private static readonly pb::FieldCodec<string> _repeated_allowedIps_codec
+        = pb::FieldCodec.ForString(26);
+    private readonly pbc::RepeatedField<string> allowedIps_ = new pbc::RepeatedField<string>();
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pbc::RepeatedField<string> AllowedIps {
+      get { return allowedIps_; }
+    }
+
+    /// <summary>Field number for the "keepalive_seconds" field.</summary>
+    public const int KeepaliveSecondsFieldNumber = 4;
+    private readonly static uint KeepaliveSecondsDefaultValue = 0;
+
+    private uint keepaliveSeconds_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint KeepaliveSeconds {
+      get { if ((_hasBits0 & 1) != 0) { return keepaliveSeconds_; } else { return KeepaliveSecondsDefaultValue; } }
+      set {
+        _hasBits0 |= 1;
+        keepaliveSeconds_ = value;
+      }
+    }
+    /// <summary>Gets whether the "keepalive_seconds" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasKeepaliveSeconds {
+      get { return (_hasBits0 & 1) != 0; }
+    }
+    /// <summary>Clears the value of the "keepalive_seconds" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearKeepaliveSeconds() {
+      _hasBits0 &= ~1;
+    }
+
+    /// <summary>Field number for the "rx_bytes" field.</summary>
+    public const int RxBytesFieldNumber = 5;
+    private readonly static ulong RxBytesDefaultValue = 0UL;
+
+    private ulong rxBytes_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ulong RxBytes {
+      get { if ((_hasBits0 & 2) != 0) { return rxBytes_; } else { return RxBytesDefaultValue; } }
+      set {
+        _hasBits0 |= 2;
+        rxBytes_ = value;
+      }
+    }
+    /// <summary>Gets whether the "rx_bytes" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasRxBytes {
+      get { return (_hasBits0 & 2) != 0; }
+    }
+    /// <summary>Clears the value of the "rx_bytes" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearRxBytes() {
+      _hasBits0 &= ~2;
+    }
+
+    /// <summary>Field number for the "tx_bytes" field.</summary>
+    public const int TxBytesFieldNumber = 6;
+    private readonly static ulong TxBytesDefaultValue = 0UL;
+
+    private ulong txBytes_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ulong TxBytes {
+      get { if ((_hasBits0 & 4) != 0) { return txBytes_; } else { return TxBytesDefaultValue; } }
+      set {
+        _hasBits0 |= 4;
+        txBytes_ = value;
+      }
+    }
+    /// <summary>Gets whether the "tx_bytes" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasTxBytes {
+      get { return (_hasBits0 & 4) != 0; }
+    }
+    /// <summary>Clears the value of the "tx_bytes" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearTxBytes() {
+      _hasBits0 &= ~4;
+    }
+
+    /// <summary>Field number for the "latest_handshake_unix" field.</summary>
+    public const int LatestHandshakeUnixFieldNumber = 7;
+    private readonly static long LatestHandshakeUnixDefaultValue = 0L;
+
+    private long latestHandshakeUnix_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public long LatestHandshakeUnix {
+      get { if ((_hasBits0 & 8) != 0) { return latestHandshakeUnix_; } else { return LatestHandshakeUnixDefaultValue; } }
+      set {
+        _hasBits0 |= 8;
+        latestHandshakeUnix_ = value;
+      }
+    }
+    /// <summary>Gets whether the "latest_handshake_unix" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasLatestHandshakeUnix {
+      get { return (_hasBits0 & 8) != 0; }
+    }
+    /// <summary>Clears the value of the "latest_handshake_unix" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearLatestHandshakeUnix() {
+      _hasBits0 &= ~8;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as TunnelPeer);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(TunnelPeer other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (PublicKey != other.PublicKey) return false;
+      if (EndpointDisplay != other.EndpointDisplay) return false;
+      if(!allowedIps_.Equals(other.allowedIps_)) return false;
+      if (KeepaliveSeconds != other.KeepaliveSeconds) return false;
+      if (RxBytes != other.RxBytes) return false;
+      if (TxBytes != other.TxBytes) return false;
+      if (LatestHandshakeUnix != other.LatestHandshakeUnix) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (PublicKey.Length != 0) hash ^= PublicKey.GetHashCode();
+      if (EndpointDisplay.Length != 0) hash ^= EndpointDisplay.GetHashCode();
+      hash ^= allowedIps_.GetHashCode();
+      if (HasKeepaliveSeconds) hash ^= KeepaliveSeconds.GetHashCode();
+      if (HasRxBytes) hash ^= RxBytes.GetHashCode();
+      if (HasTxBytes) hash ^= TxBytes.GetHashCode();
+      if (HasLatestHandshakeUnix) hash ^= LatestHandshakeUnix.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (PublicKey.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(PublicKey);
+      }
+      if (EndpointDisplay.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(EndpointDisplay);
+      }
+      allowedIps_.WriteTo(output, _repeated_allowedIps_codec);
+      if (HasKeepaliveSeconds) {
+        output.WriteRawTag(32);
+        output.WriteUInt32(KeepaliveSeconds);
+      }
+      if (HasRxBytes) {
+        output.WriteRawTag(40);
+        output.WriteUInt64(RxBytes);
+      }
+      if (HasTxBytes) {
+        output.WriteRawTag(48);
+        output.WriteUInt64(TxBytes);
+      }
+      if (HasLatestHandshakeUnix) {
+        output.WriteRawTag(56);
+        output.WriteInt64(LatestHandshakeUnix);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (PublicKey.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(PublicKey);
+      }
+      if (EndpointDisplay.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(EndpointDisplay);
+      }
+      allowedIps_.WriteTo(ref output, _repeated_allowedIps_codec);
+      if (HasKeepaliveSeconds) {
+        output.WriteRawTag(32);
+        output.WriteUInt32(KeepaliveSeconds);
+      }
+      if (HasRxBytes) {
+        output.WriteRawTag(40);
+        output.WriteUInt64(RxBytes);
+      }
+      if (HasTxBytes) {
+        output.WriteRawTag(48);
+        output.WriteUInt64(TxBytes);
+      }
+      if (HasLatestHandshakeUnix) {
+        output.WriteRawTag(56);
+        output.WriteInt64(LatestHandshakeUnix);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (PublicKey.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(PublicKey);
+      }
+      if (EndpointDisplay.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(EndpointDisplay);
+      }
+      size += allowedIps_.CalculateSize(_repeated_allowedIps_codec);
+      if (HasKeepaliveSeconds) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(KeepaliveSeconds);
+      }
+      if (HasRxBytes) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt64Size(RxBytes);
+      }
+      if (HasTxBytes) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt64Size(TxBytes);
+      }
+      if (HasLatestHandshakeUnix) {
+        size += 1 + pb::CodedOutputStream.ComputeInt64Size(LatestHandshakeUnix);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(TunnelPeer other) {
+      if (other == null) {
+        return;
+      }
+      if (other.PublicKey.Length != 0) {
+        PublicKey = other.PublicKey;
+      }
+      if (other.EndpointDisplay.Length != 0) {
+        EndpointDisplay = other.EndpointDisplay;
+      }
+      allowedIps_.Add(other.allowedIps_);
+      if (other.HasKeepaliveSeconds) {
+        KeepaliveSeconds = other.KeepaliveSeconds;
+      }
+      if (other.HasRxBytes) {
+        RxBytes = other.RxBytes;
+      }
+      if (other.HasTxBytes) {
+        TxBytes = other.TxBytes;
+      }
+      if (other.HasLatestHandshakeUnix) {
+        LatestHandshakeUnix = other.LatestHandshakeUnix;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            PublicKey = input.ReadString();
+            break;
+          }
+          case 18: {
+            EndpointDisplay = input.ReadString();
+            break;
+          }
+          case 26: {
+            allowedIps_.AddEntriesFrom(input, _repeated_allowedIps_codec);
+            break;
+          }
+          case 32: {
+            KeepaliveSeconds = input.ReadUInt32();
+            break;
+          }
+          case 40: {
+            RxBytes = input.ReadUInt64();
+            break;
+          }
+          case 48: {
+            TxBytes = input.ReadUInt64();
+            break;
+          }
+          case 56: {
+            LatestHandshakeUnix = input.ReadInt64();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            PublicKey = input.ReadString();
+            break;
+          }
+          case 18: {
+            EndpointDisplay = input.ReadString();
+            break;
+          }
+          case 26: {
+            allowedIps_.AddEntriesFrom(ref input, _repeated_allowedIps_codec);
+            break;
+          }
+          case 32: {
+            KeepaliveSeconds = input.ReadUInt32();
+            break;
+          }
+          case 40: {
+            RxBytes = input.ReadUInt64();
+            break;
+          }
+          case 48: {
+            TxBytes = input.ReadUInt64();
+            break;
+          }
+          case 56: {
+            LatestHandshakeUnix = input.ReadInt64();
+            break;
+          }
         }
       }
     }
@@ -1796,7 +2750,7 @@ namespace WireHush.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::WireHush.Protocol.WirehushReflection.Descriptor.MessageTypes[5]; }
+      get { return global::WireHush.Protocol.WirehushReflection.Descriptor.MessageTypes[7]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2131,7 +3085,7 @@ namespace WireHush.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::WireHush.Protocol.WirehushReflection.Descriptor.MessageTypes[6]; }
+      get { return global::WireHush.Protocol.WirehushReflection.Descriptor.MessageTypes[8]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2332,7 +3286,7 @@ namespace WireHush.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::WireHush.Protocol.WirehushReflection.Descriptor.MessageTypes[7]; }
+      get { return global::WireHush.Protocol.WirehushReflection.Descriptor.MessageTypes[9]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2604,7 +3558,7 @@ namespace WireHush.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::WireHush.Protocol.WirehushReflection.Descriptor.MessageTypes[8]; }
+      get { return global::WireHush.Protocol.WirehushReflection.Descriptor.MessageTypes[10]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2885,7 +3839,7 @@ namespace WireHush.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::WireHush.Protocol.WirehushReflection.Descriptor.MessageTypes[9]; }
+      get { return global::WireHush.Protocol.WirehushReflection.Descriptor.MessageTypes[11]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3157,7 +4111,7 @@ namespace WireHush.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::WireHush.Protocol.WirehushReflection.Descriptor.MessageTypes[10]; }
+      get { return global::WireHush.Protocol.WirehushReflection.Descriptor.MessageTypes[12]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3344,7 +4298,7 @@ namespace WireHush.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::WireHush.Protocol.WirehushReflection.Descriptor.MessageTypes[11]; }
+      get { return global::WireHush.Protocol.WirehushReflection.Descriptor.MessageTypes[13]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
