@@ -48,3 +48,10 @@ project [LICENSE](LICENSE).
   Apache-2.0; license in `licenses/googleapis-rpc-LICENSE.txt`.
 
 These license files must accompany binary distributions containing the libraries.
+
+## Microsoft go-winio
+
+- Microsoft go-winio v0.6.2: https://github.com/microsoft/go-winio, MIT;
+  copyright and license in `licenses/go-winio-LICENSE.txt`.
+- C# gRPC runtime packages 2.84.0: https://github.com/grpc/grpc-dotnet,
+  Apache-2.0; license in `licenses/grpc-dotnet-LICENSE.txt`.
