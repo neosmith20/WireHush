@@ -49,7 +49,6 @@ $source=@"
 <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" Description="WireHush owner-test candidate" />
 <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
 <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer WireHush version is installed." Schedule="afterInstallExecute" />
-<Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
 <Property Id="DELETE_WIREHUSH_DATA" Value="0" Secure="yes" />
 <Property Id="BeginMaintenance" Hidden="yes" /><Property Id="RollbackMaintenance" Hidden="yes" /><Property Id="ProvisionAccess" Hidden="yes" /><Property Id="CommitProvisionAccess" Hidden="yes" />
 <Icon Id="ProductIcon" SourceFile="$(Esc "$repo/windows-ui/WireHush.UI/Assets/WireHush.ico")" /><Property Id="ARPPRODUCTICON" Value="ProductIcon" />
@@ -88,16 +87,51 @@ $source=@"
  <Custom Action="FinalizeLegacy" Before="CommitMaintenance">NOT REMOVE</Custom>
  <Custom Action="CommitMaintenance" Before="InstallFinalize">NOT UPGRADINGPRODUCTCODE</Custom>
 </InstallExecuteSequence>
-<UIRef Id="WixUI_InstallDir" />
 <WixVariable Id="WixUILicenseRtf" Value="$(Esc "$repo/installer/v1-license.rtf")" />
-<UI><Dialog Id="RemoveDataChoiceDlg" Width="370" Height="270" Title="Remove WireHush">
- <Control Id="Title" Type="Text" X="20" Y="20" Width="330" Height="30" Text="Keep your data unless you explicitly choose deletion." />
- <Control Id="Explanation" Type="Text" X="20" Y="60" Width="330" Height="70" Text="By default, uninstall keeps encrypted tunnel records, settings, migration backups, logs, and UI preferences. Checking the box deletes WireHush data for all local users. Deletion cannot be rolled back. Close every WireHush window before continuing." />
- <Control Id="Delete" Type="CheckBox" X="20" Y="140" Width="330" Height="40" Property="DELETE_WIREHUSH_DATA" CheckBoxValue="1" Text="Delete all WireHush data permanently" />
- <Control Id="Back" Type="PushButton" X="180" Y="240" Width="56" Height="17" Text="Back"><Publish Event="NewDialog" Value="MaintenanceTypeDlg">1</Publish></Control>
- <Control Id="Next" Type="PushButton" X="236" Y="240" Width="56" Height="17" Default="yes" Text="Next"><Publish Event="NewDialog" Value="VerifyReadyDlg">1</Publish></Control>
- <Control Id="Cancel" Type="PushButton" X="304" Y="240" Width="56" Height="17" Cancel="yes" Text="Cancel"><Publish Event="SpawnDialog" Value="CancelDlg">1</Publish></Control>
-</Dialog><Publish Dialog="MaintenanceTypeDlg" Control="RemoveButton" Event="NewDialog" Value="RemoveDataChoiceDlg" Order="1">1</Publish><Publish Dialog="LicenseAgreementDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="1">LicenseAccepted = "1"</Publish><Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="LicenseAgreementDlg" Order="1">NOT Installed</Publish></UI>
+<UI Id="WireHush_FixedPath">
+ <TextStyle Id="WixUI_Font_Normal" FaceName="Tahoma" Size="8" />
+ <TextStyle Id="WixUI_Font_Bigger" FaceName="Tahoma" Size="12" />
+ <TextStyle Id="WixUI_Font_Title" FaceName="Tahoma" Size="9" Bold="yes" />
+ <Property Id="DefaultUIFont" Value="WixUI_Font_Normal" />
+ <Property Id="WixUI_Mode" Value="InstallDir" />
+ <Property Id="ARPNOMODIFY" Value="1" />
+ <DialogRef Id="ErrorDlg" />
+ <DialogRef Id="FatalError" />
+ <DialogRef Id="FilesInUse" />
+ <DialogRef Id="MsiRMFilesInUse" />
+ <DialogRef Id="PrepareDlg" />
+ <DialogRef Id="ProgressDlg" />
+ <DialogRef Id="ResumeDlg" />
+ <DialogRef Id="UserExit" />
+ <DialogRef Id="WelcomeDlg" />
+ <DialogRef Id="LicenseAgreementDlg" />
+ <DialogRef Id="VerifyReadyDlg" />
+ <DialogRef Id="MaintenanceWelcomeDlg" />
+ <DialogRef Id="MaintenanceTypeDlg" />
+ <DialogRef Id="ExitDialog" />
+ <Dialog Id="RemoveDataChoiceDlg" Width="370" Height="270" Title="Remove WireHush">
+  <Control Id="Title" Type="Text" X="20" Y="20" Width="330" Height="30" Text="Keep your data unless you explicitly choose deletion." />
+  <Control Id="Explanation" Type="Text" X="20" Y="60" Width="330" Height="70" Text="By default, uninstall keeps encrypted tunnel records, settings, migration backups, logs, and UI preferences. Checking the box deletes WireHush data for all local users. Deletion cannot be rolled back. Close every WireHush window before continuing." />
+  <Control Id="Delete" Type="CheckBox" X="20" Y="140" Width="330" Height="40" Property="DELETE_WIREHUSH_DATA" CheckBoxValue="1" Text="Delete all WireHush data permanently" />
+  <Control Id="Back" Type="PushButton" X="180" Y="240" Width="56" Height="17" Text="Back"><Publish Event="NewDialog" Value="MaintenanceTypeDlg">1</Publish></Control>
+  <Control Id="Next" Type="PushButton" X="236" Y="240" Width="56" Height="17" Default="yes" Text="Next"><Publish Event="NewDialog" Value="VerifyReadyDlg">1</Publish></Control>
+  <Control Id="Cancel" Type="PushButton" X="304" Y="240" Width="56" Height="17" Cancel="yes" Text="Cancel"><Publish Event="SpawnDialog" Value="CancelDlg">1</Publish></Control>
+ </Dialog>
+ <Publish Dialog="ExitDialog" Control="Finish" Event="EndDialog" Value="Return" Order="999">1</Publish>
+ <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="LicenseAgreementDlg">NOT Installed</Publish>
+ <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg">Installed AND PATCH</Publish>
+ <Publish Dialog="LicenseAgreementDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg">1</Publish>
+ <Publish Dialog="LicenseAgreementDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg">LicenseAccepted = "1"</Publish>
+ <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="LicenseAgreementDlg" Order="1">NOT Installed</Publish>
+ <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="RemoveDataChoiceDlg" Order="1">Installed AND WixUI_InstallMode = "Remove"</Publish>
+ <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Order="2">Installed AND NOT PATCH AND WixUI_InstallMode &lt;&gt; "Remove"</Publish>
+ <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="3">Installed AND PATCH</Publish>
+ <Publish Dialog="MaintenanceWelcomeDlg" Control="Next" Event="NewDialog" Value="MaintenanceTypeDlg">1</Publish>
+ <Publish Dialog="MaintenanceTypeDlg" Control="RepairButton" Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
+ <Publish Dialog="MaintenanceTypeDlg" Control="RemoveButton" Event="NewDialog" Value="RemoveDataChoiceDlg">1</Publish>
+ <Publish Dialog="MaintenanceTypeDlg" Control="Back" Event="NewDialog" Value="MaintenanceWelcomeDlg">1</Publish>
+</UI>
+<UIRef Id="WixUI_Common" />
 </Product></Wix>
 "@
 $wxs=Join-Path $out 'wirehush-v1.wxs'
