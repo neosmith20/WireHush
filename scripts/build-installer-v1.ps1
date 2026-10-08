@@ -53,7 +53,8 @@ $source=@"
 <Property Id="DELETE_WIREHUSH_DATA" Value="0" Secure="yes" />
 <Property Id="BeginMaintenance" Hidden="yes" /><Property Id="RollbackMaintenance" Hidden="yes" /><Property Id="ProvisionAccess" Hidden="yes" /><Property Id="CommitProvisionAccess" Hidden="yes" />
 <Icon Id="ProductIcon" SourceFile="$(Esc "$repo/windows-ui/WireHush.UI/Assets/WireHush.ico")" /><Property Id="ARPPRODUCTICON" Value="ProductIcon" />
-<Condition Message="WireHush requires Windows 10 1809 or later.">Installed OR (VersionNT64 AND WindowsBuild &gt;= 17763)</Condition>
+<Property Id="WINDOWSBUILDNUMBER" Secure="yes"><RegistrySearch Id="BuildNumberSearch" Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion" Name="CurrentBuildNumber" Type="raw" Win64="yes" /></Property>
+<Condition Message="WireHush requires Windows 10 1809 or later.">Installed OR (VersionNT64 AND WINDOWSBUILDNUMBER AND WINDOWSBUILDNUMBER &gt;= 17763)</Condition>
 <Directory Id="TARGETDIR" Name="SourceDir"><Directory Id="ProgramFiles64Folder">$directory</Directory><Directory Id="ProgramMenuFolder" /></Directory>
 <Feature Id="Main" Title="WireHush" Level="1">$references</Feature>
 <Binary Id="InstallerActions" SourceFile="$(Esc "$out/v1-customactions.dll")" />

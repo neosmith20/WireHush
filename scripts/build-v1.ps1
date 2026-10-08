@@ -6,6 +6,9 @@ param([ValidateSet('x64', 'arm64', 'all')][string]$Architecture = 'all', [switch
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
 Set-Location -LiteralPath $repo
+$gitStatus = @(& git status --porcelain --untracked-files=normal)
+if ($LASTEXITCODE -ne 0) { throw 'Unable to verify repository cleanliness' }
+if ($gitStatus.Count -ne 0) { throw 'Owner-test builds require a clean Git working tree so artifact provenance matches the recorded commit' }
 if (!$SkipBootstrap) { & "$PSScriptRoot/bootstrap-v1.ps1" }
 $versionText = Get-Content -LiteralPath "$repo/version/version.go" -Raw
 if ($versionText -notmatch 'Number\s*=\s*"(\d+\.\d+\.\d+)"') { throw 'Invalid product version' }
