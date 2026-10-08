@@ -48,6 +48,9 @@ try {
     if ($installerBuilder -match 'WixUI_InstallDir|WIXUI_INSTALLDIR|InstallDirDlg') { throw 'V1 installer must not expose a mutable installation path' }
     $buildScript = Get-Content -LiteralPath "$repo/scripts/build-v1.ps1" -Raw
     if (!$buildScript.Contains('git status --porcelain --untracked-files=normal') -or !$buildScript.Contains('Owner-test builds require a clean Git working tree')) { throw 'Artifact provenance clean-tree guard regression' }
+    $uiProject = Get-Content -LiteralPath "$repo/windows-ui/WireHush.UI/WireHush.UI.csproj" -Raw
+    $managerResources = Get-Content -LiteralPath "$repo/cmd/wirehush-manager/resources.rc" -Raw
+    if (!$uiProject.Contains('<Company>WireHush contributors</Company>') -or !$managerResources.Contains('VALUE "CompanyName", "WireHush contributors"')) { throw 'WireHush executable company metadata regression' }
     & "$repo/.deps/dotnet/dotnet.exe" run --project windows-ui/WireHush.UI.SafetyTests -c Release 2>&1 | Out-Host
     if ($LASTEXITCODE) { throw 'UI measurement safety tests failed' }
     & git diff --check 2>&1 | Out-Host

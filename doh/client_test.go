@@ -125,7 +125,9 @@ func TestQueryTimeoutAndCancellation(t *testing.T) {
 func TestDialBootstrappedAddressesFallsBackWithinRequestDeadline(t *testing.T) {
 	first := netip.MustParseAddr("2001:db8::1")
 	second := netip.MustParseAddr("192.0.2.1")
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	// Keep this comfortably above Windows timer granularity and scheduler jitter.
+	// The invariant under test is per-candidate deadline partitioning, not a 100 ms wall clock.
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	defer cancel()
 	var calls []netip.Addr
 	conn, err := dialBootstrappedAddresses(ctx, "tcp", "443", []netip.Addr{first, second}, func(ctx context.Context, _ string, address string) (net.Conn, error) {
