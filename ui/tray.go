@@ -170,7 +170,7 @@ func (tray *Tray) addTunnelAction(tunnel *manager.Tunnel) {
 				tray.mtw.Synchronize(func() {
 					raise(tray.mtw.Handle())
 					tray.mtw.tunnelsPage.listView.selectTunnel(tclosure.Name)
-					tray.mtw.tabs.SetCurrentIndex(0)
+					tray.mtw.showPage(tray.mtw.tunnelsPage.Composite)
 					if oldState == manager.TunnelUnknown {
 						showErrorCustom(tray.mtw, l18n.Sprintf("Failed to determine tunnel state"), err.Error())
 					} else if oldState == manager.TunnelStopped {
@@ -350,9 +350,7 @@ func (tray *Tray) UpdateFound() {
 		if !tray.mtw.Visible() {
 			tray.mtw.tunnelsPage.listView.SelectFirstActiveTunnel()
 		}
-		if tray.mtw.updatePage != nil {
-			tray.mtw.tabs.SetCurrentIndex(tray.mtw.tabs.Pages().Index(tray.mtw.updatePage.TabPage))
-		}
+		tray.mtw.showPage(tray.mtw.tunnelsPage.Composite)
 		raise(tray.mtw.Handle())
 	}
 	action.Triggered().Attach(showUpdateTab)
@@ -376,7 +374,7 @@ func (tray *Tray) UpdateFound() {
 
 func (tray *Tray) onManageTunnels() {
 	tray.mtw.tunnelsPage.listView.SelectFirstActiveTunnel()
-	tray.mtw.tabs.SetCurrentIndex(0)
+	tray.mtw.showPage(tray.mtw.tunnelsPage.Composite)
 	raise(tray.mtw.Handle())
 }
 

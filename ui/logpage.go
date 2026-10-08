@@ -21,19 +21,19 @@ const (
 )
 
 type LogPage struct {
-	*walk.TabPage
+	*walk.Composite
 	logView *walk.TableView
 	model   *logModel
 }
 
-func NewLogPage() (*LogPage, error) {
+func NewLogPage(parent walk.Container) (*LogPage, error) {
 	lp := &LogPage{}
 
 	var err error
 	var disposables walk.Disposables
 	defer disposables.Treat()
 
-	if lp.TabPage, err = walk.NewTabPage(); err != nil {
+	if lp.Composite, err = walk.NewComposite(parent); err != nil {
 		return nil, err
 	}
 	disposables.Add(lp)
@@ -42,13 +42,15 @@ func NewLogPage() (*LogPage, error) {
 		close(lp.model.quit)
 	})
 
-	lp.SetTitle(l18n.Sprintf("Log"))
 	lp.SetLayout(walk.NewVBoxLayout())
+	applyDarkSurface(lp, uiCanvasBrush)
 
 	if lp.logView, err = walk.NewTableView(lp); err != nil {
 		return nil, err
 	}
 	lp.logView.SetAlternatingRowBG(true)
+	applyDarkWindow(lp.logView.Handle())
+	lp.logView.SetBackground(uiCardBrush)
 	lp.logView.SetLastColumnStretched(true)
 	lp.logView.SetGridlines(true)
 

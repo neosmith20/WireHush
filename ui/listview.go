@@ -68,6 +68,8 @@ func NewListView(parent walk.Container) (*ListView, error) {
 	disposables.Add(tv)
 
 	tv.SetDoubleBuffering(true)
+	applyDarkWindow(tv.Handle())
+	tv.SetBackground(uiRailBrush)
 
 	model := new(ListModel)
 	model.lastObservedState = make(map[manager.Tunnel]manager.TunnelState)
@@ -116,6 +118,8 @@ func (tv *ListView) CurrentTunnel() *manager.Tunnel {
 var dummyBitmap *walk.Bitmap
 
 func (tv *ListView) StyleCell(style *walk.CellStyle) {
+	style.BackgroundColor = walk.RGB(12, 24, 34)
+	style.TextColor = uiTextColor
 	row := style.Row()
 	if row < 0 || row >= len(tv.model.tunnels) {
 		return

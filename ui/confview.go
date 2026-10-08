@@ -1,758 +1,800 @@
-/* SPDX-License-Identifier: MIT
- *
- * Copyright (C) 2019-2026 WireGuard LLC. All Rights Reserved.
- */
+//go:build windows
 
 package ui
 
 import (
-	"strconv"
+	"fmt"
+	"log"
+	"net/netip"
+	"runtime/debug"
 	"strings"
 	"time"
 
 	"github.com/lxn/walk"
 	"github.com/lxn/win"
-
 	"golang.zx2c4.com/wireguard/windows/conf"
-	"golang.zx2c4.com/wireguard/windows/l18n"
 	"golang.zx2c4.com/wireguard/windows/manager"
 )
 
-type widgetsLine interface {
-	widgets() (walk.Widget, walk.Widget)
-}
+type dashboardSection int
 
-type widgetsLinesView interface {
-	widgetsLines() []widgetsLine
-}
-
-type labelStatusLine struct {
-	label           *walk.TextLabel
-	statusComposite *walk.Composite
-	statusImage     *walk.ImageView
-	statusLabel     *walk.LineEdit
-}
-
-type labelTextLine struct {
-	label *walk.TextLabel
-	text  *walk.TextEdit
-}
-
-type toggleActiveLine struct {
-	composite *walk.Composite
-	button    *walk.PushButton
-}
-
-type interfaceView struct {
-	status       *labelStatusLine
-	publicKey    *labelTextLine
-	listenPort   *labelTextLine
-	mtu          *labelTextLine
-	addresses    *labelTextLine
-	dns          *labelTextLine
-	scripts      *labelTextLine
-	table        *labelTextLine
-	toggleActive *toggleActiveLine
-	lines        []widgetsLine
-}
-
-type peerView struct {
-	publicKey           *labelTextLine
-	presharedKey        *labelTextLine
-	allowedIPs          *labelTextLine
-	endpoint            *labelTextLine
-	persistentKeepalive *labelTextLine
-	latestHandshake     *labelTextLine
-	transfer            *labelTextLine
-	lines               []widgetsLine
-}
+const (
+	dashboardOverview dashboardSection = iota
+	dashboardNetwork
+	dashboardDNS
+	dashboardPeer
+	dashboardAllowedIPs
+)
 
 type ConfView struct {
 	*walk.ScrollView
-	name            *walk.GroupBox
-	interfaze       *interfaceView
-	peers           map[conf.Key]*peerView
-	tunnelChangedCB *manager.TunnelChangeCallback
-	tunnel          *manager.Tunnel
-	updateTicker    *time.Ticker
-	quit            chan struct{}
+	empty, dashboard      *walk.Composite
+	emptyImport, emptyAdd *darkButton
+	title, state          *walk.Label
+	connect               *darkButton
+	nav                   map[dashboardSection]*darkButton
+	pages                 map[dashboardSection]*walk.Composite
+	tunnel                *manager.Tunnel
+	tunnelChangedCB       *manager.TunnelChangeCallback
+	updateTicker          *time.Ticker
+	quit                  chan struct{}
+	traffic               trafficHistory
+	trafficTunnel         string
+	trafficGraph          *trafficGraph
+	trafficSummary        *walk.Label
+	summaryValues         []*walk.Label
+	rows                  map[string]*walk.Label
+	dnsHeading            *walk.Label
+	observedStart         time.Time
+	lastState             manager.TunnelState
+	lastTunnel            string
+	detailKey             string
+	trafficRx             uint64
+	trafficTx             uint64
 }
 
-func (lsl *labelStatusLine) widgets() (walk.Widget, walk.Widget) {
-	return lsl.label, lsl.statusComposite
-}
-
-func (lsl *labelStatusLine) update(state manager.TunnelState) {
-	icon, err := iconForState(state, 14)
-	if err == nil {
-		lsl.statusImage.SetImage(icon)
-	} else {
-		lsl.statusImage.SetImage(nil)
-	}
-
-	s, e := lsl.statusLabel.TextSelection()
-	lsl.statusLabel.SetText(textForState(state, false))
-	lsl.statusLabel.SetTextSelection(s, e)
-}
-
-func (lsl *labelStatusLine) Dispose() {
-	lsl.label.Dispose()
-	lsl.statusComposite.Dispose()
-}
-
-func newLabelStatusLine(parent walk.Container) (*labelStatusLine, error) {
-	var err error
-	var disposables walk.Disposables
-	defer disposables.Treat()
-
-	lsl := new(labelStatusLine)
-
-	if lsl.label, err = walk.NewTextLabel(parent); err != nil {
-		return nil, err
-	}
-	disposables.Add(lsl.label)
-	lsl.label.SetText(l18n.Sprintf("Status:"))
-	lsl.label.SetTextAlignment(walk.AlignHFarVNear)
-
-	if lsl.statusComposite, err = walk.NewComposite(parent); err != nil {
-		return nil, err
-	}
-	disposables.Add(lsl.statusComposite)
-	layout := walk.NewHBoxLayout()
-	layout.SetMargins(walk.Margins{})
-	layout.SetAlignment(walk.AlignHNearVNear)
-	layout.SetSpacing(0)
-	lsl.statusComposite.SetLayout(layout)
-
-	if lsl.statusImage, err = walk.NewImageView(lsl.statusComposite); err != nil {
-		return nil, err
-	}
-	disposables.Add(lsl.statusImage)
-	lsl.statusImage.SetMargin(2)
-	lsl.statusImage.SetMode(walk.ImageViewModeIdeal)
-
-	if lsl.statusLabel, err = walk.NewLineEdit(lsl.statusComposite); err != nil {
-		return nil, err
-	}
-	disposables.Add(lsl.statusLabel)
-	win.SetWindowLong(lsl.statusLabel.Handle(), win.GWL_EXSTYLE, win.GetWindowLong(lsl.statusLabel.Handle(), win.GWL_EXSTYLE)&^win.WS_EX_CLIENTEDGE)
-	lsl.statusLabel.SetReadOnly(true)
-	lsl.statusLabel.SetBackground(walk.NullBrush())
-	lsl.statusLabel.FocusedChanged().Attach(func() {
-		lsl.statusLabel.SetTextSelection(0, 0)
-	})
-	lsl.update(manager.TunnelUnknown)
-	lsl.statusLabel.Accessibility().SetRole(walk.AccRoleStatictext)
-
-	disposables.Spare()
-
-	return lsl, nil
-}
-
-func (lt *labelTextLine) widgets() (walk.Widget, walk.Widget) {
-	return lt.label, lt.text
-}
-
-func (lt *labelTextLine) show(text string) {
-	s, e := lt.text.TextSelection()
-	lt.text.SetText(text)
-	lt.label.SetVisible(true)
-	lt.text.SetVisible(true)
-	lt.text.SetTextSelection(s, e)
-}
-
-func (lt *labelTextLine) hide() {
-	lt.text.SetText("")
-	lt.label.SetVisible(false)
-	lt.text.SetVisible(false)
-}
-
-func (lt *labelTextLine) hideWithText(text string) {
-	lt.text.SetText(text)
-	lt.label.SetVisible(false)
-	lt.text.SetVisible(false)
-}
-
-func (lt *labelTextLine) Dispose() {
-	lt.label.Dispose()
-	lt.text.Dispose()
-}
-
-func newLabelTextLine(fieldName string, parent walk.Container) (*labelTextLine, error) {
-	var err error
-	var disposables walk.Disposables
-	defer disposables.Treat()
-
-	lt := new(labelTextLine)
-
-	if lt.label, err = walk.NewTextLabel(parent); err != nil {
-		return nil, err
-	}
-	disposables.Add(lt.label)
-	lt.label.SetText(fieldName)
-	lt.label.SetTextAlignment(walk.AlignHFarVNear)
-	lt.label.SetVisible(false)
-
-	if lt.text, err = walk.NewTextEdit(parent); err != nil {
-		return nil, err
-	}
-	disposables.Add(lt.text)
-	win.SetWindowLong(lt.text.Handle(), win.GWL_EXSTYLE, win.GetWindowLong(lt.text.Handle(), win.GWL_EXSTYLE)&^win.WS_EX_CLIENTEDGE)
-	lt.text.SetCompactHeight(true)
-	lt.text.SetReadOnly(true)
-	lt.text.SetBackground(walk.NullBrush())
-	lt.text.SetVisible(false)
-	lt.text.FocusedChanged().Attach(func() {
-		lt.text.SetTextSelection(0, 0)
-	})
-	lt.text.Accessibility().SetRole(walk.AccRoleStatictext)
-
-	disposables.Spare()
-
-	return lt, nil
-}
-
-func (tal *toggleActiveLine) widgets() (walk.Widget, walk.Widget) {
-	return nil, tal.composite
-}
-
-func (tal *toggleActiveLine) updateGlobal(globalState manager.TunnelState) {
-	tal.button.SetEnabled(globalState == manager.TunnelStarted || globalState == manager.TunnelStopped)
-}
-
-func (tal *toggleActiveLine) update(state manager.TunnelState) {
-	var text string
-
-	switch state {
-	case manager.TunnelStarted:
-		text = l18n.Sprintf("&Deactivate")
-	case manager.TunnelStopped:
-		text = l18n.Sprintf("&Activate")
-	case manager.TunnelStarting, manager.TunnelStopping:
-		text = textForState(state, true)
-	default:
-		text = ""
-	}
-
-	tal.button.SetText(text)
-	tal.button.SetVisible(state != manager.TunnelUnknown)
-}
-
-func (tal *toggleActiveLine) Dispose() {
-	tal.composite.Dispose()
-}
-
-func newToggleActiveLine(parent walk.Container) (*toggleActiveLine, error) {
-	var err error
-	var disposables walk.Disposables
-	defer disposables.Treat()
-
-	tal := new(toggleActiveLine)
-
-	if tal.composite, err = walk.NewComposite(parent); err != nil {
-		return nil, err
-	}
-	disposables.Add(tal.composite)
-	layout := walk.NewHBoxLayout()
-	layout.SetMargins(walk.Margins{0, 0, 0, 6})
-	tal.composite.SetLayout(layout)
-
-	if tal.button, err = walk.NewPushButton(tal.composite); err != nil {
-		return nil, err
-	}
-	disposables.Add(tal.button)
-	walk.NewHSpacer(tal.composite)
-	tal.update(manager.TunnelStopped)
-
-	disposables.Spare()
-
-	return tal, nil
-}
-
-type labelTextLineItem struct {
-	label string
-	ptr   **labelTextLine
-}
-
-func createLabelTextLines(items []labelTextLineItem, parent walk.Container, disposables *walk.Disposables) ([]widgetsLine, error) {
-	var err error
-	var disps walk.Disposables
-	defer disps.Treat()
-
-	wls := make([]widgetsLine, len(items))
-	for i, item := range items {
-		if *item.ptr, err = newLabelTextLine(item.label, parent); err != nil {
-			return nil, err
-		}
-		disps.Add(*item.ptr)
-		if disposables != nil {
-			disposables.Add(*item.ptr)
-		}
-		wls[i] = *item.ptr
-	}
-
-	disps.Spare()
-
-	return wls, nil
-}
-
-func newInterfaceView(parent walk.Container) (*interfaceView, error) {
-	var err error
-	var disposables walk.Disposables
-	defer disposables.Treat()
-
-	iv := new(interfaceView)
-
-	if iv.status, err = newLabelStatusLine(parent); err != nil {
-		return nil, err
-	}
-	disposables.Add(iv.status)
-
-	items := []labelTextLineItem{
-		{l18n.Sprintf("Public Key:"), &iv.publicKey},
-		{l18n.Sprintf("Listen Port:"), &iv.listenPort},
-		{l18n.Sprintf("MTU:"), &iv.mtu},
-		{l18n.Sprintf("Addresses:"), &iv.addresses},
-		{l18n.Sprintf("DNS Servers:"), &iv.dns},
-		{l18n.Sprintf("Scripts:"), &iv.scripts},
-		{l18n.Sprintf("Table:"), &iv.table},
-	}
-	if iv.lines, err = createLabelTextLines(items, parent, &disposables); err != nil {
-		return nil, err
-	}
-
-	if iv.toggleActive, err = newToggleActiveLine(parent); err != nil {
-		return nil, err
-	}
-	disposables.Add(iv.toggleActive)
-
-	iv.lines = append([]widgetsLine{iv.status}, append(iv.lines, iv.toggleActive)...)
-
-	layoutInGrid(iv, parent.Layout().(*walk.GridLayout))
-
-	disposables.Spare()
-
-	return iv, nil
-}
-
-func newPeerView(parent walk.Container) (*peerView, error) {
-	pv := new(peerView)
-
-	items := []labelTextLineItem{
-		{l18n.Sprintf("Public Key:"), &pv.publicKey},
-		{l18n.Sprintf("Preshared Key:"), &pv.presharedKey},
-		{l18n.Sprintf("Allowed IPs:"), &pv.allowedIPs},
-		{l18n.Sprintf("Endpoint:"), &pv.endpoint},
-		{l18n.Sprintf("Persistent Keepalive:"), &pv.persistentKeepalive},
-		{l18n.Sprintf("Latest Handshake:"), &pv.latestHandshake},
-		{l18n.Sprintf("Transfer:"), &pv.transfer},
-	}
-	var err error
-	if pv.lines, err = createLabelTextLines(items, parent, nil); err != nil {
-		return nil, err
-	}
-
-	layoutInGrid(pv, parent.Layout().(*walk.GridLayout))
-
-	return pv, nil
-}
-
-func layoutInGrid(view widgetsLinesView, layout *walk.GridLayout) {
-	for i, l := range view.widgetsLines() {
-		w1, w2 := l.widgets()
-
-		if w1 != nil {
-			layout.SetRange(w1, walk.Rectangle{0, i, 1, 1})
-		}
-		if w2 != nil {
-			layout.SetRange(w2, walk.Rectangle{2, i, 1, 1})
-		}
-	}
-}
-
-func (iv *interfaceView) widgetsLines() []widgetsLine {
-	return iv.lines
-}
-
-func (iv *interfaceView) apply(c *conf.Interface, state manager.TunnelState) {
-	if IsAdmin {
-		iv.publicKey.show(c.PrivateKey.Public().String())
-	} else {
-		iv.publicKey.hideWithText(c.PrivateKey.Public().String())
-	}
-
-	if c.ListenPort > 0 {
-		iv.listenPort.show(strconv.Itoa(int(c.ListenPort)))
-	} else {
-		iv.listenPort.hide()
-	}
-
-	if c.MTU > 0 {
-		iv.mtu.show(strconv.Itoa(int(c.MTU)))
-	} else {
-		iv.mtu.hide()
-	}
-
-	if len(c.Addresses) > 0 {
-		addrStrings := make([]string, len(c.Addresses))
-		for i, address := range c.Addresses {
-			addrStrings[i] = address.String()
-		}
-		iv.addresses.show(strings.Join(addrStrings[:], l18n.EnumerationSeparator()))
-	} else {
-		iv.addresses.hide()
-	}
-
-	if len(c.DNSOverHTTPS) > 0 {
-		if state == manager.TunnelStarting {
-			iv.dns.show(l18n.Sprintf("Encrypted (DoH): initializing"))
-		} else {
-			status := l18n.Sprintf("Encrypted (DoH)")
-			if state == manager.TunnelStopped {
-				status += l18n.Sprintf(" (ready on activation)")
-			}
-			iv.dns.show(status + ": " + strings.Join(c.DNSOverHTTPS, l18n.EnumerationSeparator()))
-		}
-	} else if len(c.DNS)+len(c.DNSSearch) > 0 {
-		addrStrings := make([]string, 0, len(c.DNS)+len(c.DNSSearch))
-		for _, address := range c.DNS {
-			addrStrings = append(addrStrings, address.String())
-		}
-		addrStrings = append(addrStrings, c.DNSSearch...)
-		iv.dns.show(l18n.Sprintf("Plain: %s", strings.Join(addrStrings[:], l18n.EnumerationSeparator())))
-	} else {
-		iv.dns.hide()
-	}
-
-	var scriptsInUse []string
-	if len(c.PreUp) > 0 {
-		scriptsInUse = append(scriptsInUse, l18n.Sprintf("pre-up"))
-	}
-	if len(c.PostUp) > 0 {
-		scriptsInUse = append(scriptsInUse, l18n.Sprintf("post-up"))
-	}
-	if len(c.PreDown) > 0 {
-		scriptsInUse = append(scriptsInUse, l18n.Sprintf("pre-down"))
-	}
-	if len(c.PostDown) > 0 {
-		scriptsInUse = append(scriptsInUse, l18n.Sprintf("post-down"))
-	}
-	if len(scriptsInUse) > 0 {
-		if conf.AdminBool("DangerousScriptExecution") {
-			iv.scripts.show(strings.Join(scriptsInUse, l18n.EnumerationSeparator()))
-		} else {
-			iv.scripts.show(l18n.Sprintf("disabled, per policy"))
-		}
-	} else {
-		iv.scripts.hide()
-	}
-
-	if c.TableOff {
-		iv.table.show(l18n.Sprintf("off"))
-	} else {
-		iv.table.hide()
-	}
-}
-
-func (iv *interfaceView) showDNSError(err error) {
-	if err != nil {
-		iv.dns.show(l18n.Sprintf("Encrypted (DoH): error: %v", err))
-	}
-}
-
-func (pv *peerView) widgetsLines() []widgetsLine {
-	return pv.lines
-}
-
-func (pv *peerView) apply(c *conf.Peer) {
-	if IsAdmin {
-		pv.publicKey.show(c.PublicKey.String())
-	} else {
-		pv.publicKey.hideWithText(c.PublicKey.String())
-	}
-
-	if !c.PresharedKey.IsZero() && IsAdmin {
-		pv.presharedKey.show(l18n.Sprintf("enabled"))
-	} else {
-		pv.presharedKey.hide()
-	}
-
-	if len(c.AllowedIPs) > 0 {
-		addrStrings := make([]string, len(c.AllowedIPs))
-		for i, address := range c.AllowedIPs {
-			addrStrings[i] = address.String()
-		}
-		pv.allowedIPs.show(strings.Join(addrStrings[:], l18n.EnumerationSeparator()))
-	} else {
-		pv.allowedIPs.hide()
-	}
-
-	if !c.Endpoint.IsEmpty() {
-		pv.endpoint.show(c.Endpoint.String())
-	} else {
-		pv.endpoint.hide()
-	}
-
-	if c.PersistentKeepalive > 0 {
-		pv.persistentKeepalive.show(strconv.Itoa(int(c.PersistentKeepalive)))
-	} else {
-		pv.persistentKeepalive.hide()
-	}
-
-	if !c.LastHandshakeTime.IsEmpty() {
-		pv.latestHandshake.show(c.LastHandshakeTime.String())
-	} else {
-		pv.latestHandshake.hide()
-	}
-
-	if c.RxBytes > 0 || c.TxBytes > 0 {
-		pv.transfer.show(l18n.Sprintf("%s received, %s sent", c.RxBytes.String(), c.TxBytes.String()))
-	} else {
-		pv.transfer.hide()
-	}
-}
-
-func newPaddedGroupGrid(parent walk.Container) (group *walk.GroupBox, err error) {
-	group, err = walk.NewGroupBox(parent)
+func newDashboardCard(parent walk.Container, title string) (*walk.Composite, error) {
+	card, err := walk.NewComposite(parent)
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		if err != nil {
-			group.Dispose()
-		}
-	}()
-	layout := walk.NewGridLayout()
-	layout.SetMargins(walk.Margins{10, 5, 10, 5})
-	layout.SetSpacing(0)
-	err = group.SetLayout(layout)
-	if err != nil {
-		return nil, err
+	l := walk.NewVBoxLayout()
+	l.SetMargins(walk.Margins{16, 14, 16, 14})
+	l.SetSpacing(8)
+	if err := card.SetLayout(l); err != nil {
+		card.Dispose()
+		return nil, fmt.Errorf("card layout: %w", err)
 	}
-	spacer, err := walk.NewSpacerWithCfg(group, &walk.SpacerCfg{walk.GrowableHorz | walk.GreedyHorz, walk.Size{10, 0}, false})
+	applyDarkSurface(card, uiCardBrush)
+	h, err := walk.NewLabel(card)
 	if err != nil {
-		return nil, err
+		card.Dispose()
+		return nil, fmt.Errorf("card heading: %w", err)
 	}
-	layout.SetRange(spacer, walk.Rectangle{1, 0, 1, 1})
-	return group, nil
+	h.SetText(title)
+	h.SetTextColor(uiTextColor)
+	f, err := walk.NewFont("Segoe UI Semibold", 12, 0)
+	if err != nil {
+		card.Dispose()
+		return nil, fmt.Errorf("card heading font: %w", err)
+	}
+	h.SetFont(f)
+	return card, nil
+}
+func newDashboardRow(parent walk.Container, label, value string) (*walk.Label, error) {
+	row, err := walk.NewComposite(parent)
+	if err != nil {
+		return nil, fmt.Errorf("row container: %w", err)
+	}
+	l := walk.NewHBoxLayout()
+	l.SetMargins(walk.Margins{})
+	if err := row.SetLayout(l); err != nil {
+		row.Dispose()
+		return nil, fmt.Errorf("row layout: %w", err)
+	}
+	k, err := walk.NewLabel(row)
+	if err != nil {
+		row.Dispose()
+		return nil, fmt.Errorf("row label: %w", err)
+	}
+	k.SetText(label)
+	applyMutedText(k)
+	walk.NewHSpacer(row)
+	v, err := walk.NewLabel(row)
+	if err != nil {
+		row.Dispose()
+		return nil, fmt.Errorf("row value: %w", err)
+	}
+	v.SetText(value)
+	v.SetTextColor(uiTextColor)
+	return v, nil
+}
+
+func addDashboardRow(parent walk.Container, label, value string) *walk.Label {
+	v, err := newDashboardRow(parent, label, value)
+	if err != nil {
+		log.Printf("dashboard row %q: %v", label, err)
+	}
+	return v
+}
+
+func (v *ConfView) row(parent walk.Container, key, label, value string) error {
+	valueLabel, err := newDashboardRow(parent, label, value)
+	if err != nil {
+		return fmt.Errorf("dashboard row %q: %w", key, err)
+	}
+	v.rows[key] = valueLabel
+	return nil
 }
 
 func NewConfView(parent walk.Container) (*ConfView, error) {
+	v := &ConfView{nav: map[dashboardSection]*darkButton{}, pages: map[dashboardSection]*walk.Composite{}, rows: map[string]*walk.Label{}}
 	var err error
-	var disposables walk.Disposables
-	defer disposables.Treat()
-
-	cv := new(ConfView)
-	if cv.ScrollView, err = walk.NewScrollView(parent); err != nil {
-		return nil, err
-	}
-	disposables.Add(cv)
-	vlayout := walk.NewVBoxLayout()
-	vlayout.SetMargins(walk.Margins{5, 0, 5, 0})
-	cv.SetLayout(vlayout)
-	if cv.name, err = newPaddedGroupGrid(cv); err != nil {
-		return nil, err
-	}
-	if cv.interfaze, err = newInterfaceView(cv.name); err != nil {
-		return nil, err
-	}
-	cv.interfaze.toggleActive.button.Clicked().Attach(cv.onToggleActiveClicked)
-	cv.peers = make(map[conf.Key]*peerView)
-	cv.tunnelChangedCB = manager.IPCClientRegisterTunnelChange(cv.onTunnelChanged)
-	cv.SetTunnel(nil)
-	globalState, err := manager.IPCClientGlobalState()
+	v.ScrollView, err = walk.NewScrollView(parent)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("connection view: %w", err)
 	}
-	cv.interfaze.toggleActive.updateGlobal(globalState)
-
-	if err := walk.InitWrapperWindow(cv); err != nil {
-		return nil, err
+	l := walk.NewVBoxLayout()
+	l.SetMargins(walk.Margins{18, 18, 18, 18})
+	l.SetSpacing(14)
+	if err := v.SetLayout(l); err != nil {
+		return nil, fmt.Errorf("connection view layout: %w", err)
 	}
-	cv.SetDoubleBuffering(true)
-	cv.updateTicker = time.NewTicker(time.Second)
-	cv.quit = make(chan struct{})
-	go func() {
-		for {
-			select {
-			case <-cv.updateTicker.C:
-				if !cv.Visible() || !cv.Form().Visible() || win.IsIconic(cv.Form().Handle()) {
-					continue
-				}
-				if cv.tunnel != nil {
-					tunnel := cv.tunnel
-					var state manager.TunnelState
-					var config conf.Config
-					if state, _ = tunnel.State(); state == manager.TunnelStarted {
-						config, _ = tunnel.RuntimeConfig()
-					}
-					if config.Name == "" {
-						config, _ = tunnel.StoredConfig()
-					}
-					cv.Synchronize(func() {
-						cv.setTunnel(tunnel, &config, state)
-					})
-				}
-			case <-cv.quit:
-				return
+	applyDarkSurface(v, uiCanvasBrush)
+	v.empty, err = walk.NewComposite(v)
+	if err != nil {
+		return nil, fmt.Errorf("empty state container: %w", err)
+	}
+	el := walk.NewVBoxLayout()
+	el.SetMargins(walk.Margins{80, 100, 80, 80})
+	el.SetAlignment(walk.AlignHCenterVNear)
+	el.SetSpacing(12)
+	if err := v.empty.SetLayout(el); err != nil {
+		v.empty.Dispose()
+		return nil, fmt.Errorf("empty state layout: %w", err)
+	}
+	applyDarkSurface(v.empty, uiCanvasBrush)
+	logo, err := loadLogoIcon(64)
+	if err != nil {
+		return nil, fmt.Errorf("empty state logo: %w", err)
+	}
+	if logo != nil {
+		im, imageErr := walk.NewImageView(v.empty)
+		if imageErr != nil {
+			return nil, fmt.Errorf("empty state logo image: %w", imageErr)
+		}
+		im.SetImage(logo)
+		im.SetMinMaxSize(walk.Size{64, 64}, walk.Size{64, 64})
+	}
+	et, err := walk.NewLabel(v.empty)
+	if err != nil {
+		return nil, fmt.Errorf("empty state title: %w", err)
+	}
+	et.SetText("No Connection Selected")
+	et.SetTextColor(uiTextColor)
+	ef, err := walk.NewFont("Segoe UI Semibold", 18, 0)
+	if err != nil {
+		return nil, fmt.Errorf("empty state title font: %w", err)
+	}
+	et.SetFont(ef)
+	ed, err := walk.NewLabel(v.empty)
+	if err != nil {
+		return nil, fmt.Errorf("empty state description: %w", err)
+	}
+	ed.SetText("Select a connection from the left or import a tunnel to get started.")
+	applyMutedText(ed)
+	v.emptyImport, err = newDarkButton(v.empty, "Import Tunnel(s)", true)
+	if err != nil {
+		return nil, fmt.Errorf("empty import button: %w", err)
+	}
+	v.emptyAdd, err = newDarkButton(v.empty, "Add Tunnel", false)
+	if err != nil {
+		return nil, fmt.Errorf("empty add button: %w", err)
+	}
+	v.dashboard, err = walk.NewComposite(v)
+	if err != nil {
+		return nil, fmt.Errorf("dashboard container: %w", err)
+	}
+	dl := walk.NewVBoxLayout()
+	dl.SetMargins(walk.Margins{})
+	dl.SetSpacing(12)
+	if err := v.dashboard.SetLayout(dl); err != nil {
+		v.dashboard.Dispose()
+		return nil, fmt.Errorf("dashboard layout: %w", err)
+	}
+	applyDarkSurface(v.dashboard, uiCanvasBrush)
+	v.dashboard.SetVisible(false)
+	header, err := walk.NewComposite(v.dashboard)
+	if err != nil {
+		return nil, fmt.Errorf("dashboard header: %w", err)
+	}
+	hl := walk.NewHBoxLayout()
+	hl.SetMargins(walk.Margins{18, 16, 18, 16})
+	hl.SetSpacing(12)
+	if err := header.SetLayout(hl); err != nil {
+		header.Dispose()
+		return nil, fmt.Errorf("dashboard header layout: %w", err)
+	}
+	applyDarkSurface(header, uiCardBrush)
+	left, err := walk.NewComposite(header)
+	if err != nil {
+		return nil, fmt.Errorf("dashboard header left content: %w", err)
+	}
+	if err := left.SetLayout(walk.NewVBoxLayout()); err != nil {
+		left.Dispose()
+		return nil, fmt.Errorf("dashboard header left layout: %w", err)
+	}
+	applyDarkSurface(left, uiCardBrush)
+	v.title, err = walk.NewLabel(left)
+	if err != nil {
+		return nil, fmt.Errorf("dashboard title: %w", err)
+	}
+	v.title.SetTextColor(uiTextColor)
+	tf, err := walk.NewFont("Segoe UI Semibold", 22, 0)
+	if err != nil {
+		return nil, fmt.Errorf("dashboard title font: %w", err)
+	}
+	v.title.SetFont(tf)
+	v.state, err = walk.NewLabel(left)
+	if err != nil {
+		return nil, fmt.Errorf("dashboard state: %w", err)
+	}
+	applyMutedText(v.state)
+	walk.NewHSpacer(header)
+	v.connect, err = newDarkButton(header, "Connect", true)
+	if err != nil {
+		return nil, fmt.Errorf("dashboard connect button: %w", err)
+	}
+	v.connect.SetMinMaxSize(walk.Size{170, 52}, walk.Size{170, 52})
+	v.connect.Clicked().Attach(v.onToggle)
+	summary, err := walk.NewComposite(v.dashboard)
+	if err != nil {
+		return nil, fmt.Errorf("dashboard summary: %w", err)
+	}
+	sl := walk.NewHBoxLayout()
+	sl.SetMargins(walk.Margins{})
+	sl.SetSpacing(12)
+	if err := summary.SetLayout(sl); err != nil {
+		summary.Dispose()
+		return nil, fmt.Errorf("dashboard summary layout: %w", err)
+	}
+	applyDarkSurface(summary, uiCanvasBrush)
+	for _, label := range []string{"VPN IP (IPv4)", "VPN IP (IPv6)", "Endpoint", "Latest Handshake"} {
+		c, cardErr := newDashboardCard(summary, label)
+		if cardErr != nil {
+			return nil, fmt.Errorf("dashboard summary card %q: %w", label, cardErr)
+		}
+		value, rowErr := newDashboardRow(c, "", "Not Assigned")
+		if rowErr != nil {
+			return nil, fmt.Errorf("dashboard summary value %q: %w", label, rowErr)
+		}
+		v.summaryValues = append(v.summaryValues, value)
+		c.SetMinMaxSize(walk.Size{180, 88}, walk.Size{0, 88})
+	}
+	navigation, err := walk.NewComposite(v.dashboard)
+	if err != nil {
+		return nil, fmt.Errorf("dashboard navigation: %w", err)
+	}
+	nl := walk.NewHBoxLayout()
+	nl.SetMargins(walk.Margins{})
+	nl.SetSpacing(4)
+	if err := navigation.SetLayout(nl); err != nil {
+		navigation.Dispose()
+		return nil, fmt.Errorf("dashboard navigation layout: %w", err)
+	}
+	for i, label := range []string{"Overview", "Network", "DNS", "Peer", "Allowed IPs"} {
+		s := dashboardSection(i)
+		b, buttonErr := newDarkButton(navigation, label, false)
+		if buttonErr != nil {
+			return nil, fmt.Errorf("navigation button %q: %w", label, buttonErr)
+		}
+		v.nav[s] = b
+		b.Clicked().Attach(func() { v.showSection(s) })
+	}
+	for i := dashboardOverview; i <= dashboardAllowedIPs; i++ {
+		p, pageErr := walk.NewComposite(v.dashboard)
+		if pageErr != nil {
+			return nil, fmt.Errorf("dashboard page %d: %w", i, pageErr)
+		}
+		if i == dashboardOverview {
+			layout := walk.NewHBoxLayout()
+			layout.SetMargins(walk.Margins{})
+			layout.SetSpacing(12)
+			if layoutErr := p.SetLayout(layout); layoutErr != nil {
+				p.Dispose()
+				return nil, fmt.Errorf("overview layout: %w", layoutErr)
 			}
+		} else {
+			layout := walk.NewVBoxLayout()
+			layout.SetMargins(walk.Margins{})
+			layout.SetSpacing(12)
+			if layoutErr := p.SetLayout(layout); layoutErr != nil {
+				p.Dispose()
+				return nil, fmt.Errorf("dashboard page layout %d: %w", i, layoutErr)
+			}
+		}
+		applyDarkSurface(p, uiCanvasBrush)
+		p.SetVisible(false)
+		v.pages[i] = p
+	}
+	ov := v.pages[dashboardOverview]
+	connection, err := newDashboardCard(ov, "Connection")
+	if err != nil {
+		return nil, fmt.Errorf("connection card: %w", err)
+	}
+	for _, row := range []struct{ key, label, value string }{
+		{"connection.status", "Status", "Disconnected"},
+		{"connection.name", "Tunnel Name", "—"},
+		{"connection.addresses", "Addresses", "Not Assigned"},
+		{"connection.uptime", "Uptime", "—"},
+		{"connection.listen", "Listen Port", "Not configured"},
+	} {
+		if err := v.row(connection, row.key, row.label, row.value); err != nil {
+			return nil, err
+		}
+	}
+	traffic, err := newDashboardCard(ov, "Traffic")
+	if err != nil {
+		return nil, fmt.Errorf("traffic card: %w", err)
+	}
+	v.trafficGraph, err = newTrafficGraph(traffic, &v.traffic)
+	if err != nil {
+		return nil, fmt.Errorf("traffic graph: %w", err)
+	}
+	if v.trafficGraph == nil {
+		return nil, fmt.Errorf("traffic graph constructor returned nil widget")
+	}
+	v.trafficSummary, err = walk.NewLabel(traffic)
+	if err != nil {
+		return nil, fmt.Errorf("traffic summary label: %w", err)
+	}
+	applyMutedText(v.trafficSummary)
+	dns, err := newDashboardCard(ov, "DNS")
+	if err != nil {
+		return nil, fmt.Errorf("dns card: %w", err)
+	}
+	// The first child is the heading; retain it so DoH can truthfully be
+	// called out as encrypted when configured.
+	if dns.Children().Len() == 0 {
+		return nil, fmt.Errorf("dns card heading missing")
+	}
+	var ok bool
+	v.dnsHeading, ok = dns.Children().At(0).(*walk.Label)
+	if !ok || v.dnsHeading == nil {
+		return nil, fmt.Errorf("dns card heading has unexpected type")
+	}
+	for _, row := range []struct{ key, label, value string }{
+		{"dns.mode", "Mode", "Not Configured"},
+		{"dns.resolver", "Resolver", "Not configured"},
+		{"dns.family", "Address Family", "—"},
+		{"dns.fallback", "Fallback", "Disabled"},
+	} {
+		if err := v.row(dns, row.key, row.label, row.value); err != nil {
+			return nil, err
+		}
+	}
+	peer, err := newDashboardCard(ov, "Peer")
+	if err != nil {
+		return nil, fmt.Errorf("peer card: %w", err)
+	}
+	for _, row := range []struct{ key, label, value string }{
+		{"peer.endpoint", "Endpoint", "Not Configured"},
+		{"peer.allowed", "Allowed IPs", "Not configured"},
+		{"peer.keepalive", "Persistent Keepalive", "Disabled"},
+		{"peer.handshake", "Latest Handshake", "No handshake yet"},
+		{"peer.psk", "Preshared Key", "Not configured"},
+	} {
+		if err := v.row(peer, row.key, row.label, row.value); err != nil {
+			return nil, err
+		}
+	}
+	v.showSection(dashboardOverview)
+	v.tunnelChangedCB = manager.IPCClientRegisterTunnelChange(v.onChanged)
+	v.updateTicker = time.NewTicker(time.Second)
+	v.quit = make(chan struct{})
+	go v.loop()
+	return v, nil
+}
+
+// SetEmptyActions keeps the deliberate empty state connected to the existing
+// import and editor paths without giving the dashboard its own tunnel logic.
+func (v *ConfView) SetEmptyActions(importTunnel, addTunnel func()) {
+	v.emptyImport.Clicked().Attach(importTunnel)
+	v.emptyAdd.Clicked().Attach(addTunnel)
+}
+func (v *ConfView) showSection(s dashboardSection) {
+	for k, p := range v.pages {
+		p.SetVisible(k == s)
+		v.nav[k].primary = k == s
+		v.nav[k].Invalidate()
+	}
+}
+func (v *ConfView) loop() {
+	log.Printf("ConfView.loop ENTER")
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			log.Printf("PANIC IN ConfView.loop: %v\n%s", recovered, debug.Stack())
+			if syncer, ok := log.Writer().(interface{ Sync() error }); ok {
+				_ = syncer.Sync()
+			}
+			panic(recovered)
 		}
 	}()
-
-	disposables.Spare()
-
-	return cv, nil
-}
-
-func (cv *ConfView) Dispose() {
-	if cv.tunnelChangedCB != nil {
-		cv.tunnelChangedCB.Unregister()
-		cv.tunnelChangedCB = nil
-	}
-	if cv.updateTicker != nil {
-		cv.updateTicker.Stop()
-		close(cv.quit)
-		cv.updateTicker = nil
-	}
-	cv.ScrollView.Dispose()
-}
-
-func (cv *ConfView) onToggleActiveClicked() {
-	cv.interfaze.toggleActive.button.SetEnabled(false)
-	go func() {
-		oldState, err := cv.tunnel.Toggle()
-		if err != nil {
-			cv.Synchronize(func() {
-				if oldState == manager.TunnelUnknown {
-					showErrorCustom(cv.Form(), l18n.Sprintf("Failed to determine tunnel state"), err.Error())
-				} else if oldState == manager.TunnelStopped {
-					showErrorCustom(cv.Form(), l18n.Sprintf("Failed to activate tunnel"), err.Error())
-				} else if oldState == manager.TunnelStarted {
-					showErrorCustom(cv.Form(), l18n.Sprintf("Failed to deactivate tunnel"), err.Error())
+	for {
+		select {
+		case <-v.updateTicker.C:
+			log.Printf("ConfView.loop TICK begin")
+			if v.tunnel != nil && v.Visible() {
+				t := v.tunnel
+				log.Printf("ConfView.loop before State")
+				state, _ := t.State()
+				log.Printf("ConfView.loop after State")
+				c := conf.Config{}
+				if state == manager.TunnelStarted {
+					log.Printf("ConfView.loop before RuntimeConfig")
+					c, _ = t.RuntimeConfig()
 				}
-			})
-		}
-	}()
-}
-
-func (cv *ConfView) onTunnelChanged(tunnel *manager.Tunnel, state, globalState manager.TunnelState, err error) {
-	cv.Synchronize(func() {
-		cv.interfaze.toggleActive.updateGlobal(globalState)
-		if cv.tunnel != nil && cv.tunnel.Name == tunnel.Name {
-			cv.interfaze.status.update(state)
-			cv.interfaze.toggleActive.update(state)
-		}
-	})
-	if cv.tunnel != nil && cv.tunnel.Name == tunnel.Name {
-		var config conf.Config
-		if state == manager.TunnelStarted {
-			config, _ = tunnel.RuntimeConfig()
-		}
-		if config.Name == "" {
-			config, _ = tunnel.StoredConfig()
-		}
-		cv.Synchronize(func() {
-			cv.setTunnel(tunnel, &config, state)
-			if err != nil && len(config.Interface.DNSOverHTTPS) > 0 {
-				cv.interfaze.showDNSError(err)
+				if c.Name == "" {
+					log.Printf("ConfView.loop before StoredConfig")
+					c, _ = t.StoredConfig()
+				}
+				log.Printf("ConfView.loop before Synchronize")
+				v.Synchronize(func() { v.setTunnel(t, &c, state) })
+				log.Printf("ConfView.loop TICK queued")
 			}
-		})
+		case <-v.quit:
+			return
+		}
 	}
 }
-
-func (cv *ConfView) SetTunnel(tunnel *manager.Tunnel) {
-	cv.tunnel = tunnel // XXX: This races with the read in the updateTicker, but it's pointer-sized!
-
-	var config conf.Config
-	var state manager.TunnelState
-	if tunnel != nil {
-		go func() {
-			if state, _ = tunnel.State(); state == manager.TunnelStarted {
-				config, _ = tunnel.RuntimeConfig()
-			}
-			if config.Name == "" {
-				config, _ = tunnel.StoredConfig()
-			}
-			cv.Synchronize(func() {
-				cv.setTunnel(tunnel, &config, state)
-			})
-		}()
-	} else {
-		cv.setTunnel(tunnel, &config, state)
+func (v *ConfView) Dispose() {
+	if v.tunnelChangedCB != nil {
+		v.tunnelChangedCB.Unregister()
 	}
+	v.updateTicker.Stop()
+	close(v.quit)
+	v.ScrollView.Dispose()
 }
-
-func (cv *ConfView) setTunnel(tunnel *manager.Tunnel, config *conf.Config, state manager.TunnelState) {
-	if !(cv.tunnel == nil || tunnel == nil || tunnel.Name == cv.tunnel.Name) {
+func (v *ConfView) SetTunnel(t *manager.Tunnel) {
+	v.tunnel = t
+	if t == nil {
+		v.setTunnel(nil, &conf.Config{}, manager.TunnelUnknown)
 		return
 	}
-
-	title := l18n.Sprintf("Interface: %s", config.Name)
-	if cv.name.Title() != title {
-		cv.SetSuspended(true)
-		defer cv.SetSuspended(false)
-		cv.name.SetTitle(title)
-	}
-	cv.name.SetVisible(tunnel != nil)
-
-	cv.interfaze.apply(&config.Interface, state)
-	cv.interfaze.status.update(state)
-	cv.interfaze.toggleActive.update(state)
-	inverse := make(map[*peerView]bool, len(cv.peers))
-	all := make([]*peerView, 0, len(cv.peers))
-	for _, pv := range cv.peers {
-		inverse[pv] = true
-		all = append(all, pv)
-	}
-	someMatch := false
-	for _, peer := range config.Peers {
-		_, ok := cv.peers[peer.PublicKey]
-		if ok {
-			someMatch = true
-			break
-		}
-	}
-	for _, peer := range config.Peers {
-		if pv := cv.peers[peer.PublicKey]; (!someMatch && len(all) > 0) || pv != nil {
-			if pv == nil {
-				pv = all[0]
-				all = all[1:]
-				k, e := conf.NewPrivateKeyFromString(pv.publicKey.text.Text())
-				if e != nil {
-					continue
-				}
-				delete(cv.peers, *k)
-				cv.peers[peer.PublicKey] = pv
+	go func() {
+		s, _ := t.State()
+		c, _ := t.StoredConfig()
+		if s == manager.TunnelStarted {
+			if r, e := t.RuntimeConfig(); e == nil {
+				c = r
 			}
-			pv.apply(&peer)
-			inverse[pv] = false
-		} else {
-			group, err := newPaddedGroupGrid(cv)
-			if err != nil {
-				continue
+		}
+		v.Synchronize(func() { v.setTunnel(t, &c, s) })
+	}()
+}
+func (v *ConfView) onChanged(t *manager.Tunnel, s, global manager.TunnelState, err error) {
+	if v.tunnel != nil && t != nil && v.tunnel.Name == t.Name {
+		c, _ := t.StoredConfig()
+		if s == manager.TunnelStarted {
+			if r, e := t.RuntimeConfig(); e == nil {
+				c = r
 			}
-			group.SetTitle(l18n.Sprintf("Peer"))
-			pv, err := newPeerView(group)
-			if err != nil {
-				group.Dispose()
-				continue
-			}
-			pv.apply(&peer)
-			cv.peers[peer.PublicKey] = pv
 		}
-	}
-	for pv, remove := range inverse {
-		if !remove {
-			continue
-		}
-		k, e := conf.NewPrivateKeyFromString(pv.publicKey.text.Text())
-		if e != nil {
-			continue
-		}
-		delete(cv.peers, *k)
-		groupBox := pv.publicKey.label.Parent().AsContainerBase().Parent().(*walk.GroupBox)
-		groupBox.SetVisible(false)
-		groupBox.Parent().Children().Remove(groupBox)
-		groupBox.Dispose()
+		v.Synchronize(func() { v.setTunnel(t, &c, s) })
 	}
 }
+func (v *ConfView) onToggle() {
+	if v.tunnel == nil {
+		return
+	}
+	v.connect.SetEnabled(false)
+	go v.tunnel.Toggle()
+}
+func (v *ConfView) setTunnel(t *manager.Tunnel, c *conf.Config, s manager.TunnelState) {
+	v.empty.SetVisible(t == nil)
+	v.dashboard.SetVisible(t != nil)
+	if t == nil {
+		v.lastTunnel, v.lastState, v.observedStart = "", manager.TunnelUnknown, time.Time{}
+		return
+	}
+	if v.lastTunnel != t.Name {
+		v.traffic.reset()
+		v.trafficTunnel = t.Name
+		v.observedStart = time.Time{}
+		v.lastState = manager.TunnelUnknown
+		v.lastTunnel = t.Name
+	}
+	if s == manager.TunnelStarted && v.lastState != manager.TunnelStarted && v.lastState != manager.TunnelUnknown {
+		v.observedStart = time.Now()
+	}
+	if s != manager.TunnelStarted {
+		v.observedStart = time.Time{}
+	}
+	v.lastState = s
+	v.title.SetText(c.Name)
+	status := textForState(s, false)
+	if s == manager.TunnelStarted {
+		if !v.observedStart.IsZero() {
+			status = "Connected for " + formatDuration(time.Since(v.observedStart))
+		} else {
+			status = "Connected"
+		}
+		v.state.SetTextColor(uiHealthyColor)
+		v.connect.SetText("Disconnect")
+	} else {
+		applyMutedText(v.state)
+		v.connect.SetText("Connect")
+	}
+	v.state.SetText(status)
+	v.connect.SetEnabled(s == manager.TunnelStarted || s == manager.TunnelStopped)
+	ipv4, ipv6 := splitAddresses(c.Interface.Addresses)
+	endpoint, extraEndpoints := firstEndpoint(c.Peers)
+	if extraEndpoints > 0 {
+		endpoint += fmt.Sprintf("  +%d more", extraEndpoints)
+	}
+	handshake := newestHandshake(c.Peers)
+	for i, value := range []string{ipv4, ipv6, endpoint, handshake} {
+		v.summaryValues[i].SetText(value)
+	}
+	setRow := func(key, value string) {
+		if label := v.rows[key]; label != nil {
+			label.SetText(value)
+		}
+	}
+	setRow("connection.status", textForState(s, false))
+	setRow("connection.name", c.Name)
+	setRow("connection.addresses", strings.Join(joinAddresses(c.Interface.Addresses), ", "))
+	if c.Interface.ListenPort > 0 {
+		setRow("connection.listen", fmt.Sprintf("%d", c.Interface.ListenPort))
+	}
+	if !v.observedStart.IsZero() && s == manager.TunnelStarted {
+		setRow("connection.uptime", formatDuration(time.Since(v.observedStart)))
+	} else {
+		setRow("connection.uptime", "—")
+	}
+	mode, resolver, family := dnsDisplay(c)
+	if len(c.Interface.DNSOverHTTPS) > 0 {
+		v.dnsHeading.SetText("DNS (Encrypted)")
+	} else {
+		v.dnsHeading.SetText("DNS")
+	}
+	setRow("dns.mode", mode)
+	setRow("dns.resolver", resolver)
+	setRow("dns.family", family)
+	setRow("dns.fallback", "Disabled")
+	peer := firstPeer(c.Peers)
+	setRow("peer.endpoint", endpoint)
+	setRow("peer.allowed", allowedSummary(c.Peers))
+	setRow("peer.handshake", handshake)
+	if peer != nil && peer.PersistentKeepalive > 0 {
+		setRow("peer.keepalive", fmt.Sprintf("%d seconds", peer.PersistentKeepalive))
+	} else {
+		setRow("peer.keepalive", "Disabled")
+	}
+	if peer != nil && !peer.PresharedKey.IsZero() {
+		setRow("peer.psk", "Enabled")
+	} else {
+		setRow("peer.psk", "Not configured")
+	}
+	if s == manager.TunnelStarted {
+		rx, tx := peerCounters(c.Peers)
+		v.trafficRx, v.trafficTx = rx, tx
+		v.traffic.sample(time.Now(), rx, tx)
+	}
+	x := v.traffic.latest()
+	v.trafficSummary.SetText("Download " + formatRate(x.rxBps) + "   Upload " + formatRate(x.txBps) + "   Received " + formatBytes(v.trafficRx) + "   Sent " + formatBytes(v.trafficTx))
+	v.trafficGraph.Invalidate()
+	if key := detailFingerprint(c); key != v.detailKey {
+		v.detailKey = key
+		v.buildDetailPages(c)
+	}
+}
+
+func (v *ConfView) buildDetailPages(c *conf.Config) {
+	v.replaceDetails(v.pages[dashboardNetwork], func(parent *walk.Composite) {
+		card, _ := newDashboardCard(parent, "Network")
+		ipv4, ipv6 := splitAddresses(c.Interface.Addresses)
+		addDashboardRow(card, "IPv4 Address(es)", ipv4)
+		addDashboardRow(card, "IPv6 Address(es)", ipv6)
+		if c.Interface.ListenPort > 0 {
+			addDashboardRow(card, "Listen Port", fmt.Sprintf("%d", c.Interface.ListenPort))
+		}
+		if c.Interface.MTU > 0 {
+			addDashboardRow(card, "MTU", fmt.Sprintf("%d", c.Interface.MTU))
+		}
+		endpoint, extra := firstEndpoint(c.Peers)
+		if extra > 0 {
+			endpoint += fmt.Sprintf("  +%d more", extra)
+		}
+		addDashboardRow(card, "Endpoint(s)", endpoint)
+		if c.Interface.TableOff {
+			addDashboardRow(card, "Routing Table", "Disabled by configuration")
+		}
+	})
+	v.replaceDetails(v.pages[dashboardDNS], func(parent *walk.Composite) {
+		card, _ := newDashboardCard(parent, "DNS")
+		mode, resolver, family := dnsDisplay(c)
+		addDashboardRow(card, "DNS Mode", mode)
+		addDashboardRow(card, "Resolver", resolver)
+		if len(c.Interface.DNSSearch) > 0 {
+			addDashboardRow(card, "Search Suffixes", strings.Join(c.Interface.DNSSearch, ", "))
+		}
+		if len(c.Interface.DNSOverHTTPS) > 0 {
+			addDashboardRow(card, "Bootstrap Policy", "Family-Aware Bootstrap")
+			addDashboardRow(card, "Fallback", "Disabled")
+		}
+		addDashboardRow(card, "Address Family", family)
+	})
+	v.replaceDetails(v.pages[dashboardPeer], func(parent *walk.Composite) {
+		if len(c.Peers) == 0 {
+			card, _ := newDashboardCard(parent, "Peer")
+			addDashboardRow(card, "Status", "No peers configured")
+			return
+		}
+		for index, peer := range c.Peers {
+			card, _ := newDashboardCard(parent, fmt.Sprintf("Peer %d", index+1))
+			addDashboardRow(card, "Public Key", shortKey(peer.PublicKey.String()))
+			if peer.Endpoint.IsEmpty() {
+				addDashboardRow(card, "Endpoint", "Not configured")
+			} else {
+				addDashboardRow(card, "Endpoint", peer.Endpoint.String())
+			}
+			addDashboardRow(card, "Allowed IPs", joinPrefixes(peer.AllowedIPs))
+			addDashboardRow(card, "Latest Handshake", handshakeDisplay(peer.LastHandshakeTime))
+			addDashboardRow(card, "Received", formatBytes(uint64(peer.RxBytes)))
+			addDashboardRow(card, "Sent", formatBytes(uint64(peer.TxBytes)))
+			if peer.PersistentKeepalive > 0 {
+				addDashboardRow(card, "Persistent Keepalive", fmt.Sprintf("%d seconds", peer.PersistentKeepalive))
+			}
+			if !peer.PresharedKey.IsZero() {
+				addDashboardRow(card, "Preshared Key", "Enabled")
+			}
+		}
+	})
+	v.replaceDetails(v.pages[dashboardAllowedIPs], func(parent *walk.Composite) {
+		if len(c.Peers) == 0 {
+			card, _ := newDashboardCard(parent, "Allowed IPs")
+			addDashboardRow(card, "Status", "No peers configured")
+			return
+		}
+		for index, peer := range c.Peers {
+			card, _ := newDashboardCard(parent, "Peer "+shortKey(peer.PublicKey.String()))
+			addDashboardRow(card, fmt.Sprintf("Peer %d Prefixes", index+1), joinPrefixes(peer.AllowedIPs))
+		}
+	})
+}
+
+func (v *ConfView) replaceDetails(page *walk.Composite, build func(*walk.Composite)) {
+	for page.Children().Len() > 0 {
+		page.Children().At(0).Dispose()
+	}
+	build(page)
+}
+
+func splitAddresses(addresses []netip.Prefix) (string, string) {
+	var ipv4, ipv6 []string
+	for _, address := range addresses {
+		if address.Addr().Is4() {
+			ipv4 = append(ipv4, address.String())
+		} else if address.Addr().Is6() {
+			ipv6 = append(ipv6, address.String())
+		}
+	}
+	if len(ipv4) == 0 {
+		ipv4 = []string{"Not Assigned"}
+	}
+	if len(ipv6) == 0 {
+		ipv6 = []string{"Not Assigned"}
+	}
+	return strings.Join(ipv4, ", "), strings.Join(ipv6, ", ")
+}
+func joinAddresses(addresses []netip.Prefix) []string {
+	result := make([]string, 0, len(addresses))
+	for _, address := range addresses {
+		result = append(result, address.String())
+	}
+	if len(result) == 0 {
+		return []string{"Not Assigned"}
+	}
+	return result
+}
+func firstEndpoint(peers []conf.Peer) (string, int) {
+	for index, peer := range peers {
+		if !peer.Endpoint.IsEmpty() {
+			return peer.Endpoint.String(), len(peers) - index - 1
+		}
+	}
+	return "Not Configured", 0
+}
+func newestHandshake(peers []conf.Peer) string {
+	var newest conf.HandshakeTime
+	for _, peer := range peers {
+		if !peer.LastHandshakeTime.IsEmpty() && (newest.IsEmpty() || peer.LastHandshakeTime > newest) {
+			newest = peer.LastHandshakeTime
+		}
+	}
+	return handshakeDisplay(newest)
+}
+func handshakeDisplay(handshake conf.HandshakeTime) string {
+	if handshake.IsEmpty() {
+		return "No handshake yet"
+	}
+	return handshake.String()
+}
+func firstPeer(peers []conf.Peer) *conf.Peer {
+	if len(peers) == 0 {
+		return nil
+	}
+	return &peers[0]
+}
+func allowedSummary(peers []conf.Peer) string {
+	if len(peers) == 0 {
+		return "Not configured"
+	}
+	value := joinPrefixes(peers[0].AllowedIPs)
+	if len(peers) > 1 {
+		value += fmt.Sprintf("  +%d peer(s)", len(peers)-1)
+	}
+	return value
+}
+func joinPrefixes(prefixes []netip.Prefix) string {
+	if len(prefixes) == 0 {
+		return "Not configured"
+	}
+	values := make([]string, 0, len(prefixes))
+	for _, prefix := range prefixes {
+		values = append(values, prefix.String())
+	}
+	return strings.Join(values, ", ")
+}
+func dnsDisplay(c *conf.Config) (string, string, string) {
+	has4, has6 := false, false
+	for _, address := range c.Interface.Addresses {
+		has4 = has4 || address.Addr().Is4()
+		has6 = has6 || address.Addr().Is6()
+	}
+	family := "—"
+	if has4 && has6 {
+		family = "Dual-Stack"
+	} else if has4 {
+		family = "IPv4"
+	} else if has6 {
+		family = "IPv6"
+	}
+	if len(c.Interface.DNSOverHTTPS) > 0 {
+		return "DNS over HTTPS (DoH)", strings.Join(c.Interface.DNSOverHTTPS, ", "), family
+	}
+	if len(c.Interface.DNS) > 0 {
+		values := make([]string, 0, len(c.Interface.DNS))
+		for _, dns := range c.Interface.DNS {
+			values = append(values, dns.String())
+		}
+		return "Plain DNS", strings.Join(values, ", "), family
+	}
+	return "Not Configured", "Not configured", family
+}
+func shortKey(key string) string {
+	if len(key) <= 16 {
+		return key
+	}
+	return key[:8] + "..." + key[len(key)-6:]
+}
+func formatDuration(duration time.Duration) string {
+	if duration < time.Minute {
+		return "less than a minute"
+	}
+	hours, minutes := int(duration.Hours()), int(duration.Minutes())%60
+	if hours > 0 {
+		return fmt.Sprintf("%dh %dm", hours, minutes)
+	}
+	return fmt.Sprintf("%dm", minutes)
+}
+func detailFingerprint(c *conf.Config) string {
+	values := []string{c.Name, strings.Join(joinAddresses(c.Interface.Addresses), ","), strings.Join(c.Interface.DNSOverHTTPS, ","), fmt.Sprint(c.Interface.DNS), fmt.Sprint(c.Interface.DNSSearch), fmt.Sprint(c.Interface.ListenPort), fmt.Sprint(c.Interface.MTU), fmt.Sprint(c.Interface.TableOff)}
+	for _, peer := range c.Peers {
+		values = append(values, peer.PublicKey.String(), peer.Endpoint.String(), joinPrefixes(peer.AllowedIPs), fmt.Sprint(peer.PersistentKeepalive), fmt.Sprint(!peer.PresharedKey.IsZero()))
+	}
+	return strings.Join(values, "|")
+}
+
+var _ = win.IsIconic

@@ -7,17 +7,16 @@ package ui
 
 import (
 	"fmt"
+	"log"
 	"runtime"
 	"runtime/debug"
 	"time"
 
 	"github.com/lxn/walk"
-	"github.com/lxn/win"
 	"golang.org/x/sys/windows"
 
 	"golang.zx2c4.com/wireguard/windows/l18n"
 	"golang.zx2c4.com/wireguard/windows/manager"
-	"golang.zx2c4.com/wireguard/windows/version"
 )
 
 var (
@@ -28,6 +27,7 @@ var (
 )
 
 func RunUI() {
+	log.Printf("RunUI ENTER")
 	runtime.LockOSThread()
 	windows.SetProcessPriorityBoost(windows.CurrentProcess(), false)
 	defer func() {
@@ -44,21 +44,29 @@ func RunUI() {
 	)
 
 	for mtw == nil {
+		log.Printf("RunUI before NewManageTunnelsWindow")
 		mtw, err = NewManageTunnelsWindow()
 		if err != nil {
+			log.Printf("RunUI NewManageTunnelsWindow error: %v", err)
 			time.Sleep(time.Millisecond * 400)
+		} else {
+			log.Printf("RunUI after NewManageTunnelsWindow success")
 		}
 	}
 
 	for tray == nil {
+		log.Printf("RunUI before NewTray")
 		tray, err = NewTray(mtw)
 		if err != nil {
-			if version.OsIsCore() {
-				noTrayAvailable = true
-				break
-			}
-			time.Sleep(time.Millisecond * 400)
+			log.Printf("RunUI NewTray failure: %v", err)
+			// A missing or unavailable notification area must never prevent the
+			// main manager UI from starting. This is common in remote, kiosk, and
+			// shell-restart sessions, and the former retry loop kept the UI child
+			// alive forever before it ever entered its message loop.
+			noTrayAvailable = true
+			break
 		}
+		log.Printf("RunUI after NewTray success")
 	}
 
 	manager.IPCClientRegisterManagerStopping(func() {
@@ -92,10 +100,21 @@ func RunUI() {
 	}()
 
 	if tray == nil {
-		win.ShowWindow(mtw.Handle(), win.SW_MINIMIZE)
+		log.Printf("RunUI before mtw.Show")
+		// Use Walk's form lifecycle rather than a raw ShowWindow call. Show
+		// restores persistent bounds and publishes visibility to the layout;
+		// calling the raw API before Run left the completed form invisible on
+		// this VM.
+		mtw.Show()
+		log.Printf("RunUI after mtw.Show")
+		log.Printf("RunUI before raise")
+		raise(mtw.Handle())
+		log.Printf("RunUI after raise")
 	}
 
+	log.Printf("RunUI immediately before mtw.Run")
 	mtw.Run()
+	log.Printf("RunUI immediately after mtw.Run returned")
 	if tray != nil {
 		tray.Dispose()
 	}

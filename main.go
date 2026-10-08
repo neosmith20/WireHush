@@ -12,7 +12,9 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
@@ -256,6 +258,31 @@ func main() {
 	case "/ui":
 		if len(os.Args) != 6 {
 			usage()
+		}
+		var diagnosticFile *os.File
+		if path, openErr := filepath.Abs(`C:\TunnelMint-Test\WireHush-UI-Panic.log`); openErr == nil {
+			diagnosticFile, _ = os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+		}
+		if diagnosticFile != nil {
+			os.Stderr = diagnosticFile
+			os.Stdout = diagnosticFile
+			_ = windows.SetStdHandle(windows.STD_ERROR_HANDLE, windows.Handle(diagnosticFile.Fd()))
+			_ = windows.SetStdHandle(windows.STD_OUTPUT_HANDLE, windows.Handle(diagnosticFile.Fd()))
+			log.SetOutput(diagnosticFile)
+			log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+			debug.SetTraceback("all")
+			executable, _ := os.Executable()
+			fmt.Fprintf(diagnosticFile, "\n============================================================\nWIREHUSH UI PROCESS START\nTime: %s\nPID: %d\nExecutable: %s\nMode: /ui\n============================================================\n", time.Now().Format(time.RFC3339Nano), os.Getpid(), executable)
+			_ = diagnosticFile.Sync()
+			defer diagnosticFile.Close()
+			defer func() {
+				if recovered := recover(); recovered != nil {
+					fmt.Fprintf(diagnosticFile, "OUTER UI PANIC: %v\n", recovered)
+					debug.PrintStack()
+					_ = diagnosticFile.Sync()
+					panic(recovered)
+				}
+			}()
 		}
 		var processToken windows.Token
 		isAdmin := false

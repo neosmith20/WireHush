@@ -21,13 +21,20 @@ import (
 type ManageTunnelsWindow struct {
 	walk.FormBase
 
-	tabs         *walk.TabWidget
+	pageHost     *walk.Composite
+	header       *productHeader
 	tunnelsPage  *TunnelsPage
 	logPage      *LogPage
 	settingsPage *SettingsPage
 	updatePage   *UpdatePage
 
 	tunnelChangedCB *manager.TunnelChangeCallback
+}
+
+type productHeader struct {
+	connectionsButton *darkButton
+	logButton         *darkButton
+	settingsButton    *darkButton
 }
 
 const (
@@ -73,13 +80,15 @@ func NewManageTunnelsWindow() (*ManageTunnelsWindow, error) {
 	}
 	mtw.SetTitle(product.ManagerWindowTitle)
 	mtw.SetFont(font)
-	mtw.SetSize(walk.Size{675, 525})
-	mtw.SetMinMaxSize(walk.Size{500, 400}, walk.Size{0, 0})
+	mtw.SetSize(walk.Size{1400, 900})
+	mtw.SetMinMaxSize(walk.Size{1100, 700}, walk.Size{0, 0})
+	applyDarkWindow(mtw.Handle())
+	mtw.SetBackground(uiCanvasBrush)
 	vlayout := walk.NewVBoxLayout()
-	vlayout.SetMargins(walk.Margins{5, 5, 5, 5})
+	vlayout.SetMargins(walk.Margins{})
 	vlayout.SetSpacing(0)
 	mtw.SetLayout(vlayout)
-	if err = addProductHeader(mtw, &disposables); err != nil {
+	if mtw.header, err = addProductHeader(mtw, &disposables); err != nil {
 		return nil, err
 	}
 	mtw.Closing().Attach(func(canceled *bool, reason walk.CloseReason) {
@@ -92,25 +101,35 @@ func NewManageTunnelsWindow() (*ManageTunnelsWindow, error) {
 		}
 	})
 
-	if mtw.tabs, err = walk.NewTabWidget(mtw); err != nil {
+	if mtw.pageHost, err = walk.NewComposite(mtw); err != nil {
 		return nil, err
 	}
+	pageLayout := walk.NewVBoxLayout()
+	pageLayout.SetMargins(walk.Margins{})
+	mtw.pageHost.SetLayout(pageLayout)
+	applyDarkSurface(mtw.pageHost, uiCanvasBrush)
 
-	if mtw.tunnelsPage, err = NewTunnelsPage(); err != nil {
+	if mtw.tunnelsPage, err = NewTunnelsPage(mtw.pageHost); err != nil {
 		return nil, err
 	}
-	mtw.tabs.Pages().Add(mtw.tunnelsPage.TabPage)
 	mtw.tunnelsPage.CreateToolbar()
 
-	if mtw.logPage, err = NewLogPage(); err != nil {
+	if mtw.logPage, err = NewLogPage(mtw.pageHost); err != nil {
 		return nil, err
 	}
-	mtw.tabs.Pages().Add(mtw.logPage.TabPage)
 
-	if mtw.settingsPage, err = NewSettingsPage(); err != nil {
+	if mtw.settingsPage, err = NewSettingsPage(mtw.pageHost); err != nil {
 		return nil, err
 	}
-	mtw.tabs.Pages().Add(mtw.settingsPage.TabPage)
+	mtw.logPage.SetVisible(false)
+	mtw.settingsPage.SetVisible(false)
+	mtw.header.connectionsButton.Clicked().Attach(func() { mtw.showPage(mtw.tunnelsPage.Composite) })
+	mtw.header.logButton.Clicked().Attach(func() {
+		mtw.showPage(mtw.logPage.Composite)
+	})
+	mtw.header.settingsButton.Clicked().Attach(func() {
+		mtw.showPage(mtw.settingsPage.Composite)
+	})
 
 	mtw.VisibleChanged().Attach(func() {
 		if mtw.Visible() {
@@ -146,32 +165,34 @@ func NewManageTunnelsWindow() (*ManageTunnelsWindow, error) {
 	return mtw, nil
 }
 
-func addProductHeader(parent walk.Container, disposables *walk.Disposables) error {
+func addProductHeader(parent walk.Container, disposables *walk.Disposables) (*productHeader, error) {
+	productHeader := new(productHeader)
 	header, err := walk.NewComposite(parent)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	headerLayout := walk.NewHBoxLayout()
-	headerLayout.SetMargins(walk.Margins{14, 12, 14, 10})
+	headerLayout.SetMargins(walk.Margins{20, 16, 20, 14})
 	header.SetLayout(headerLayout)
-	header.SetMinMaxSize(walk.Size{0, 62}, walk.Size{0, 62})
+	header.SetMinMaxSize(walk.Size{0, 92}, walk.Size{0, 92})
+	applyDarkSurface(header, uiHeaderBrush)
 
 	icon, err := loadLogoIcon(40)
 	if err == nil {
 		imageView, imageErr := walk.NewImageView(header)
 		if imageErr != nil {
-			return imageErr
+			return nil, imageErr
 		}
 		imageView.SetMode(walk.ImageViewModeCenter)
-		imageView.SetMinMaxSize(walk.Size{40, 40}, walk.Size{40, 40})
+		imageView.SetMinMaxSize(walk.Size{52, 52}, walk.Size{52, 52})
 		if err := imageView.SetImage(icon); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	labels, err := walk.NewComposite(header)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	labelsLayout := walk.NewVBoxLayout()
 	labelsLayout.SetMargins(walk.Margins{10, 0, 0, 0})
@@ -179,32 +200,44 @@ func addProductHeader(parent walk.Container, disposables *walk.Disposables) erro
 	labels.SetLayout(labelsLayout)
 	title, err := walk.NewLabel(labels)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	title.SetText(l18n.Sprintf("WireHush"))
-	titleFont, err := walk.NewFont("Segoe UI Semibold", 13, 0)
+	title.SetTextColor(uiTextColor)
+	titleFont, err := walk.NewFont("Segoe UI Semibold", 22, 0)
 	if err == nil {
 		title.SetFont(titleFont)
 		disposables.Add(titleFont)
 	}
 	subtitle, err := walk.NewLabel(labels)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	subtitle.SetText(l18n.Sprintf("Private network control"))
+	applyMutedText(subtitle)
+	walk.NewHSpacer(header)
+	if productHeader.connectionsButton, err = newDarkButton(header, l18n.Sprintf("Connections"), false); err != nil {
+		return nil, err
+	}
+	if productHeader.logButton, err = newDarkButton(header, l18n.Sprintf("Log"), false); err != nil {
+		return nil, err
+	}
+	if productHeader.settingsButton, err = newDarkButton(header, l18n.Sprintf("Settings"), false); err != nil {
+		return nil, err
+	}
 
 	accent, err := walk.NewComposite(parent)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	accent.SetMinMaxSize(walk.Size{0, 3}, walk.Size{0, 3})
 	brush, err := walk.NewSolidColorBrush(walk.RGB(23, 195, 210))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	accent.SetBackground(brush)
 	disposables.Add(brush)
-	return nil
+	return productHeader, nil
 }
 
 func (mtw *ManageTunnelsWindow) Dispose() {
@@ -255,11 +288,8 @@ func (mtw *ManageTunnelsWindow) UpdateFound() {
 	if IsAdmin {
 		mtw.SetTitle(l18n.Sprintf("%s (out of date)", mtw.Title()))
 	}
-	updatePage, err := NewUpdatePage()
-	if err == nil {
-		mtw.updatePage = updatePage
-		mtw.tabs.Pages().Add(updatePage.TabPage)
-	}
+	// Update presentation remains available from the tray notification. The
+	// dashboard shell deliberately has no stock tab strip to host a page here.
 }
 
 func (mtw *ManageTunnelsWindow) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uintptr {
@@ -278,7 +308,7 @@ func (mtw *ManageTunnelsWindow) WndProc(hwnd win.HWND, msg uint32, wParam, lPara
 			return 0
 		}
 	case raiseMsg:
-		if mtw.tunnelsPage == nil || mtw.tabs == nil {
+		if mtw.tunnelsPage == nil || mtw.pageHost == nil {
 			mtw.Synchronize(func() {
 				mtw.SendMessage(msg, wParam, lParam)
 			})
@@ -286,10 +316,10 @@ func (mtw *ManageTunnelsWindow) WndProc(hwnd win.HWND, msg uint32, wParam, lPara
 		}
 		if !mtw.Visible() {
 			mtw.tunnelsPage.listView.SelectFirstActiveTunnel()
-			mtw.tabs.SetCurrentIndex(0)
+			mtw.showPage(mtw.tunnelsPage.Composite)
 		}
 		if mtw.updatePage != nil {
-			mtw.tabs.SetCurrentIndex(mtw.tabs.Pages().Index(mtw.updatePage.TabPage))
+			mtw.showPage(mtw.tunnelsPage.Composite)
 		}
 		raise(mtw.Handle())
 		return 0
@@ -307,4 +337,10 @@ func (mtw *ManageTunnelsWindow) WndProc(hwnd win.HWND, msg uint32, wParam, lPara
 	}
 
 	return mtw.FormBase.WndProc(hwnd, msg, wParam, lParam)
+}
+
+func (mtw *ManageTunnelsWindow) showPage(page *walk.Composite) {
+	mtw.tunnelsPage.SetVisible(page == mtw.tunnelsPage.Composite)
+	mtw.logPage.SetVisible(page == mtw.logPage.Composite)
+	mtw.settingsPage.SetVisible(page == mtw.settingsPage.Composite)
 }
