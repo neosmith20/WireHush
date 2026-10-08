@@ -10,8 +10,9 @@ Branch: `hotfix/windows-version-gate`
 
 - `a8d176635ca7f2866dbad3b740e63b72216ccd94` — fix the modern Windows installer version gate and add artifact clean-tree provenance checks.
 - `5b45b66aa5f19276972a579324d24fa40bdeab65` — remove the mutable destination-folder wizard path and add regression coverage for the fixed-path UI.
+- `5f14fece6cde1c0f94e1be33dc26af9fe409911f` — normalize executable company metadata and remove Windows scheduler sensitivity from the DoH fallback timing test without changing production DoH logic.
 
-The tested packaged source is exactly `5b45b66aa5f19276972a579324d24fa40bdeab65`.
+The tested packaged source is exactly `5f14fece6cde1c0f94e1be33dc26af9fe409911f`.
 
 ## Test host
 
@@ -24,8 +25,8 @@ The tested packaged source is exactly `5b45b66aa5f19276972a579324d24fa40bdeab65`
 
 | Architecture | MSI | Bytes | SHA-256 |
 | --- | --- | ---: | --- |
-| x64 | `.artifacts/v1/x64/b44a936d985e453e894b2324abbc18ac/WireHush-0.1.0-x64-test.msi` | 75398147 | `0c2203c0b8b547d97c7034660446eb144132c9b738a0e47207ef684c4ca43145` |
-| ARM64 | `.artifacts/v1/arm64/1175ac60e4654ebc8c9ce2be32c63854/WireHush-0.1.0-arm64-test.msi` | 70855683 | `a578c9716052f49577a127dfb430065fe2f2ec161e4e209ad9f0bc707a86c1a3` |
+| x64 | `.artifacts/v1/x64/0ef3075ac65c4f3e8bde4c335c15f828/WireHush-0.1.0-x64-test.msi` | 75389955 | `2b0fbd07f6f9a87008fea3b64b0299bba9426f0adc1726dbd8a0f47891ec5d6b` |
+| ARM64 | `.artifacts/v1/arm64/89b4a0a6cf8b45b7af8cc280147096ce/WireHush-0.1.0-arm64-test.msi` | 70855683 | `85a8dd2935849cf999fedced5dfe345e1bf6a3313f0a07f5a68066046d865b57` |
 
 Both payload `SHA256SUMS.txt` manifests verified with zero failures, and both
 `INSTALLER-SHA256SUMS.txt` values matched the MSI hashes above. Both installers
@@ -34,11 +35,18 @@ remain in effect and `-SkipIce` was not used.
 
 ## Automated validation
 
-`scripts/test-v1.ps1 -Race` exited 0 after both installer fixes. This included the
+`scripts/test-v1.ps1 -Race` exited 0 after all hotfix/polish changes. This included the
 regression suites, production-tag manager tests, protected logging test, TLS
 regression, race suites, native installer safety fixture, UI traffic safety tests,
 dependency gate, Windows build-detection regression guard, fixed-path installer UI
-regression guard, artifact clean-tree provenance guard, and `git diff --check`.
+regression guard, executable-company metadata guard, artifact clean-tree provenance
+guard, and `git diff --check`.
+
+A 100 ms DoH fallback timing test exposed one scheduler-sensitive failure under VM
+load. The exact focused test then passed 100/100 runs. Its parent test deadline was
+raised to 500 ms so the test checks candidate budget partitioning rather than Windows
+timer granularity; production DoH code was not changed. The full `-Race` suite then
+passed again.
 
 ## Installed x64 validation
 
@@ -63,8 +71,9 @@ Installed state verified:
 - Start Menu shortcut is present.
 - Installed WireHush.exe, WireHush.dll, WireHush-Manager.exe, WireHush.Protocol.dll,
   and WireHush.pri hashes match the committed x64 build payload.
+- WireHush.exe and WireHush-Manager.exe both report company metadata `WireHush contributors`; the UI product version embeds the exact packaged source SHA.
 - Normal unelevated UI launch stays open. A second same-session launch redirects to
-  the existing instance.
+  the existing instance; its transient redirect process exits and leaves one window.
 - Before a fresh logon, the UI clearly reports that the account needs a refreshed
   `WireHush Users` token.
 - Elevated UI launch is intentionally rejected by the application.
@@ -78,7 +87,7 @@ The exact final x64 MSI also passed:
 - Silent uninstall with default Keep Data: product, service and Program Files were
   removed while SYSTEM-owned ProgramData/log data remained intact.
 - Reinstall over retained data: canonical service returned and retained data kept
-  the same owner and size.
+  the same owner and size; a SYSTEM-context SHA-256 of `backend.bin` was identical before and after the silent Keep Data uninstall.
 - Explicit `DELETE_WIREHUSH_DATA=1` uninstall: WireHush product, service,
   Program Files, ProgramData and LocalAppData were removed successfully.
 - The interactive maintenance path reaches the custom permanent-delete warning and
@@ -87,9 +96,10 @@ The exact final x64 MSI also passed:
   deletion, proving the fail-closed deletion boundary.
 - Upstream WireGuard and the separate TunnelMint tree remained present throughout.
 
-After these destructive tests, the final x64 candidate was installed again from a
-zero WireHush baseline. The installer recreated `WireHush Users` and added the
-installing account. The manager is currently stopped as expected for demand start.
+The exact `5f14fec` x64 candidate was exercised through fresh interactive install,
+silent Keep Data uninstall/reinstall, explicit-delete uninstall, and a final reinstall.
+It is currently installed. `WireHush Users` exists with the installing account as a
+member, and the manager is stopped as expected for demand start.
 
 ## Still required before release
 
