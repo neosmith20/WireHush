@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"golang.zx2c4.com/wireguard/windows/conf"
 )
@@ -175,6 +176,22 @@ func (mutations *wireHushMutations) Update(ctx context.Context, caller wireHushC
 	if wasActive {
 		if err := control.start(canonical); err != nil {
 			return fmt.Errorf("%w: %v", errWireHushReconnectFailed, err)
+		}
+		// SCM Start only accepts the request. Observe the worker reaching running
+		// before declaring reconnect success; a startup failure retains the save.
+		for {
+			state, err := control.state(canonical)
+			if err != nil || state == TunnelStopped {
+				return errWireHushReconnectFailed
+			}
+			if state == TunnelStarted {
+				break
+			}
+			select {
+			case <-ctx.Done():
+				return errWireHushReconnectFailed
+			case <-time.After(100 * time.Millisecond):
+			}
 		}
 	}
 	return nil

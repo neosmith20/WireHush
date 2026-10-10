@@ -200,3 +200,21 @@ func TestWireHushUpdateLifecycle(t *testing.T) {
 		}
 	}
 }
+
+func TestWireHushUpdateReportsWorkerStartupFailureAfterSave(t *testing.T) {
+	record := wireHushControlRecord(t, "12345678-1234-4abc-8def-1234567890ab", conf.TunnelScopePrivate, wireHushAuthOwnerSID, "A")
+	m := testWireHushMutations(record)
+	state := TunnelStarted
+	m.control.state = func(conf.TunnelServiceLocator) (TunnelState, error) { return state, nil }
+	m.control.stop = func(conf.TunnelServiceLocator) error { return nil }
+	m.control.waitForStop = func(conf.TunnelServiceLocator) error { return nil }
+	m.control.start = func(conf.TunnelServiceLocator) error { state = TunnelStopped; return nil }
+	err := m.Update(context.Background(), wireHushCaller{SID: record.OwnerSID}, wireHushControlLocator(record), "B", record.WGQuickText)
+	if !errors.Is(err, errWireHushReconnectFailed) {
+		t.Fatal("accepted SCM start hid worker startup failure")
+	}
+	saved, _ := m.control.loadRecord(record.Scope, record.OwnerSID, record.TunnelID)
+	if saved.Name != "B" {
+		t.Fatal("worker startup failure discarded successful save")
+	}
+}
