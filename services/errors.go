@@ -32,6 +32,8 @@ const (
 	ErrorDropPrivileges
 	ErrorRunScript
 	ErrorWin32
+	// WireHush worker failed before creating any adapter or encrypted DNS state.
+	ErrorStartupBeforeNetwork
 )
 
 func (e Error) Error() string {
@@ -68,6 +70,8 @@ func (e Error) Error() string {
 		return "Unable to drop privileges"
 	case ErrorRunScript:
 		return "An error occurred while running a configuration script command"
+	case ErrorStartupBeforeNetwork:
+		return "Tunnel startup failed before network activation; configuration may be corrected and retried"
 	case ErrorWin32:
 		return "An internal Windows error has occurred"
 	default:

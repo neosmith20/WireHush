@@ -121,6 +121,12 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 			// report successful exit when DNS restoration or a down hook failed.
 			svcSpecificEC, exitCode = services.DetermineErrorCode(logErr, services.ErrorSetNetConfig)
 		}
+		if service.RecordLocator != nil && logErr != nil && adapter == nil && encryptedDNSSession == nil {
+			// Endpoint resolution and source loading precede adapter creation and
+			// every network mutation. Preserve failure evidence while allowing a
+			// corrected configuration to retry without administrator repair.
+			svcSpecificEC, exitCode = true, uint32(services.ErrorStartupBeforeNetwork)
+		}
 		stopIt <- true
 		log.Println("Shutting down")
 	}()

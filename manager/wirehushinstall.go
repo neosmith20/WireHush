@@ -139,7 +139,7 @@ func InstallWireHushTunnelContext(ctx context.Context, locator conf.TunnelServic
 					return err
 				}
 			} else {
-				if statusErr == nil && status.State == svc.Stopped && wireHushTunnelServiceExitError(status) != nil {
+				if statusErr == nil && status.State == svc.Stopped && wireHushTunnelNeedsRepair(status) {
 					service.Close()
 					return errWireHushCleanupFailed
 				}
@@ -306,7 +306,7 @@ func WireHushTunnelState(locator conf.TunnelServiceLocator) (TunnelState, error)
 func wireHushTunnelStateFromServiceStatus(status svc.Status) TunnelState {
 	switch status.State {
 	case svc.Stopped:
-		if wireHushTunnelServiceExitError(status) != nil {
+		if wireHushTunnelNeedsRepair(status) {
 			return TunnelUnknown
 		}
 		return TunnelStopped
