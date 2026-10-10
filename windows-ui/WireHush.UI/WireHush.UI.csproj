@@ -26,6 +26,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Update="Assets/WireHush.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Update="Assets/WireHush_Icon.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <!-- Stable WinUI components from SDK 2.5.1, without unused AI/ML/widgets. -->
     <PackageReference Include="Microsoft.WindowsAppSDK.WinUI" Version="2.3.9" />

@@ -51,6 +51,7 @@ public sealed partial class MainWindow : Window
             Title = "WireHush"; ExtendsContentIntoTitleBar = true;
             var hwnd = WindowNative.GetWindowHandle(this);
             _appWindow = AppWindow.GetFromWindowId(Win32Interop.GetWindowIdFromWindow(hwnd));
+            _appWindow.SetIcon(System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "WireHush.ico"));
             _windowPreferences = new WindowPreferences(hwnd, _appWindow); ConfigureTitleBar(); _appWindow.Closing += OnAppWindowClosing; Closed += OnClosed;
             RootGrid.SizeChanged += (_, _) => { if (!_exiting) RenderDetails(); };
             BuildLiveShell(); _refreshTimer.Interval = TimeSpan.FromSeconds(1); _refreshTimer.Tick += async (_, _) =>
@@ -232,7 +233,7 @@ public sealed partial class MainWindow : Window
             var menu = new Button { Tag = "menu:" + tunnel.Id, Background = new SolidColorBrush(Colors.Transparent), BorderThickness = new Thickness(0), Padding = new Thickness(0), Content = new FontIcon { Glyph = "\uE712", FontSize = 20, Foreground = Brush("WireHushMutedBrush") } };
             ToolTipService.SetToolTip(menu, "Tunnel actions");
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(menu, $"Actions for {tunnel.Name}");
-            menu.Click += (_, _) => ShowTunnelMenu(tunnel.Id);
+            menu.Click += (_, _) => ShowTunnelMenu(tunnel.Id, menu);
             Grid.SetColumn(menu, 1); row.Children.Add(menu);
             if (focused == select.Tag as string || focused == menu.Tag as string) row.Loaded += (_, _) => RestoreFocusTag(row, focused);
             _tunnelList.Children.Add(row);
@@ -254,9 +255,9 @@ public sealed partial class MainWindow : Window
     {
         var border = new Border { Style = (Style)Application.Current.Resources["WireHushCardStyle"], Padding = new Thickness(22), Margin = new Thickness(0, 0, 0, 0) };
         var stack = new StackPanel { Spacing = 20 }; var heading = new Grid(); heading.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); heading.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        var title = new StackPanel { Spacing = 4 }; title.Children.Add(Text(_selectedDetails!.Name, 32, true)); var status = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 }; status.Children.Add(new Ellipse { Width = 10, Height = 10, Fill = StateBrush(_selectedDetails.State), VerticalAlignment = VerticalAlignment.Center }); status.Children.Add(Text(StateText(_selectedDetails.State), 16, false, StateBrush(_selectedDetails.State))); status.Children.Add(Text("|", 16, false, Brush("WireHushMutedBrush"))); status.Children.Add(Text(_selectedDetails.State == "connected" ? Uptime(_selectedDetails.StartedAtUtc) : _selectedDetails.State == "unknown" ? "Networking state unavailable" : StateText(_selectedDetails.State), 16, false, Brush("WireHushMutedBrush"))); title.Children.Add(status); heading.Children.Add(title);
+        var title = new StackPanel { Spacing = 4 }; title.Children.Add(Text(_selectedDetails!.Name, 32, true)); var status = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 }; status.Children.Add(new Ellipse { Width = 10, Height = 10, Fill = StateBrush(_selectedDetails.State), VerticalAlignment = VerticalAlignment.Center }); status.Children.Add(Text(StateText(_selectedDetails.State), 16, false, StateBrush(_selectedDetails.State)));  title.Children.Add(status); heading.Children.Add(title);
         var actionText = _tunnelActionPending ? _selectedDetails.State == "connected" ? "Disconnecting…" : "Connecting…" : _selectedDetails.State == "connected" ? "Disconnect" : "Connect";
-        var toggle = ActionButton(actionText, _selectedDetails.State == "connected" ? "\uE71A" : "\uE768", _selectedDetails.State != "connected", async (_, _) => await ToggleTunnelAsync()); toggle.Tag = "action:connect"; toggle.IsEnabled = (_selectedDetails.State == "connected" || _managerClient?.DeviceBusyForAnotherUser != true) && _managerClient?.Connected == true && !_tunnelActionPending && _selectedDetails.State is ("connected" or "disconnected"); toggle.Width = 255; toggle.Height = 68; Grid.SetColumn(toggle, 1); heading.Children.Add(toggle); stack.Children.Add(heading);
+        var toggle = ActionButton(actionText, _selectedDetails.State == "connected" ? "\uE71A" : "\uE768", _selectedDetails.State != "connected", async (_, _) => await ToggleTunnelAsync()); toggle.Tag = "action:connect"; toggle.IsEnabled = (_selectedDetails.State == "connected" || _managerClient?.DeviceBusyForAnotherUser != true) && _managerClient?.Connected == true && !_tunnelActionPending && _selectedDetails.State is ("connected" or "disconnected"); toggle.Width = 180; toggle.Height = 48; Grid.SetColumn(toggle, 1); heading.Children.Add(toggle); stack.Children.Add(heading);
         var columns = RootGrid.ActualWidth < 1400 ? 2 : 4; var tiles = new Grid(); for (var i = 0; i < columns; i++) tiles.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); for (var i = 0; i < (4 + columns - 1) / columns; i++) tiles.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         var values = new[] { ("VPN IP (IPv4)", _selectedDetails.Ipv4Addresses.Count == 0 ? "Unavailable" : _selectedDetails.Ipv4Addresses[0]), ("VPN IP (IPv6)", _selectedDetails.Ipv6Addresses.Count == 0 ? "Unavailable" : _selectedDetails.Ipv6Addresses[0]), ("Endpoint", string.IsNullOrWhiteSpace(_selectedDetails.EndpointDisplay) ? "Unavailable" : _selectedDetails.EndpointDisplay), ("Latest Handshake", _selectedDetails.LatestHandshakeUtc is null ? "Not reported" : RelativeTime(_selectedDetails.LatestHandshakeUtc)) };
         for (var i = 0; i < values.Length; i++) { var tile = new StackPanel { Spacing = 6, Padding = new Thickness(12, 8, 12, 8) }; tile.Children.Add(Text(values[i].Item1, 14, false, Brush("WireHushMutedBrush"))); tile.Children.Add(Text(values[i].Item2, 17, true)); Grid.SetColumn(tile, i % columns); Grid.SetRow(tile, i / columns); tiles.Children.Add(tile); }
@@ -265,10 +266,11 @@ public sealed partial class MainWindow : Window
     private UIElement EmptyDetails() { var s = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Spacing = 10 }; s.Children.Add(Text("No tunnel selected", 28, true)); s.Children.Add(Text("Add or import a WireGuard tunnel to begin.", 16, false, Brush("WireHushMutedBrush"))); return s; }
     private UIElement OverviewPage()
     {
-        var grid = new Grid(); grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); var left = new StackPanel { Spacing = 16 }; left.Children.Add(Card("Connection", new[] { ("Endpoint", Value(_selectedDetails!.EndpointDisplay)), ("Latest handshake", RelativeTime(_selectedDetails.LatestHandshakeUtc)), ("Tunnel uptime", Uptime(_selectedDetails.StartedAtUtc)), ("Interface", Value(_selectedDetails.InterfaceName)) })); left.Children.Add(Card("DNS", new[] { ("Mode", Value(_selectedDetails.Dns.Mode)), ("Resolver", Value(_selectedDetails.Dns.ServerDisplay)), ("Status", DnsStatus()) })); grid.Children.Add(left); var right = new StackPanel { Spacing = 16 }; right.Children.Add(TrafficCard()); right.Children.Add(Card("Network", new[] { ("IPv4", Join(_selectedDetails.Ipv4Addresses)), ("IPv6", Join(_selectedDetails.Ipv6Addresses)), ("Allowed IPs", _selectedDetails.MayEdit ? $"{_selectedDetails.AllowedIPs.Count} routes" : "Unavailable") })); Grid.SetColumn(right, 1); grid.Children.Add(right); return grid;
+        var grid = new Grid(); grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); var left = new StackPanel { Spacing = 16 };  left.Children.Add(Card("DNS", new[] { ("Mode", DnsModeText()), ("Resolver", Value(_selectedDetails!.Dns.ServerDisplay)), ("Status", DnsStatus()) })); grid.Children.Add(left); var right = new StackPanel { Spacing = 16 }; right.Children.Add(TrafficCard()); right.Children.Add(Card("Network", new[] { ("IPv4", Join(_selectedDetails.Ipv4Addresses)), ("IPv6", Join(_selectedDetails.Ipv6Addresses)), ("Allowed IPs", _selectedDetails.MayEdit ? $"{_selectedDetails.AllowedIPs.Count} routes" : "Unavailable") })); Grid.SetColumn(right, 1); grid.Children.Add(right); return grid;
     }
     private UIElement NetworkPage() => Card("Network", new[] { ("IPv4 addresses", Join(_selectedDetails!.Ipv4Addresses)), ("IPv6 addresses", Join(_selectedDetails.Ipv6Addresses)), ("Listen port", _selectedDetails.ListenPort?.ToString() ?? "—"), ("Interface", Value(_selectedDetails.InterfaceName)), ("Endpoint", Value(_selectedDetails.EndpointDisplay)) });
-    private UIElement DnsPage() { var v = new List<(string, string)> { ("Mode", Value(_selectedDetails!.Dns.Mode)), ("Resolver", Value(_selectedDetails.Dns.ServerDisplay)), ("Address family", Value(_selectedDetails.Dns.AddressFamily)), ("Tunnel readiness", DnsStatus()), ("Plain DNS fallback", _selectedDetails.Dns.Mode == "DNS over HTTPS (DoH)" ? "Disabled" : "Not applicable"), ("Bootstrap resolvers", _selectedDetails.Dns.Mode == "DNS over HTTPS (DoH)" ? "See Settings" : "Not applicable") }; return Card("DNS", v); }
+    private UIElement DnsPage() { var v = new List<(string, string)> { ("Mode", Value(_selectedDetails!.Dns.Mode)), ("Resolver", Value(_selectedDetails!.Dns.ServerDisplay)), ("Address family", Value(_selectedDetails.Dns.AddressFamily)), ("Tunnel readiness", DnsStatus()), ("Plain DNS fallback", _selectedDetails.Dns.Mode == "DNS over HTTPS (DoH)" ? "Disabled" : "Not applicable"), ("Bootstrap resolvers", _selectedDetails.Dns.Mode == "DNS over HTTPS (DoH)" ? "See Settings" : "Not applicable") }; return Card("DNS", v); }
+    private string DnsModeText() => _selectedDetails!.Dns.Mode switch { "DNS" => "Plain DNS (Windows resolver)", "DNS over HTTPS (DoH)" => "Encrypted DNS over HTTPS", "Not configured" => "System DNS (no tunnel override)", _ => "Unavailable" };
     private string DnsStatus()
     {
         if (_selectedDetails!.State == "unknown") return "Networking state unavailable";
@@ -290,7 +292,11 @@ public sealed partial class MainWindow : Window
         var border = new Border { Style = (Style)Application.Current.Resources["WireHushCardStyle"], Padding = new Thickness(20), Margin = new Thickness(0, 0, 8, 0) };
         var content = new StackPanel { Spacing = 10 };
         content.Children.Add(Text("Traffic", 20, true));
-        content.Children.Add(Text("Recent receive and send rate — up to five minutes", 14, false, Brush("WireHushMutedBrush")));
+        content.Children.Add(Text("Recent traffic — up to five minutes", 14, false, Brush("WireHushMutedBrush")));
+        var legend = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 20 };
+        legend.Children.Add(Text("Receive (RX)", 14, true, Brush("WireHushCyanBrush")));
+        legend.Children.Add(Text("Send (TX)", 14, true, Brush("WireHushGreenBrush")));
+        content.Children.Add(legend);
         var canvas = new Canvas { Height = 160, Background = new SolidColorBrush(Windows.UI.Color.FromArgb(0x30, 0x24, 0x36, 0x42)) };
         void Draw()
         {
@@ -323,25 +329,33 @@ public sealed partial class MainWindow : Window
         catch (Exception ex) { ShowNotice(SafeError(ex)); }
         finally { _tunnelActionPending = false; RenderDetails(); }
     }
-    private void ShowTunnelMenu(string name) { var menu = new MenuFlyout(); var action = new MenuFlyoutItem { Text = _tunnels.FirstOrDefault(t => t.Id == name)?.State == "connected" ? "Disconnect" : "Connect" }; action.IsEnabled = _managerClient?.Connected == true && (_tunnels.FirstOrDefault(t => t.Id == name)?.State == "connected" || _managerClient?.DeviceBusyForAnotherUser != true); action.Click += async (_, _) => { try { _selectedTunnel = name; _section = "Overview"; await LoadSelectedTunnelAsync(name); await ToggleTunnelAsync(); } catch (Exception ex) { ShowNotice(SafeError(ex)); } }; menu.Items.Add(action); var delete = new MenuFlyoutItem { Text = "Delete", Foreground = new SolidColorBrush(Colors.IndianRed) }; delete.Click += async (_, _) => await DeleteTunnelAsync(name); delete.IsEnabled = _tunnels.FirstOrDefault(t => t.Id == name)?.MayEdit == true && _managerClient?.Connected == true; menu.Items.Add(delete); var edit = new MenuFlyoutItem { Text = "Edit", IsEnabled = delete.IsEnabled }; edit.Click += async (_, _) => await EditTunnelAsync(name); menu.Items.Add(edit); var export = new MenuFlyoutItem { Text = "Export", IsEnabled = delete.IsEnabled }; export.Click += async (_, _) => await ExportTunnelAsync(name); menu.Items.Add(export); menu.ShowAt(Content as FrameworkElement); }
+    private void ShowTunnelMenu(string name, FrameworkElement anchor) { var menu = new MenuFlyout(); var action = new MenuFlyoutItem { Text = _tunnels.FirstOrDefault(t => t.Id == name)?.State == "connected" ? "Disconnect" : "Connect" }; action.IsEnabled = _managerClient?.Connected == true && (_tunnels.FirstOrDefault(t => t.Id == name)?.State == "connected" || _managerClient?.DeviceBusyForAnotherUser != true); action.Click += async (_, _) => { try { _selectedTunnel = name; _section = "Overview"; await LoadSelectedTunnelAsync(name); await ToggleTunnelAsync(); } catch (Exception ex) { ShowNotice(SafeError(ex)); } }; menu.Items.Add(action); var delete = new MenuFlyoutItem { Text = "Delete", Foreground = new SolidColorBrush(Colors.IndianRed) }; delete.Click += async (_, _) => await DeleteTunnelAsync(name); delete.IsEnabled = _tunnels.FirstOrDefault(t => t.Id == name)?.MayEdit == true && _managerClient?.Connected == true; menu.Items.Add(delete); var edit = new MenuFlyoutItem { Text = "Edit", IsEnabled = delete.IsEnabled }; edit.Click += async (_, _) => await EditTunnelAsync(name); menu.Items.Add(edit); var export = new MenuFlyoutItem { Text = "Export", IsEnabled = delete.IsEnabled }; export.Click += async (_, _) => await ExportTunnelAsync(name); menu.Items.Add(export); menu.ShowAt(anchor, new Microsoft.UI.Xaml.Controls.Primitives.FlyoutShowOptions { Placement = Microsoft.UI.Xaml.Controls.Primitives.FlyoutPlacementMode.Right }); }
     private async Task DeleteTunnelAsync(string name) { if (_managerClient is null) return; var d = new ContentDialog { Title = $"Delete {_tunnels.FirstOrDefault(t => t.Id == name)?.Name}?", Content = "This removes the stored tunnel configuration.", PrimaryButtonText = "Delete", CloseButtonText = "Cancel", XamlRoot = RootGrid.XamlRoot }; if (await ShowDialogAsync(d) != ContentDialogResult.Primary) return; try { await _managerClient.DeleteTunnelAsync(name, _lifetime.Token); if (_selectedTunnel == name) _selectedTunnel = null; await LoadTunnelsAsync(); } catch (Exception ex) { ShowNotice(SafeError(ex)); } }
     private async Task AddTunnelAsync()
     {
-        if (_managerClient is null) return;
-        var name = new TextBox { PlaceholderText = "Tunnel name" };
+        if (_managerClient?.Connected != true) { ShowNotice("WireHush Manager is unavailable. Retry when connected."); return; }
+        var name = new TextBox { Header = "Tunnel name", PlaceholderText = "Tunnel name" };
         var configuration = new TextBox { PlaceholderText = "Paste a standard WireGuard configuration", AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 240, FontFamily = new FontFamily("Cascadia Mono") };
         var form = new StackPanel { Spacing = 10 }; form.Children.Add(name); form.Children.Add(configuration);
         var shared = new CheckBox { Content = "Shared tunnel (available to authorized users of this device)", IsEnabled = _managerClient.MayEditMachineSettings };
         form.Children.Add(Text("New tunnels are private to your Windows account by default.", 14));
         if (_managerClient.MayEditMachineSettings) form.Children.Add(shared);
         var d = new ContentDialog { Title = "Add Tunnel", Content = form, PrimaryButtonText = "Add", CloseButtonText = "Cancel", XamlRoot = RootGrid.XamlRoot };
-        if (await ShowDialogAsync(d) != ContentDialogResult.Primary) return;
-        try { _selectedTunnel = await _managerClient.ImportTunnelAsync(name.Text.Trim(), configuration.Text, _lifetime.Token, shared.IsChecked == true); await LoadTunnelsAsync(); }
-        catch (Exception ex) { ShowNotice(SafeError(ex)); }
+        var error = new InfoBar { Severity = InfoBarSeverity.Error }; form.Children.Add(error);
+        d.PrimaryButtonClick += async (_, args) =>
+        {
+            var deferral = args.GetDeferral();
+            try { _selectedTunnel = await _managerClient.ImportTunnelAsync(name.Text.Trim(), configuration.Text, _lifetime.Token, shared.IsChecked == true); }
+            catch (Exception ex) { args.Cancel = true; error.Message = SafeError(ex); error.IsOpen = true; }
+            finally { deferral.Complete(); }
+        };
+        await ShowDialogAsync(d);
+        configuration.Text = "";
+        await LoadTunnelsAsync();
     }
     private async Task ImportTunnelAsync()
     {
-        if (_managerClient is null || !_managerClient.Connected) return;
+        if (_managerClient?.Connected != true) { ShowNotice("WireHush Manager is unavailable. Retry when connected."); return; }
         var picker = new Windows.Storage.Pickers.FileOpenPicker();
         picker.FileTypeFilter.Add(".conf"); picker.FileTypeFilter.Add(".wg");
         InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
@@ -387,7 +401,7 @@ public sealed partial class MainWindow : Window
     private void ShowNotice(string message) { SetConnectionStatus(message); }
     private void SetConnectionStatus(string message)
     {
-        if (_connectionStatus is not null) _connectionStatus.Text = message;
+        if (_connectionStatus is not null) { _connectionStatus.Text = message; _connectionStatus.Foreground = Brush(message.StartsWith("Connected", StringComparison.Ordinal) ? "WireHushGreenBrush" : "WireHushMutedBrush"); }
         if (_managerInfo is not null)
         {
             _managerInfo.Message = message;
@@ -412,13 +426,20 @@ public sealed partial class MainWindow : Window
         if (_exiting) return;
         _exiting = true; SetConnectionStatus("Closing WireHush…"); try
         {
-            if (_managerClient is null || !_managerClient.Connected) { await ConnectAndLoadAsync(); }
-            if (_managerClient is null || !_managerClient.Connected) throw new InvalidOperationException("Cleanup could not be verified. Keep WireHush open and retry when the Manager is available.");
-            await _managerClient.ShutdownAsync(_lifetime.Token);
-
+            if (_managerClient is null || !_managerClient.Connected)
+                throw new InvalidOperationException("Manager unavailable. Active tunnels may keep running.");
+            using var cleanup = CancellationTokenSource.CreateLinkedTokenSource(_lifetime.Token);
+            cleanup.CancelAfter(TimeSpan.FromSeconds(10));
+            await _managerClient.ShutdownAsync(cleanup.Token);
             UiStartupLog.Write("session-exit-complete"); _allowClose = true; Close();
         }
-        catch (Exception ex) { _exiting = false; UiStartupLog.Write("session-exit-failed"); ShowNotice(SafeError(ex)); }
+        catch (Exception ex)
+        {
+            UiStartupLog.Write("session-exit-cleanup-unverified");
+            var warning = new ContentDialog { Title = "Cleanup could not be verified", Content = SafeError(ex) + "\n\nActive tunnels may keep running. Close the app anyway, or stay here to retry cleanup. No tunnel belonging to another account will be stopped.", PrimaryButtonText = "Close app anyway", CloseButtonText = "Stay open", XamlRoot = RootGrid.XamlRoot };
+            if (await ShowDialogAsync(warning) == ContentDialogResult.Primary) { _allowClose = true; Close(); }
+            else { _exiting = false; ShowNotice("Cleanup unverified — active tunnels may still be running."); }
+        }
     }
     private void OnClosed(object sender, WindowEventArgs args) { _windowPreferences.Dispose(); _refreshTimer.Stop(); _lifetime.Cancel(); _ = _managerClient.DisposeAsyncIfPresent(); }
     private static string Join(IReadOnlyList<string> values) => values.Count == 0 ? "—" : string.Join(", ", values); private static string Value(string? value) => string.IsNullOrWhiteSpace(value) ? "—" : value; private static string RelativeTime(DateTimeOffset? time) => time is null ? "—" : time.Value > DateTimeOffset.UtcNow ? "Clock difference detected" : $"{Math.Max(0, (int)(DateTimeOffset.UtcNow - time.Value).TotalSeconds)} seconds ago"; private static string Uptime(DateTimeOffset? time) => time is null ? "—" : (DateTimeOffset.UtcNow - time.Value).ToString("d' days 'h' hours 'm' minutes'"); private static string FormatBytes(ulong value) => value < 1024 ? $"{value} B" : value < 1024 * 1024 ? $"{value / 1024d:F1} KiB" : $"{value / 1024d / 1024d:F1} MiB"; private static string FormatRate(double value) => value < 1024 ? $"{value:F0} bps" : value < 1024 * 1024 ? $"{value / 1024:F1} Kbps" : $"{value / 1024 / 1024:F1} Mbps";

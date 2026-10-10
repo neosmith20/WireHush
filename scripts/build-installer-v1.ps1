@@ -28,7 +28,7 @@ function DirectoryXml($path, $relative, $directoryId, $name) {
         $component=Id 'C' $rel; $components.Add($component)
         $fileId=if($rel -eq 'WireHush-Manager.exe'){'ManagerExe'}elseif($rel -eq 'WireHush.exe'){'UiExe'}else{Id 'F' $rel}
         $xml+='<Component Id="'+$component+'" Guid="'+(ComponentGuid $rel)+'" Win64="yes"><File Id="'+$fileId+'" Source="'+(Esc $file.FullName)+'" KeyPath="yes">'
-        if($fileId -eq 'UiExe'){$xml+='<Shortcut Id="StartMenu" Directory="ProgramMenuFolder" Name="WireHush" WorkingDirectory="INSTALLFOLDER" Advertise="yes" />'}
+        if($fileId -eq 'UiExe'){$xml+='<Shortcut Id="StartMenu" Directory="ProgramMenuFolder" Name="WireHush" WorkingDirectory="INSTALLFOLDER" Advertise="yes" Icon="ProductIcon" IconIndex="0" />'}
         $xml+='</File>'
         if($fileId -eq 'ManagerExe'){$xml+='<ServiceInstall Id="ManagerInstall" Name="WireHushManager" DisplayName="WireHush Manager" Type="ownProcess" Account="LocalSystem" Start="demand" ErrorControl="normal" Arguments="/managerservice" Vital="yes" /><ServiceControl Id="ManagerControl" Name="WireHushManager" Stop="both" Remove="uninstall" Wait="yes" />'}
         $xml+='</Component>'
