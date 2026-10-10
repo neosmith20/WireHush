@@ -7,6 +7,8 @@ package manager
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -95,8 +97,9 @@ func TestWireHushMutationGateCancellationAndActiveUpdate(t *testing.T) {
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("queued mutation error=%v", err)
 	}
-	mutations.control.saveRecord = func(conf.TunnelRecord, bool) error { t.Fatal("active update wrote record"); return nil }
-	if err := mutations.Update(context.Background(), owner, locator, "B", record.WGQuickText); !errors.Is(err, errWireHushTunnelActive) {
+	mutations.control.state = func(conf.TunnelServiceLocator) (TunnelState, error) { return TunnelStarting, nil }
+	mutations.control.saveRecord = func(conf.TunnelRecord, bool) error { t.Fatal("transitional update wrote record"); return nil }
+	if err := mutations.Update(context.Background(), owner, locator, "B", record.WGQuickText); !errors.Is(err, errWireHushDeviceBusy) {
 		t.Fatal(err)
 	}
 	mutations.closing = true
@@ -118,5 +121,82 @@ func TestWireHushCreateDerivesIdentityAndRestrictsShared(t *testing.T) {
 	}
 	if _, err := mutations.Create(context.Background(), owner, conf.TunnelScopeShared, "Shared", wireHushControlWGQuick); !errors.Is(err, errWireHushAccessDenied) {
 		t.Fatal(err)
+	}
+}
+
+func TestWireHushUpdateLifecycle(t *testing.T) {
+	for _, active := range []bool{false, true} {
+		for _, failure := range []string{"", "stop", "save", "start", "invalid"} {
+			t.Run(fmt.Sprintf("active=%v/%s", active, failure), func(t *testing.T) {
+				record := wireHushControlRecord(t, "12345678-1234-4abc-8def-1234567890ab", conf.TunnelScopePrivate, wireHushAuthOwnerSID, "A")
+				m := testWireHushMutations(record)
+				var calls []string
+				m.control.state = func(conf.TunnelServiceLocator) (TunnelState, error) {
+					if active {
+						return TunnelStarted, nil
+					}
+					return TunnelStopped, nil
+				}
+				m.control.stop = func(conf.TunnelServiceLocator) error {
+					calls = append(calls, "stop")
+					if failure == "stop" {
+						return errors.New("stop")
+					}
+					return nil
+				}
+				m.control.waitForStop = func(conf.TunnelServiceLocator) error { calls = append(calls, "wait"); return nil }
+				save := m.control.saveRecord
+				m.control.saveRecord = func(r conf.TunnelRecord, overwrite bool) error {
+					calls = append(calls, "save")
+					if failure == "save" {
+						return errors.New("save")
+					}
+					return save(r, overwrite)
+				}
+				m.control.start = func(conf.TunnelServiceLocator) error {
+					calls = append(calls, "start")
+					if failure == "start" {
+						return errors.New("start")
+					}
+					return nil
+				}
+				text := record.WGQuickText
+				if failure == "invalid" {
+					text = "invalid"
+				}
+				err := m.Update(context.Background(), wireHushCaller{SID: record.OwnerSID}, wireHushControlLocator(record), "B", text)
+				expected := "save"
+				if active {
+					expected = "stop,wait,save,start"
+				}
+				if failure == "invalid" {
+					expected = ""
+				} else if active && failure == "stop" {
+					expected = "stop"
+				} else if failure == "save" {
+					expected = "save"
+					if active {
+						expected = "stop,wait,save"
+					}
+				}
+				if strings.Join(calls, ",") != expected {
+					t.Fatalf("calls=%v expected=%s", calls, expected)
+				}
+				saved, loadErr := m.control.loadRecord(record.Scope, record.OwnerSID, record.TunnelID)
+				if loadErr != nil {
+					t.Fatal(loadErr)
+				}
+				persisted := failure != "invalid" && failure != "save" && !(active && failure == "stop")
+				if (saved.Name == "B") != persisted {
+					t.Fatalf("saved name=%s", saved.Name)
+				}
+				if active && failure == "start" && !errors.Is(err, errWireHushReconnectFailed) {
+					t.Fatalf("reconnect error=%v", err)
+				}
+				if failure == "" && err != nil {
+					t.Fatal(err)
+				}
+			})
+		}
 	}
 }

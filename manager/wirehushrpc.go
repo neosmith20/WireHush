@@ -118,6 +118,8 @@ func wireHushRPCError(err error) error {
 		return err
 	}
 	switch {
+	case errors.Is(err, errWireHushReconnectFailed):
+		return status.Error(codes.FailedPrecondition, errWireHushReconnectFailed.Error())
 	case errors.Is(err, context.DeadlineExceeded):
 		return status.Error(codes.DeadlineExceeded, "WireHush operation timed out; refresh state before retrying")
 	case errors.Is(err, context.Canceled):
@@ -345,11 +347,13 @@ func (server *wireHushRPCServer) ReadConfiguration(ctx context.Context, referenc
 	if err != nil {
 		return nil, err
 	}
-	config, err := server.mutations.control.StoredTunnelConfig(session.identity.Caller, locator)
+	record, _, err := server.mutations.control.resolveAuthorizedTunnel(session.identity.Caller, locator, wireHushTunnelStoredConfigRead)
 	if err != nil {
 		return nil, err
 	}
-	return &protocol.ConfigurationReply{WgQuickText: config.ToWgQuick()}, nil
+	// Editing must round-trip every saved field, including settings not present
+	// in a runtime snapshot. Return the stored configuration after authorization.
+	return &protocol.ConfigurationReply{WgQuickText: record.WGQuickText}, nil
 }
 func validateWireHushRPCConfiguration(name, text string) error {
 	if !conf.TunnelNameIsValid(name) || len(text) > protocol.MaximumMessageBytes {

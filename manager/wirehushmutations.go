@@ -7,14 +7,16 @@ package manager
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"golang.zx2c4.com/wireguard/windows/conf"
 )
 
 var (
-	errWireHushDeviceBusy   = errors.New("WireHush is currently active; stop the active tunnel first")
-	errWireHushTunnelActive = errors.New("stop the tunnel before editing its configuration")
-	errWireHushClosing      = errors.New("WireHush is closing")
+	errWireHushDeviceBusy      = errors.New("WireHush is currently active; stop the active tunnel first")
+	errWireHushTunnelActive    = errors.New("stop the tunnel before editing its configuration")
+	errWireHushReconnectFailed = errors.New("configuration saved, but reconnect failed; the updated configuration was retained")
+	errWireHushClosing         = errors.New("WireHush is closing")
 )
 
 // One instance is shared by all production RPC connections. The gate protects
@@ -148,11 +150,34 @@ func (mutations *wireHushMutations) Update(ctx context.Context, caller wireHushC
 	if err != nil {
 		return err
 	}
-	if state != TunnelStopped {
-		return errWireHushTunnelActive
+	if state != TunnelStopped && state != TunnelStarted {
+		return errWireHushDeviceBusy
 	}
 	record.Name, record.WGQuickText = name, text
-	return mutations.control.SaveTunnelRecord(caller, canonical, record)
+	// Validate before disrupting a working tunnel. Hold the shared mutation gate
+	// throughout stop, persistence and restart so another caller cannot interleave.
+	if err := record.Validate(); err != nil {
+		return err
+	}
+	if err := authorizeWireHushRecordScripts(caller, record); err != nil {
+		return err
+	}
+	control := mutations.control.withContext(ctx)
+	wasActive := state == TunnelStarted
+	if wasActive {
+		if err := control.stopAndWait(canonical); err != nil {
+			return err
+		}
+	}
+	if err := control.SaveTunnelRecord(caller, canonical, record); err != nil {
+		return err
+	}
+	if wasActive {
+		if err := control.start(canonical); err != nil {
+			return fmt.Errorf("%w: %v", errWireHushReconnectFailed, err)
+		}
+	}
+	return nil
 }
 
 func (mutations *wireHushMutations) Delete(ctx context.Context, caller wireHushCaller, locator conf.TunnelServiceLocator) error {
