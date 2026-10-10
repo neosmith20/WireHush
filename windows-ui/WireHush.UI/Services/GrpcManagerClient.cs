@@ -29,9 +29,9 @@ internal sealed class GrpcManagerClient : IManagerClient
         _rpc = new P.Manager.ManagerClient(_channel);
         var handshake = await Rpc.HandshakeAsync(new P.HandshakeRequest { ProtocolMajor = 1, ProtocolMinor = 0 }, deadline: Deadline, cancellationToken: cancellationToken);
         if (handshake.ProtocolMajor != 1) throw new InvalidOperationException("The installed UI and Manager versions do not match.");
-        foreach (var capability in new[] { P.Capability.Tunnels, P.Capability.EncryptedDns, P.Capability.BootstrapSettings, P.Capability.Events, P.Capability.Export, P.Capability.SharedCreate, P.Capability.SessionExit })
+        foreach (var capability in new[] { P.Capability.Tunnels, P.Capability.EncryptedDns, P.Capability.BootstrapSettings, P.Capability.Events, P.Capability.Export, P.Capability.SessionExit })
             if (!handshake.Capabilities.Contains(capability)) throw new InvalidOperationException("Install matching UI and Manager versions to use the required V1 features.");
-        _managerVersion = Version.TryParse(handshake.ProductVersion, out var version) ? version.ToString() : "Unavailable";
+        _managerVersion = handshake.ProductVersion.Length <= 128 && System.Text.RegularExpressions.Regex.IsMatch(handshake.ProductVersion, @"^\d+\.\d+\.\d+(\+(?:[0-9a-f]{40}|unstamped))?$") ? handshake.ProductVersion : "Unavailable";
         MayEditMachineSettings = handshake.MayEditMachineSettings;
         var snapshot = await Rpc.SnapshotAsync(new P.Empty(), deadline: Deadline, cancellationToken: cancellationToken);
         lock (_gate) _snapshot = snapshot;
@@ -133,7 +133,7 @@ internal sealed class GrpcManagerClient : IManagerClient
     public Task<IReadOnlyList<string>> GetLogSnapshotAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        lock (_gate) return Task.FromResult<IReadOnlyList<string>>([$"Time (UTC): {DateTimeOffset.UtcNow:O}", $"UI version: {typeof(App).Assembly.GetName().Version}", $"Manager version: {_managerVersion}", "Protocol: 1.0", $"Runtime: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}", $"Architecture: {System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture}", $"Authenticated manager connection: {Connected}", $"Visible tunnel count: {_snapshot.Tunnels.Count}", $"Manager closing: {_snapshot.ManagerClosing}", "Tunnel identities, configuration, addresses, endpoints and owners are omitted."]);
+        lock (_gate) return Task.FromResult<IReadOnlyList<string>>([$"Time (UTC): {DateTimeOffset.UtcNow:O}", $"WireHush UI: {typeof(App).Assembly.GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false).OfType<System.Reflection.AssemblyInformationalVersionAttribute>().FirstOrDefault()?.InformationalVersion ?? "Unstamped"}", $"WireHush Manager: {_managerVersion}", $"Current manager instance: {_snapshot.InstanceId}", "Evidence: current authenticated WireHush session only; historical crash logs are not included.", "Protocol: 1.0", $"Runtime: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}", $"Architecture: {System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture}", $"Authenticated manager connection: {Connected}", $"Visible tunnel count: {_snapshot.Tunnels.Count}", $"Manager closing: {_snapshot.ManagerClosing}", "Tunnel identities, configuration, addresses, endpoints and owners are omitted."]);
     }
     public async Task ShutdownAsync(CancellationToken cancellationToken)
     {

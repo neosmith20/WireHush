@@ -199,7 +199,7 @@ func (server *wireHushRPCServer) Handshake(ctx context.Context, request *protoco
 	if admin {
 		capabilities = append(capabilities, protocol.Capability_CAPABILITY_SHARED_CREATE)
 	}
-	return &protocol.HandshakeReply{ProtocolMajor: protocol.Major, ProtocolMinor: protocol.Minor, ProductVersion: version.Number, InstanceId: server.instance, Capabilities: capabilities, MayEditShared: admin, MayEditMachineSettings: admin}, nil
+	return &protocol.HandshakeReply{ProtocolMajor: protocol.Major, ProtocolMinor: protocol.Minor, ProductVersion: version.Provenance(), InstanceId: server.instance, Capabilities: capabilities, MayEditShared: admin, MayEditMachineSettings: admin}, nil
 }
 
 func (server *wireHushRPCServer) Snapshot(ctx context.Context, _ *protocol.Empty) (*protocol.SnapshotReply, error) {

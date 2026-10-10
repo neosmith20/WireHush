@@ -7,7 +7,7 @@ internal static class UiStartupLog
     // messages, configurations and endpoints can never enter the diagnostic log.
     internal static void Write(string category)
     {
-        if (category is not ("ui-startup-failed" or "ui-unhandled-error" or "manager-connected" or "manager-unavailable" or "session-exit-complete" or "session-exit-failed")) return;
+        if (category is not ("ui-startup-failed" or "ui-unhandled-error" or "manager-connected" or "manager-unavailable" or "session-exit-complete" or "session-exit-failed" or "session-exit-cleanup-unverified")) return;
         try
         {
             lock (Gate)
