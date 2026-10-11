@@ -50,6 +50,7 @@ $source=@"
 <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
 <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer WireHush version is installed." Schedule="afterInstallExecute" />
 <Property Id="DELETE_WIREHUSH_DATA" Value="0" Secure="yes" />
+<Property Id="MSIRESTARTMANAGERCONTROL" Value="Disable" />
 <Property Id="BeginMaintenance" Hidden="yes" /><Property Id="RollbackMaintenance" Hidden="yes" /><Property Id="ProvisionAccess" Hidden="yes" /><Property Id="CommitProvisionAccess" Hidden="yes" />
 <Icon Id="ProductIcon" SourceFile="$(Esc "$repo/windows-ui/WireHush.UI/Assets/WireHush.ico")" /><Property Id="ARPPRODUCTICON" Value="ProductIcon" />
 <Property Id="WINDOWSBUILDNUMBER" Secure="yes"><RegistrySearch Id="BuildNumberSearch" Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion" Name="CurrentBuildNumber" Type="raw" Win64="yes" /></Property>
