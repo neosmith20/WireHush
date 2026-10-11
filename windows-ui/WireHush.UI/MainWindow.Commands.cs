@@ -26,7 +26,7 @@ public sealed partial class MainWindow
             dialog.Resources["ContentDialogMaxWidth"] = Math.Min(780, Math.Max(320, RootGrid.ActualWidth - 64));
             dialog.MaxWidth = Math.Min(780, Math.Max(320, RootGrid.ActualWidth - 64));
             dialog.MaxHeight = Math.Min(720, Math.Max(320, RootGrid.ActualHeight - 64));
-            return await dialog.ShowAsync();
+            return await dialog.ShowAsync(ContentDialogPlacement.Popup);
         }
         finally { _dialogGate.Release(); }
     }
