@@ -21,8 +21,19 @@ public sealed partial class MainWindow
             dialog.XamlRoot ??= RootGrid.XamlRoot;
             dialog.RequestedTheme = ElementTheme.Dark;
             dialog.FullSizeDesired = false;
-            dialog.HorizontalAlignment = HorizontalAlignment.Center;
-            dialog.VerticalAlignment = VerticalAlignment.Center;
+            // WinUI's default ContentDialog template places an in-root dialog at
+            // the top-left even when its alignment is Center. Position after its
+            // first measure so all auxiliary dialogs remain centered as this
+            // window moves or resizes.
+            dialog.HorizontalAlignment = HorizontalAlignment.Left;
+            dialog.VerticalAlignment = VerticalAlignment.Top;
+            dialog.Loaded += (_, _) =>
+            {
+                if (dialog.ActualWidth <= 0 || dialog.ActualHeight <= 0) return;
+                dialog.Margin = new Thickness(
+                    Math.Max(0, (RootGrid.ActualWidth - dialog.ActualWidth) / 2),
+                    Math.Max(0, (RootGrid.ActualHeight - dialog.ActualHeight) / 2), 0, 0);
+            };
             dialog.Resources["ContentDialogMaxWidth"] = Math.Min(780, Math.Max(320, RootGrid.ActualWidth - 64));
             dialog.MaxWidth = Math.Min(780, Math.Max(320, RootGrid.ActualWidth - 64));
             dialog.MaxHeight = Math.Min(720, Math.Max(320, RootGrid.ActualHeight - 64));
