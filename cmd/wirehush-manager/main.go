@@ -19,7 +19,7 @@ import (
 
 func run(args []string) error {
 	if len(args) == 1 && args[0] == "/version" {
-		fmt.Println("WireHush-Manager " + version.Number)
+		fmt.Println("WireHush-Manager " + version.Provenance())
 		return nil
 	}
 	if len(args) == 1 && args[0] == "/managerservice" {

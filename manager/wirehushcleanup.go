@@ -39,7 +39,7 @@ func removeWireHushTunnelAfterCleanup(ctx context.Context, query func() (svc.Sta
 			return err
 		}
 		if current.State == svc.Stopped {
-			if wireHushTunnelServiceExitError(current) != nil {
+			if wireHushTunnelNeedsRepair(current) {
 				return errWireHushCleanupFailed
 			}
 			err := remove()

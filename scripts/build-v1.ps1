@@ -6,6 +6,9 @@ param([ValidateSet('x64', 'arm64', 'all')][string]$Architecture = 'all', [switch
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
 Set-Location -LiteralPath $repo
+$gitStatus = @(& git status --porcelain --untracked-files=normal)
+if ($LASTEXITCODE -ne 0) { throw 'Unable to verify repository cleanliness' }
+if ($gitStatus.Count -ne 0) { throw 'Owner-test builds require a clean Git working tree so artifact provenance matches the recorded commit' }
 if (!$SkipBootstrap) { & "$PSScriptRoot/bootstrap-v1.ps1" }
 $versionText = Get-Content -LiteralPath "$repo/version/version.go" -Raw
 if ($versionText -notmatch 'Number\s*=\s*"(\d+\.\d+\.\d+)"') { throw 'Invalid product version' }
@@ -33,7 +36,7 @@ foreach ($target in $targets) {
     $app = "$repo/.artifacts/v1/$target/$run/app"
     New-Item -ItemType Directory -Path $app -Force | Out-Null
     Invoke-Checked "$deps/bin/$prefix-w64-mingw32-windres.exe" @('-I', "$deps/wireguard-nt/bin/$goArch", '-I', "$repo/cmd/wirehush-manager", '-I', (Split-Path $icon), "-DWIREHUSH_VERSION_ARRAY=$($version.Replace('.', ',')),0", "-DWIREHUSH_VERSION=$version", '-i', "$repo/cmd/wirehush-manager/resources.rc", '-o', "$repo/cmd/wirehush-manager/resources_$goArch.syso", '-O', 'coff')
-    Invoke-Checked $go @('build', '-overlay', '.overlay/overlay.json', '-tags', 'wirehush_v1,load_wgnt_from_rsrc', '-trimpath', '-buildvcs=false', '-ldflags=-s -w', '-o', "$app/WireHush-Manager.exe", './cmd/wirehush-manager')
+    Invoke-Checked $go @('build', '-overlay', '.overlay/overlay.json', '-tags', 'wirehush_v1,load_wgnt_from_rsrc', '-trimpath', '-buildvcs=false', "-ldflags=-s -w -X golang.zx2c4.com/wireguard/windows/version.SourceCommit=$(& git rev-parse HEAD)", '-o', "$app/WireHush-Manager.exe", './cmd/wirehush-manager')
     Invoke-Checked $dotnet @('restore', 'windows-ui/WireHush.UI/WireHush.UI.csproj', "-p:Platform=$target", '--locked-mode', '--nologo')
 Invoke-Checked $dotnet @('publish', 'windows-ui/WireHush.UI/WireHush.UI.csproj', '-c', 'Release', "-p:Platform=$target", '-r', "win-$target", "-p:Version=$version", '-p:DebugType=None', '-p:DebugSymbols=false', '--no-restore', '-o', $app, '--nologo')
     $notices = Join-Path $app 'Notices'

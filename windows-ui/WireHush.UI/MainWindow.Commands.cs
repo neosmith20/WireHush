@@ -15,6 +15,8 @@ public sealed partial class MainWindow
         if (!await _dialogGate.WaitAsync(0)) return ContentDialogResult.None;
         try
         {
+            dialog.RequestedTheme = ElementTheme.Dark;
+            dialog.Resources["ContentDialogMaxWidth"] = Math.Min(900, Math.Max(320, RootGrid.ActualWidth - 80));
             dialog.MaxWidth = Math.Min(900, Math.Max(320, RootGrid.ActualWidth - 80));
             dialog.MaxHeight = Math.Min(720, Math.Max(320, RootGrid.ActualHeight - 80));
             return await dialog.ShowAsync();
@@ -26,10 +28,17 @@ public sealed partial class MainWindow
         if (_managerClient is null || _tunnels.FirstOrDefault(t => t.Id == id)?.MayEdit != true) return;
         try
         {
-            var name = new TextBox { Text = _tunnels.First(t => t.Id == id).Name, Header = "Tunnel name" };
-            var config = new TextBox { Text = await _managerClient.ExportAsync(id, _lifetime.Token), Header = "Configuration (contains private keys)", AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 240, MaxHeight = 380 };
+            // Populate from the manager's current stored record before showing the
+            // dialog. Runtime snapshots omit private fields and must never seed an editor.
+            var stored = await _managerClient.GetEditableTunnelAsync(id, _lifetime.Token);
+            var name = new TextBox { Header = "Tunnel name" };
+            var config = new TextBox { Header = "Configuration (contains private keys)", AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 240, MaxHeight = 380 };
             var error = new InfoBar { Severity = InfoBarSeverity.Error };
-            var form = new StackPanel { Spacing = 12, MinWidth = 440 }; form.Children.Add(name); form.Children.Add(config); form.Children.Add(error);
+            var form = new StackPanel { Spacing = 12, MinWidth = 440 }; form.Children.Add(name); form.Children.Add(config); form.Children.Add(Text("Saving an active tunnel disconnects it, applies your changes, then reconnects. A disconnected tunnel stays disconnected.", 14)); form.Children.Add(error);
+            // Assign after the controls are part of the dialog content so WinUI
+            // renders the authoritative stored values rather than empty defaults.
+            name.Text = stored.Name;
+            config.Text = stored.Configuration;
             var dialog = new ContentDialog { Title = "Edit tunnel", Content = form, PrimaryButtonText = "Save", CloseButtonText = "Cancel", XamlRoot = RootGrid.XamlRoot };
             dialog.PrimaryButtonClick += async (_, args) =>
             {

@@ -118,6 +118,8 @@ func wireHushRPCError(err error) error {
 		return err
 	}
 	switch {
+	case errors.Is(err, errWireHushReconnectFailed):
+		return status.Error(codes.FailedPrecondition, errWireHushReconnectFailed.Error())
 	case errors.Is(err, context.DeadlineExceeded):
 		return status.Error(codes.DeadlineExceeded, "WireHush operation timed out; refresh state before retrying")
 	case errors.Is(err, context.Canceled):
@@ -130,8 +132,6 @@ func wireHushRPCError(err error) error {
 		return status.Error(codes.AlreadyExists, "A tunnel with that name already exists in this access scope")
 	case errors.Is(err, errWireHushDeviceBusy):
 		return status.Error(codes.FailedPrecondition, "WireHush is currently active; stop the active tunnel first")
-	case errors.Is(err, errWireHushTunnelActive):
-		return status.Error(codes.FailedPrecondition, "Stop this tunnel before editing it")
 	case errors.Is(err, errWireHushClosing):
 		return status.Error(codes.Unavailable, "WireHush is closing")
 	case errors.Is(err, errWireHushCleanupFailed):
@@ -197,7 +197,7 @@ func (server *wireHushRPCServer) Handshake(ctx context.Context, request *protoco
 	if admin {
 		capabilities = append(capabilities, protocol.Capability_CAPABILITY_SHARED_CREATE)
 	}
-	return &protocol.HandshakeReply{ProtocolMajor: protocol.Major, ProtocolMinor: protocol.Minor, ProductVersion: version.Number, InstanceId: server.instance, Capabilities: capabilities, MayEditShared: admin, MayEditMachineSettings: admin}, nil
+	return &protocol.HandshakeReply{ProtocolMajor: protocol.Major, ProtocolMinor: protocol.Minor, ProductVersion: version.Provenance(), InstanceId: server.instance, Capabilities: capabilities, MayEditShared: admin, MayEditMachineSettings: admin}, nil
 }
 
 func (server *wireHushRPCServer) Snapshot(ctx context.Context, _ *protocol.Empty) (*protocol.SnapshotReply, error) {
@@ -345,11 +345,13 @@ func (server *wireHushRPCServer) ReadConfiguration(ctx context.Context, referenc
 	if err != nil {
 		return nil, err
 	}
-	config, err := server.mutations.control.StoredTunnelConfig(session.identity.Caller, locator)
+	record, _, err := server.mutations.control.resolveAuthorizedTunnel(session.identity.Caller, locator, wireHushTunnelStoredConfigRead)
 	if err != nil {
 		return nil, err
 	}
-	return &protocol.ConfigurationReply{WgQuickText: config.ToWgQuick()}, nil
+	// Editing must round-trip every saved field, including settings not present
+	// in a runtime snapshot. Return the stored configuration after authorization.
+	return &protocol.ConfigurationReply{WgQuickText: record.WGQuickText}, nil
 }
 func validateWireHushRPCConfiguration(name, text string) error {
 	if !conf.TunnelNameIsValid(name) || len(text) > protocol.MaximumMessageBytes {

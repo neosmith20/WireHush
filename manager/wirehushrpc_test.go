@@ -233,3 +233,29 @@ func TestWireHushSlowEventReaderDoesNotBlockMutations(t *testing.T) {
 		t.Fatal("event cancellation did not complete")
 	}
 }
+
+func TestWireHushRPCLocalPrivateRoundTripWithoutGroup(t *testing.T) {
+	server, ctx, session := testWireHushRPC(t)
+	session.identity.Caller.WireHushUser = false
+	handshake, err := server.Handshake(ctx, &protocol.HandshakeRequest{ProtocolMajor: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, cap := range handshake.Capabilities {
+		if cap == protocol.Capability_CAPABILITY_SHARED_CREATE {
+			t.Fatal("ordinary user received shared creation")
+		}
+	}
+	text := wireHushControlWGQuick + "\n# Preserve saved details and comments\n"
+	created, err := server.CreateTunnel(ctx, &protocol.CreateTunnelRequest{Name: "LocalPrivate", Scope: protocol.Scope_SCOPE_PRIVATE, WgQuickText: text})
+	if err != nil {
+		t.Fatal(err)
+	}
+	reply, err := server.ReadConfiguration(ctx, created.Tunnel)
+	if err != nil || reply.WgQuickText != text {
+		t.Fatal("stored configuration failed exact editor round trip")
+	}
+	if _, err = server.CreateTunnel(ctx, &protocol.CreateTunnelRequest{Name: "ForbiddenShared", Scope: protocol.Scope_SCOPE_SHARED, WgQuickText: text}); !errors.Is(err, errWireHushAccessDenied) {
+		t.Fatal("ordinary user shared creation was not denied")
+	}
+}

@@ -23,12 +23,12 @@ import (
 )
 
 func TestWireHushPipeAuthorizationAndDescriptor(t *testing.T) {
-	for _, caller := range []wireHushCaller{{}, {SID: "S-1-5-7", WireHushUser: true}, {SID: wireHushAuthOtherSID}} {
+	for _, caller := range []wireHushCaller{{}, {SID: "S-1-5-7", WireHushUser: true}, {SID: "S-1-5-2"}} {
 		if validateWireHushPipeIdentity(wireHushPipeIdentity{Caller: caller}) == nil {
 			t.Fatalf("unauthorized identity accepted: %+v", caller)
 		}
 	}
-	for _, caller := range []wireHushCaller{{SID: wireHushAuthOwnerSID, Administrator: true}, {SID: wireHushAuthOwnerSID, WireHushUser: true}} {
+	for _, caller := range []wireHushCaller{{SID: wireHushAuthOtherSID}, {SID: wireHushAuthOwnerSID, Administrator: true}, {SID: wireHushAuthOwnerSID, WireHushUser: true}} {
 		if err := validateWireHushPipeIdentity(wireHushPipeIdentity{Caller: caller}); err != nil {
 			t.Fatal(err)
 		}
@@ -44,7 +44,7 @@ func TestWireHushPipeAuthorizationAndDescriptor(t *testing.T) {
 	if _, err := windows.SecurityDescriptorFromString(sddl); err != nil {
 		t.Fatal(err)
 	}
-	for _, forbidden := range []string{";;;WD)", ";;;AU)", ";;;BU)", "0x12019f"} {
+	for _, forbidden := range []string{";;;WD)", ";;;BU)", "0x12019f"} {
 		if strings.Contains(sddl, forbidden) {
 			t.Fatalf("overbroad pipe descriptor: %s", sddl)
 		}

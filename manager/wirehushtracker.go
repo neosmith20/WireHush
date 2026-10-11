@@ -86,6 +86,12 @@ func wireHushTrackedTunnelsGlobalState() (state TunnelState) {
 	return
 }
 
+func wireHushTunnelNeedsRepair(status svc.Status) bool {
+	// Only the explicit pre-network marker permits retry after a failed exit.
+	// Unknown failures and every failure after adapter creation stay fail-closed.
+	return wireHushTunnelServiceExitError(status) != nil && !(status.Win32ExitCode == uint32(windows.ERROR_SERVICE_SPECIFIC_ERROR) && status.ServiceSpecificExitCode == uint32(services.ErrorStartupBeforeNetwork))
+}
+
 func wireHushTunnelServiceExitError(status svc.Status) error {
 	if status.Win32ExitCode == uint32(windows.ERROR_SERVICE_SPECIFIC_ERROR) {
 		if err := services.Error(status.ServiceSpecificExitCode); err != services.ErrorSuccess {

@@ -6,13 +6,15 @@ package manager
 import (
 	"context"
 	"errors"
+	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/svc"
+	"golang.zx2c4.com/wireguard/windows/services"
 	"testing"
 	"time"
 )
 
 func TestWireHushCleanupRetainsFailedWorkerService(t *testing.T) {
-	for _, current := range []svc.Status{{State: svc.Stopped, Win32ExitCode: 1066, ServiceSpecificExitCode: 10}, {State: svc.Stopped, Win32ExitCode: 1}} {
+	for _, current := range []svc.Status{{State: svc.Stopped, Win32ExitCode: 1066, ServiceSpecificExitCode: 10}, {State: svc.Stopped, Win32ExitCode: 1}, {State: svc.Stopped, Win32ExitCode: 11001}} {
 		deleted := false
 		err := removeWireHushTunnelAfterCleanup(context.Background(), func() (svc.Status, error) { return current, nil }, func() error { t.Fatal("stopped service was stopped again"); return nil }, func() error { deleted = true; return nil })
 		if !errors.Is(err, errWireHushCleanupFailed) || deleted {
@@ -40,5 +42,20 @@ func TestWireHushCleanupDeadlineNeverDeletesService(t *testing.T) {
 	err := removeWireHushTunnelAfterCleanup(ctx, func() (svc.Status, error) { return svc.Status{State: svc.StopPending}, nil }, func() error { return nil }, func() error { deleted = true; return nil })
 	if !errors.Is(err, context.DeadlineExceeded) || deleted {
 		t.Fatal("incomplete cleanup removed service")
+	}
+}
+
+func TestWireHushCleanupAllowsExplicitPreNetworkFailure(t *testing.T) {
+	current := svc.Status{State: svc.Stopped, Win32ExitCode: uint32(windows.ERROR_SERVICE_SPECIFIC_ERROR), ServiceSpecificExitCode: uint32(services.ErrorStartupBeforeNetwork)}
+	if wireHushTunnelServiceExitError(current) == nil {
+		t.Fatal("startup failure evidence was erased")
+	}
+	if wireHushTunnelStateFromServiceStatus(current) != TunnelStopped {
+		t.Fatal("safe startup failure blocks corrected configuration")
+	}
+	deleted := false
+	err := removeWireHushTunnelAfterCleanup(context.Background(), func() (svc.Status, error) { return current, nil }, func() error { t.Fatal("stopped service was stopped again"); return nil }, func() error { deleted = true; return nil })
+	if err != nil || !deleted {
+		t.Fatalf("safe startup failure cannot be removed: %v", err)
 	}
 }

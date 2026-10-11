@@ -45,7 +45,7 @@ func validateWireHushPipeIdentity(identity wireHushPipeIdentity) error {
 	if err := identity.Caller.Validate(); err != nil {
 		return errWireHushAccessDenied
 	}
-	if identity.Caller.SID == "S-1-5-7" || (!identity.Caller.Administrator && !identity.Caller.WireHushUser) {
+	if identity.Caller.SID == "S-1-5-7" || identity.Caller.SID == "S-1-5-2" {
 		return errWireHushAccessDenied
 	}
 	return nil
@@ -55,9 +55,9 @@ func wireHushPipeSecurityDescriptor(group *windows.SID) (string, error) {
 	if group == nil || !group.IsValid() {
 		return "", errWireHushAccessDenied
 	}
-	// Anonymous and network logons are explicitly denied. No Everyone,
-	// Authenticated Users, or Builtin Users allow ACE is present.
-	return "O:SYG:SYD:P(D;;GA;;;AN)(D;;GA;;;NU)(A;;GA;;;SY)(A;;0x12019b;;;BA)(A;;0x12019b;;;" + group.String() + ")", nil
+	// Authenticated local users may manage their own private namespace. Network
+	// and anonymous logons remain denied; shared permissions are checked per RPC.
+	return "O:SYG:SYD:P(D;;GA;;;AN)(D;;GA;;;NU)(A;;GA;;;SY)(A;;0x12019b;;;AU)(A;;0x12019b;;;BA)(A;;0x12019b;;;" + group.String() + ")", nil
 }
 
 func listenWireHushPipe() (net.Listener, *windows.SID, error) {
@@ -151,6 +151,19 @@ func authenticateWireHushPipe(conn net.Conn, group *windows.SID) (wireHushPipeId
 		return wireHushPipeIdentity{}, err
 	}
 	defer token.Close()
+	for _, check := range []struct {
+		kind     windows.WELL_KNOWN_SID_TYPE
+		required bool
+	}{{windows.WinAuthenticatedUserSid, true}, {windows.WinNetworkSid, false}, {windows.WinAnonymousSid, false}} {
+		sid, err := windows.CreateWellKnownSid(check.kind)
+		if err != nil {
+			return wireHushPipeIdentity{}, err
+		}
+		member, err := token.IsMember(sid)
+		if err != nil || member != check.required {
+			return wireHushPipeIdentity{}, errWireHushAccessDenied
+		}
+	}
 	user, err := token.GetTokenUser()
 	if err != nil {
 		return wireHushPipeIdentity{}, err

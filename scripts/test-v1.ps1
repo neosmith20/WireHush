@@ -1,4 +1,4 @@
-#requires -Version 7.2
+﻿#requires -Version 7.2
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2026 WireHush. All Rights Reserved.
 [CmdletBinding()]
@@ -39,6 +39,18 @@ try {
     if ($LASTEXITCODE) { throw 'Installer safety test compilation failed' }
     & "$repo/.artifacts/v1/installer-safety-test.exe" 2>&1 | Out-Host
     if ($LASTEXITCODE) { throw 'Installer safety tests failed' }
+    $installerBuilder = Get-Content -LiteralPath "$repo/scripts/build-installer-v1.ps1" -Raw
+    $buildSearch = '<Property Id="WINDOWSBUILDNUMBER" Secure="yes"><RegistrySearch Id="BuildNumberSearch" Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion" Name="CurrentBuildNumber" Type="raw" Win64="yes" /></Property>'
+    $buildCondition = '<Condition Message="WireHush requires Windows 10 1809 or later.">Installed OR (VersionNT64 AND WINDOWSBUILDNUMBER AND WINDOWSBUILDNUMBER &gt;= 17763)</Condition>'
+    if (!$installerBuilder.Contains($buildSearch) -or !$installerBuilder.Contains($buildCondition)) { throw 'Installer Windows build detection regression' }
+    if ($installerBuilder -match '\bWindowsBuild\b') { throw 'Legacy WindowsBuild MSI property must not gate V1 installation' }
+    if (!$installerBuilder.Contains('<UI Id="WireHush_FixedPath">') -or !$installerBuilder.Contains('<UIRef Id="WixUI_Common" />') -or !$installerBuilder.Contains('<Dialog Id="RemoveDataChoiceDlg"')) { throw 'Installer fixed-path UI regression' }
+    if ($installerBuilder -match 'WixUI_InstallDir|WIXUI_INSTALLDIR|InstallDirDlg') { throw 'V1 installer must not expose a mutable installation path' }
+    $buildScript = Get-Content -LiteralPath "$repo/scripts/build-v1.ps1" -Raw
+    if (!$buildScript.Contains('git status --porcelain --untracked-files=normal') -or !$buildScript.Contains('Owner-test builds require a clean Git working tree')) { throw 'Artifact provenance clean-tree guard regression' }
+    $uiProject = Get-Content -LiteralPath "$repo/windows-ui/WireHush.UI/WireHush.UI.csproj" -Raw
+    $managerResources = Get-Content -LiteralPath "$repo/cmd/wirehush-manager/resources.rc" -Raw
+    if (!$uiProject.Contains('<Company>WireHush contributors</Company>') -or !$managerResources.Contains('VALUE "CompanyName", "WireHush contributors"')) { throw 'WireHush executable company metadata regression' }
     & "$repo/.deps/dotnet/dotnet.exe" run --project windows-ui/WireHush.UI.SafetyTests -c Release 2>&1 | Out-Host
     if ($LASTEXITCODE) { throw 'UI measurement safety tests failed' }
     & git diff --check 2>&1 | Out-Host

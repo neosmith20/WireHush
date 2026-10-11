@@ -19,6 +19,7 @@ public interface IManagerClient : IAsyncDisposable
     Task<string> ImportTunnelAsync(string name, string content, CancellationToken cancellationToken, bool shared = false);
     Task<IReadOnlyList<BootstrapResolver>> GetBootstrapAsync(CancellationToken cancellationToken);
     Task SaveBootstrapAsync(IReadOnlyList<BootstrapResolver> resolvers, CancellationToken cancellationToken);
+    Task<EditableTunnel> GetEditableTunnelAsync(string id, CancellationToken cancellationToken);
     Task<string> ExportAsync(string id, CancellationToken cancellationToken);
     Task UpdateAsync(string id, string name, string configuration, CancellationToken cancellationToken);
     Task<IReadOnlyList<string>> GetLogSnapshotAsync(CancellationToken cancellationToken);
