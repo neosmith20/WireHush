@@ -259,8 +259,20 @@ public sealed partial class MainWindow : Window
         var actionText = _tunnelActionPending ? _selectedDetails.State == "connected" ? "Disconnecting…" : "Connecting…" : _selectedDetails.State == "connected" ? "Disconnect" : "Connect";
         var toggle = ActionButton(actionText, _selectedDetails.State == "connected" ? "" : "\uE768", _selectedDetails.State != "connected", async (_, _) => await ToggleTunnelAsync()); toggle.Tag = "action:connect"; toggle.IsEnabled = (_selectedDetails.State == "connected" || _managerClient?.DeviceBusyForAnotherUser != true) && _managerClient?.Connected == true && !_tunnelActionPending && _selectedDetails.State is ("connected" or "disconnected"); toggle.Width = 255; toggle.Height = 68; Grid.SetColumn(toggle, 1); heading.Children.Add(toggle); stack.Children.Add(heading);
         var columns = DetailWidth < 900 ? 2 : 4; var tiles = new Grid(); for (var i = 0; i < columns; i++) tiles.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); for (var i = 0; i < (4 + columns - 1) / columns; i++) tiles.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        var values = new[] { ("VPN IP (IPv4)", _selectedDetails.Ipv4Addresses.Count == 0 ? "Unavailable" : _selectedDetails.Ipv4Addresses[0]), ("VPN IP (IPv6)", _selectedDetails.Ipv6Addresses.Count == 0 ? "Unavailable" : _selectedDetails.Ipv6Addresses[0]), ("Endpoint", string.IsNullOrWhiteSpace(_selectedDetails.EndpointDisplay) ? "Unavailable" : _selectedDetails.EndpointDisplay), ("Latest Handshake", _selectedDetails.LatestHandshakeUtc is null ? "Not reported" : RelativeTime(_selectedDetails.LatestHandshakeUtc)) };
-        for (var i = 0; i < values.Length; i++) { var tile = new StackPanel { Spacing = 6, Padding = new Thickness(12, 8, 12, 8) }; tile.Children.Add(Text($"{values[i].Item1}:", 14, false, Brush("WireHushMutedBrush"))); tile.Children.Add(Text(values[i].Item2, 17, true)); Grid.SetColumn(tile, i % columns); Grid.SetRow(tile, i / columns); tiles.Children.Add(tile); }
+        var values = new[] { ("VPN IP (IPv4)", _selectedDetails.Ipv4Addresses.Count == 0 ? "Unavailable" : _selectedDetails.Ipv4Addresses[0]), ("VPN IP (IPv6)", _selectedDetails.Ipv6Addresses.Count == 0 ? "Unavailable" : _selectedDetails.Ipv6Addresses[0]), ("Endpoint", string.IsNullOrWhiteSpace(_selectedDetails.EndpointDisplay) ? "Unavailable" : _selectedDetails.EndpointDisplay), ("Latest Handshake", _selectedDetails.LatestHandshakeUtc is null ? "Not Reported" : RelativeTime(_selectedDetails.LatestHandshakeUtc)) };
+        for (var i = 0; i < values.Length; i++)
+        {
+            var tile = new Grid { ColumnSpacing = 6, Padding = new Thickness(12, 8, 12, 8) };
+            tile.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            tile.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            tile.Children.Add(Text($"{values[i].Item1}:", 14, false, Brush("WireHushMutedBrush")));
+            var value = Text(values[i].Item2, 17, true);
+            Grid.SetColumn(value, 1);
+            tile.Children.Add(value);
+            Grid.SetColumn(tile, i % columns);
+            Grid.SetRow(tile, i / columns);
+            tiles.Children.Add(tile);
+        }
         stack.Children.Add(tiles); border.Child = stack; return border;
     }
     private UIElement EmptyDetails() { var s = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Spacing = 10 }; s.Children.Add(Text("No tunnel selected", 28, true)); s.Children.Add(Text("Add or import a WireGuard tunnel to begin.", 16, false, Brush("WireHushMutedBrush"))); return s; }
@@ -284,18 +296,18 @@ public sealed partial class MainWindow : Window
         grid.Children.Add(right); return grid;
     }
     private UIElement NetworkPage() => DetailCard("Network", new[] { ("IPv4", Join(_selectedDetails!.Ipv4Addresses)), ("IPv6", Join(_selectedDetails.Ipv6Addresses)), ("Listen Port", _selectedDetails.ListenPort?.ToString() ?? "—"), ("Interface", "WireHush Connection"), ("Endpoint", Value(_selectedDetails.EndpointDisplay)) });
-    private UIElement DnsPage() { var v = new List<(string, string)> { ("Mode", Value(_selectedDetails!.Dns.Mode)), ("Resolver", Value(_selectedDetails!.Dns.ServerDisplay)), ("Address Family", Value(_selectedDetails.Dns.AddressFamily)), ("Tunnel Readiness", DnsStatus()), ("Plain DNS Fallback", _selectedDetails.Dns.Mode == "DNS over HTTPS (DoH)" ? "Disabled" : "Not applicable"), ("Bootstrap Resolvers", _selectedDetails.Dns.Mode == "DNS over HTTPS (DoH)" ? "See Settings" : "Not applicable") }; return DetailCard("DNS", v); }
-    private string DnsModeText() => _selectedDetails!.Dns.Mode switch { "DNS" => "Plain DNS (Windows resolver)", "DNS over HTTPS (DoH)" => "Encrypted DNS over HTTPS", "Not configured" => "System DNS (no tunnel override)", _ => "Unavailable" };
+    private UIElement DnsPage() { var v = new List<(string, string)> { ("Mode", DnsModeText()), ("Resolver", Value(_selectedDetails!.Dns.ServerDisplay)), ("Address Family", Value(_selectedDetails.Dns.AddressFamily)), ("Tunnel Readiness", DnsStatus()), ("Plain DNS Fallback", _selectedDetails.Dns.Mode == "DNS over HTTPS (DoH)" ? "Disabled" : "Not Applicable"), ("Bootstrap Resolvers", _selectedDetails.Dns.Mode == "DNS over HTTPS (DoH)" ? "See Settings" : "Not Applicable") }; return DetailCard("DNS", v); }
+    private string DnsModeText() => _selectedDetails!.Dns.Mode switch { "DNS" => "Plain DNS (Windows Resolver)", "DNS over HTTPS (DoH)" => "Encrypted DNS over HTTPS", "Not configured" => "System DNS (No Tunnel Override)", _ => "Unavailable" };
     private string DnsStatus()
     {
-        if (_selectedDetails!.State == "unknown") return "Networking state unavailable";
-        if (_selectedDetails.State != "connected") return "Not active";
+        if (_selectedDetails!.State == "unknown") return "Networking State Unavailable";
+        if (_selectedDetails.State != "connected") return "Not Active";
         return _selectedDetails.Dns.Mode switch
         {
-            "DNS over HTTPS (DoH)" => _selectedDetails.Dns.Ready ? "Ready through tunnel" : "Encrypted DNS configured; live health unavailable",
-            "DNS" => "Windows DNS configured",
-            "Not configured" => "No tunnel DNS configured",
-            _ => "DNS details unavailable"
+            "DNS over HTTPS (DoH)" => _selectedDetails.Dns.Ready ? "Ready Through Tunnel" : "Encrypted DNS Configured; Live Health Unavailable",
+            "DNS" => "Windows DNS Configured",
+            "Not configured" => "No Tunnel DNS Configured",
+            _ => "DNS Details Unavailable"
         };
     }
     private UIElement PeerPage() { var s = new StackPanel { Spacing = 14 }; if (_selectedDetails!.Peers.Count == 0) s.Children.Add(DetailCard("Peers", new[] { ("Status", "Peer details are unavailable for this account.") })); foreach (var p in _selectedDetails.Peers) s.Children.Add(DetailCard("Peer", new[] { ("Public Key", Value(p.PublicKeyDisplay)), ("Endpoint", Value(p.EndpointDisplay)), ("Latest Handshake", RelativeTime(p.LatestHandshakeUtc)), ("Received", FormatBytes(p.RxBytes)), ("Sent", FormatBytes(p.TxBytes)), ("Keepalive", p.PersistentKeepaliveSeconds?.ToString() ?? "—") })); return s; }
@@ -305,19 +317,18 @@ public sealed partial class MainWindow : Window
         var border = new Border { Style = (Style)Application.Current.Resources["WireHushCardStyle"], Padding = new Thickness(20), Margin = new Thickness(0) };
         var stack = new StackPanel { Spacing = 12 };
         stack.Children.Add(Text(title, 20, true));
-        var rows = new Grid { ColumnSpacing = 16, RowSpacing = 12 };
-        rows.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        rows.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         foreach (var (label, value) in values)
         {
-            var index = rows.RowDefinitions.Count;
-            rows.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            var labelText = Text($"{label}:", 15, false, Brush("WireHushMutedBrush"));
+            var row = new Grid { ColumnSpacing = 6 };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.Children.Add(Text($"{label}:", 15, false, Brush("WireHushMutedBrush")));
             var valueText = Text(value, 15);
-            Grid.SetRow(labelText, index); Grid.SetRow(valueText, index); Grid.SetColumn(valueText, 1);
-            rows.Children.Add(labelText); rows.Children.Add(valueText);
+            Grid.SetColumn(valueText, 1);
+            row.Children.Add(valueText);
+            stack.Children.Add(row);
         }
-        stack.Children.Add(rows); border.Child = stack; return border;
+        border.Child = stack; return border;
     }
     private UIElement Card(string title, IEnumerable<(string Label, string Value)> values) { var border = new Border { Style = (Style)Application.Current.Resources["WireHushCardStyle"], Padding = new Thickness(20), Margin = new Thickness(0) }; var stack = new StackPanel { Spacing = 12 }; stack.Children.Add(Text(title, 20, true)); foreach (var (label, value) in values) { var row = new Grid(); row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(115) }); row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); row.Children.Add(Text(label, 15, false, Brush("WireHushMutedBrush"))); var vb = Text(value, 15); Grid.SetColumn(vb, 1); row.Children.Add(vb); stack.Children.Add(row); } border.Child = stack; return border; }
     private UIElement TrafficCard()

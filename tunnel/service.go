@@ -42,6 +42,7 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 	var luid winipcfg.LUID
 	var config *conf.Config
 	var runtimeInterfaceName string
+	var scriptInterfaceName string
 	var adapterGUID *windows.GUID
 	var encryptedDNSSession *dohruntime.Session
 	var configuredBootstrap []netip.Addr
@@ -102,7 +103,7 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 			}
 		}
 		if logErr == nil && adapter != nil && config != nil {
-			logErr = runScriptCommand(config.Interface.PreDown, runtimeInterfaceName)
+			logErr = runScriptCommand(config.Interface.PreDown, scriptInterfaceName)
 		}
 		if watcher != nil {
 			watcher.Destroy()
@@ -111,7 +112,7 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 			adapter.Close()
 		}
 		if logErr == nil && adapter != nil && config != nil {
-			postDownErr := runScriptCommand(config.Interface.PostDown, runtimeInterfaceName)
+			postDownErr := runScriptCommand(config.Interface.PostDown, scriptInterfaceName)
 			if service.RecordLocator != nil {
 				logErr = postDownErr
 			}
@@ -154,6 +155,7 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 		serviceError = services.ErrorLoadConfiguration
 		return
 	}
+	scriptInterfaceName = runtimeInterfaceName
 	config.DeduplicateNetworkEntries()
 
 	log.SetPrefix(fmt.Sprintf("[%s] ", config.Name))
@@ -218,13 +220,17 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 		return
 	}
 
+	adapterType := "WireGuard"
+	if service.RecordLocator != nil {
+		adapterType = wireHushTunnelType
+	}
 	log.Println("Creating network adapter")
 	for i := range 15 {
 		if i > 0 {
 			time.Sleep(time.Second)
 			log.Printf("Retrying adapter creation after failure because system just booted (T+%v): %v", windows.DurationSinceBoot(), err)
 		}
-		adapter, err = driver.CreateAdapter(runtimeInterfaceName, "WireGuard", adapterGUID)
+		adapter, err = driver.CreateAdapter(runtimeInterfaceName, adapterType, adapterGUID)
 		if err == nil || !services.StartedAtBoot() {
 			break
 		}
@@ -235,6 +241,13 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 		return
 	}
 	luid = adapter.LUID()
+	if service.RecordLocator != nil {
+		var brandingErr error
+		scriptInterfaceName, brandingErr = wireHushConnectionAlias(runtimeInterfaceName, func() error { return setWireHushConnectionName(luid) })
+		if brandingErr != nil {
+			log.Printf("Warning: unable to set WireHush connection name: %v", brandingErr)
+		}
+	}
 	driverVersion, err := driver.RunningVersion()
 	if err != nil {
 		log.Printf("Warning: unable to determine driver version: %v", err)
@@ -248,7 +261,7 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 		return
 	}
 
-	err = runScriptCommand(config.Interface.PreUp, runtimeInterfaceName)
+	err = runScriptCommand(config.Interface.PreUp, scriptInterfaceName)
 	if err != nil {
 		serviceError = services.ErrorRunScript
 		return
@@ -299,7 +312,7 @@ func (service *tunnelService) Execute(args []string, r <-chan svc.ChangeRequest,
 		})
 	}
 
-	err = runScriptCommand(config.Interface.PostUp, runtimeInterfaceName)
+	err = runScriptCommand(config.Interface.PostUp, scriptInterfaceName)
 	if err != nil {
 		serviceError = services.ErrorRunScript
 		return
