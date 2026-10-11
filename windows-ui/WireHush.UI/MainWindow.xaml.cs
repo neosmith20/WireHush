@@ -262,13 +262,9 @@ public sealed partial class MainWindow : Window
         var values = new[] { ("VPN IP (IPv4)", _selectedDetails.Ipv4Addresses.Count == 0 ? "Unavailable" : _selectedDetails.Ipv4Addresses[0]), ("VPN IP (IPv6)", _selectedDetails.Ipv6Addresses.Count == 0 ? "Unavailable" : _selectedDetails.Ipv6Addresses[0]), ("Endpoint", string.IsNullOrWhiteSpace(_selectedDetails.EndpointDisplay) ? "Unavailable" : _selectedDetails.EndpointDisplay), ("Latest Handshake", _selectedDetails.LatestHandshakeUtc is null ? "Not Reported" : RelativeTime(_selectedDetails.LatestHandshakeUtc)) };
         for (var i = 0; i < values.Length; i++)
         {
-            var tile = new Grid { ColumnSpacing = 6, Padding = new Thickness(12, 8, 12, 8) };
-            tile.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            tile.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            tile.Children.Add(Text($"{values[i].Item1}:", 14, false, Brush("WireHushMutedBrush")));
-            var value = Text(values[i].Item2, 17, true);
-            Grid.SetColumn(value, 1);
-            tile.Children.Add(value);
+            var tile = new StackPanel { Spacing = 6, Padding = new Thickness(12, 8, 12, 8) };
+            tile.Children.Add(Text(values[i].Item1, 14, false, Brush("WireHushMutedBrush")));
+            tile.Children.Add(Text(values[i].Item2, 17, true));
             Grid.SetColumn(tile, i % columns);
             Grid.SetRow(tile, i / columns);
             tiles.Children.Add(tile);
