@@ -15,10 +15,17 @@ public sealed partial class MainWindow
         if (!await _dialogGate.WaitAsync(0)) return ContentDialogResult.None;
         try
         {
+            // Keep every auxiliary surface inside this window's Xaml root. This makes
+            // it follow WireHush when the main window is moved and prevents each dialog
+            // from choosing an unrelated desktop position.
+            dialog.XamlRoot ??= RootGrid.XamlRoot;
             dialog.RequestedTheme = ElementTheme.Dark;
-            dialog.Resources["ContentDialogMaxWidth"] = Math.Min(900, Math.Max(320, RootGrid.ActualWidth - 80));
-            dialog.MaxWidth = Math.Min(900, Math.Max(320, RootGrid.ActualWidth - 80));
-            dialog.MaxHeight = Math.Min(720, Math.Max(320, RootGrid.ActualHeight - 80));
+            dialog.FullSizeDesired = false;
+            dialog.HorizontalAlignment = HorizontalAlignment.Center;
+            dialog.VerticalAlignment = VerticalAlignment.Center;
+            dialog.Resources["ContentDialogMaxWidth"] = Math.Min(780, Math.Max(320, RootGrid.ActualWidth - 64));
+            dialog.MaxWidth = Math.Min(780, Math.Max(320, RootGrid.ActualWidth - 64));
+            dialog.MaxHeight = Math.Min(720, Math.Max(320, RootGrid.ActualHeight - 64));
             return await dialog.ShowAsync();
         }
         finally { _dialogGate.Release(); }
@@ -77,11 +84,11 @@ public sealed partial class MainWindow
         {
             var editable = _managerClient.MayEditMachineSettings;
             var entries = (await _managerClient.GetBootstrapAsync(_lifetime.Token)).ToList();
-            var rows = new StackPanel { Spacing = 10 };
+            var rows = new StackPanel { Spacing = 12 };
             var error = new InfoBar { Severity = InfoBarSeverity.Error };
-            var panel = new StackPanel { Spacing = 12, MinWidth = 460 };
+            var panel = new StackPanel { Spacing = 16, MinWidth = 520 };
             panel.Children.Add(Text("Bootstrap resolvers", 20, true));
-            panel.Children.Add(Text(editable ? "These IP addresses are used only while establishing encrypted DNS. Changes are saved for the whole device." : "An administrator can change these device settings.", 14));
+            panel.Children.Add(Text(editable ? "These IP addresses are used only while establishing encrypted DNS. Changes are saved for the whole device." : "An administrator can change these device settings.", 14, false, Brush("WireHushMutedBrush")));
             panel.Children.Add(rows); panel.Children.Add(error);
             void Render()
             {
@@ -89,25 +96,32 @@ public sealed partial class MainWindow
                 for (var index = 0; index < entries.Count; index++)
                 {
                     var i = index;
-                    var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+                    var row = new Grid { ColumnSpacing = 8 };
+                    row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(32) });
+                    row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                    row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                    row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
                     var enabled = new CheckBox { IsChecked = entries[i].Enabled, IsEnabled = editable, VerticalAlignment = VerticalAlignment.Center };
+                    ToolTipService.SetToolTip(enabled, "Use this resolver");
                     enabled.Checked += (_, _) => entries[i] = entries[i] with { Enabled = true };
                     enabled.Unchecked += (_, _) => entries[i] = entries[i] with { Enabled = false };
-                    var address = new TextBox { Text = entries[i].Address, Width = 250, IsReadOnly = !editable || !entries[i].Custom, Header = entries[i].Custom ? "Custom IP" : "Default IP" };
+                    var address = new TextBox { Text = entries[i].Address, MinWidth = 320, IsReadOnly = !editable || !entries[i].Custom, Header = entries[i].Custom ? "Custom resolver IP" : "Default resolver IP" };
                     address.TextChanged += (_, _) => entries[i] = entries[i] with { Address = address.Text.Trim() };
-                    row.Children.Add(enabled); row.Children.Add(address);
+                    row.Children.Add(enabled); Grid.SetColumn(address, 1); row.Children.Add(address);
                     if (editable)
                     {
-                        row.Children.Add(SmallButton("↑", (_, _) => { if (i > 0) { (entries[i-1], entries[i]) = (entries[i], entries[i-1]); Render(); } }));
-                        row.Children.Add(SmallButton("↓", (_, _) => { if (i+1 < entries.Count) { (entries[i+1], entries[i]) = (entries[i], entries[i+1]); Render(); } }));
-                        if (entries[i].Custom) row.Children.Add(SmallButton("Remove", (_, _) => { entries.RemoveAt(i); Render(); }));
+                        var up = SmallButton("↑", (_, _) => { if (i > 0) { (entries[i-1], entries[i]) = (entries[i], entries[i-1]); Render(); } });
+                        Grid.SetColumn(up, 2); row.Children.Add(up);
+                        var down = SmallButton("↓", (_, _) => { if (i+1 < entries.Count) { (entries[i+1], entries[i]) = (entries[i], entries[i+1]); Render(); } });
+                        Grid.SetColumn(down, 3); row.Children.Add(down);
+                        if (entries[i].Custom) { var remove = SmallButton("Remove", (_, _) => { entries.RemoveAt(i); Render(); }); Grid.SetColumn(remove, 4); row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); row.Children.Add(remove); }
                     }
                     rows.Children.Add(row);
                 }
                 if (editable) rows.Children.Add(SmallButton("Add custom IP", (_, _) => { if (entries.Count < 64) { entries.Add(new BootstrapResolver("", true, true)); Render(); } }));
             }
             Render();
-            var dialog = new ContentDialog { Title = "Settings", Content = new ScrollViewer { Content = panel, MaxHeight = 480 }, PrimaryButtonText = editable ? "Save" : "", SecondaryButtonText = editable ? "Restore defaults" : "", CloseButtonText = "Close", XamlRoot = RootGrid.XamlRoot };
+            var dialog = new ContentDialog { Title = "Settings", Content = new ScrollViewer { Content = panel, MaxHeight = 500, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, VerticalScrollBarVisibility = ScrollBarVisibility.Auto }, PrimaryButtonText = editable ? "Save" : "", SecondaryButtonText = editable ? "Restore defaults" : "", CloseButtonText = "Close", XamlRoot = RootGrid.XamlRoot };
             dialog.SecondaryButtonClick += (_, args) => { args.Cancel = true; entries = DefaultBootstrap().ToList(); Render(); };
             dialog.PrimaryButtonClick += async (_, args) =>
             {

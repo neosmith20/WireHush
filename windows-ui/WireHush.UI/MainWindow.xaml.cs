@@ -87,7 +87,7 @@ public sealed partial class MainWindow : Window
         var brandText = new StackPanel { VerticalAlignment = VerticalAlignment.Center }; brandText.Children.Add(Text("WireHush", 40, true)); brandText.Children.Add(Text("Private network control", 18)); brand.Children.Add(brandText); header.Children.Add(brand);
         var drag = new Grid(); Grid.SetColumn(drag, 1); header.Children.Add(drag); SetTitleBar(drag);
         _headerCommands = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, VerticalAlignment = VerticalAlignment.Center };
-        _headerCommands.Children.Add(HeaderButton("Settings", "\uE713", async (_, _) => await ShowSettingsAsync())); _headerCommands.Children.Add(HeaderButton("Log", "\uE8A5", async (_, _) => await ShowLogAsync())); _headerCommands.Children.Add(HeaderButton("Help", "\uE897", (_, _) => ShowHelp())); Grid.SetColumn(_headerCommands, 2); header.Children.Add(_headerCommands); RootGrid.Children.Add(header);
+        _headerCommands.Children.Add(HeaderButton("Settings", "\uE713", async (_, _) => await ShowSettingsAsync())); _headerCommands.Children.Add(HeaderButton("Log", "\uE8A5", async (_, _) => await ShowLogAsync())); _headerCommands.Children.Add(HeaderButton("Help", "\uE897", async (_, _) => await ShowHelpAsync())); Grid.SetColumn(_headerCommands, 2); header.Children.Add(_headerCommands); RootGrid.Children.Add(header);
         var body = new Grid(); body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(342) }); body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); Grid.SetRow(body, 1); RootGrid.Children.Add(body); body.Children.Add(BuildRail());
         var main = new Grid(); main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); main.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
         _managerInfo = new InfoBar { IsOpen = true, Severity = InfoBarSeverity.Informational, Title = "WireHush Manager", Message = "Connecting to WireHush Manager…", Margin = new Thickness(34, 14, 38, 0) }; main.Children.Add(_managerInfo);
@@ -403,20 +403,24 @@ public sealed partial class MainWindow : Window
         if (_managerClient is null) { ShowNotice("WireHush Manager is unavailable."); return; }
         try
         {
-            var lines = await _managerClient.GetLogSnapshotAsync(_lifetime.Token); var box = new TextBox { IsReadOnly = true, TextWrapping = TextWrapping.Wrap, AcceptsReturn = true, FontFamily = new FontFamily("Cascadia Mono"), MinWidth = 760, MinHeight = 380 };
+            var lines = await _managerClient.GetLogSnapshotAsync(_lifetime.Token); var box = new TextBox { IsReadOnly = true, TextWrapping = TextWrapping.Wrap, AcceptsReturn = true, FontFamily = new FontFamily("Cascadia Mono"), MinWidth = 620, MinHeight = 360, MaxHeight = 450 };
             void Filter(string query) => box.Text = string.Join(Environment.NewLine, lines.Where(line => string.IsNullOrWhiteSpace(query) || line.Contains(query, StringComparison.OrdinalIgnoreCase)));
-            Filter(string.Empty); var panel = new StackPanel { Spacing = 8 }; var filter = new AutoSuggestBox { PlaceholderText = "Filter displayed log…", QueryIcon = new SymbolIcon(Symbol.Find) }; filter.TextChanged += (_, _) => Filter(filter.Text); panel.Children.Add(filter); panel.Children.Add(box);
-            var dialog = new ContentDialog { Title = "Diagnostics (configuration omitted)", Content = panel, PrimaryButtonText = "Copy", CloseButtonText = "Close", XamlRoot = Content.XamlRoot }; dialog.PrimaryButtonClick += (_, _) => { var package = new Windows.ApplicationModel.DataTransfer.DataPackage(); package.SetText(box.Text); Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package); }; await ShowDialogAsync(dialog);
+            Filter(string.Empty); var panel = new StackPanel { Spacing = 12, MinWidth = 620 }; panel.Children.Add(Text("Runtime diagnostics without tunnel configuration or private keys.", 14, false, Brush("WireHushMutedBrush"))); var filter = new AutoSuggestBox { PlaceholderText = "Filter displayed log…", QueryIcon = new SymbolIcon(Symbol.Find) }; filter.TextChanged += (_, _) => Filter(filter.Text); panel.Children.Add(filter); panel.Children.Add(box);
+            var dialog = new ContentDialog { Title = "Diagnostics", Content = panel, PrimaryButtonText = "Copy", CloseButtonText = "Close", XamlRoot = RootGrid.XamlRoot }; dialog.PrimaryButtonClick += (_, _) => { var package = new Windows.ApplicationModel.DataTransfer.DataPackage(); package.SetText(box.Text); Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package); }; await ShowDialogAsync(dialog);
         }
         catch (Exception ex) { ShowNotice(SafeError(ex)); }
     }
-    private void ShowHelp()
+    private async Task ShowHelpAsync()
     {
-        _section = "Help"; var panel = new StackPanel { Spacing = 16 };
-        panel.Children.Add(Card("Help", new[] { ("Connect", "Select a tunnel and choose Connect."), ("Encrypted DNS", "Use DNS = https://… in a tunnel configuration. WireHush fails closed if it cannot establish that resolver."), ("Bootstrap", "Settings controls only the IP resolvers used to reach the encrypted DNS endpoint.") }));
-        panel.Children.Add(ActionButton("Back to tunnel", "\uE72B", false, (_, _) => { _section = "Overview"; RenderDetails(); }));
-        panel.Children.Add(ActionButton("Exit WireHush", "\uE7E8", false, async (_, _) => await ConfirmExitAsync()));
-        _detailHost!.Content = panel;
+        // Help is an auxiliary surface, like Settings and Diagnostics. Keeping it
+        // modal preserves the current tunnel page, selection, and keyboard focus.
+        var panel = new StackPanel { Spacing = 16, MinWidth = 500 };
+        panel.Children.Add(Text("Quick help", 20, true));
+        panel.Children.Add(Text("WireHush keeps tunnel controls in the main window. Closing this help panel leaves the current tunnel untouched.", 14, false, Brush("WireHushMutedBrush")));
+        panel.Children.Add(Card("Connect", new[] { ("Start or stop", "Select a tunnel, then use Connect or Disconnect."), ("Tunnel actions", "Use the three-dot menu beside a tunnel to edit, export, or delete it.") }));
+        panel.Children.Add(Card("Encrypted DNS", new[] { ("Tunnel DNS", "Use DNS = https://… in a tunnel configuration. WireHush fails closed if it cannot establish that resolver."), ("Bootstrap", "Settings controls only the IP resolvers used to reach the encrypted DNS endpoint.") }));
+        var dialog = new ContentDialog { Title = "Help", Content = new ScrollViewer { Content = panel, MaxHeight = 500, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, VerticalScrollBarVisibility = ScrollBarVisibility.Auto }, CloseButtonText = "Close", XamlRoot = RootGrid.XamlRoot };
+        await ShowDialogAsync(dialog);
     }
     private static string SafeError(Exception error) => error is Grpc.Core.RpcException rpc ? rpc.Status.Detail : error is InvalidOperationException or TimeoutException ? error.Message : "WireHush could not complete the operation. Refresh state and retry.";
     private void ShowNotice(string message) { SetConnectionStatus(message); }
