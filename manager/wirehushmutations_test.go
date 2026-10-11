@@ -97,10 +97,17 @@ func TestWireHushMutationGateCancellationAndActiveUpdate(t *testing.T) {
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("queued mutation error=%v", err)
 	}
-	mutations.control.state = func(conf.TunnelServiceLocator) (TunnelState, error) { return TunnelStarting, nil }
-	mutations.control.saveRecord = func(conf.TunnelRecord, bool) error { t.Fatal("transitional update wrote record"); return nil }
-	if err := mutations.Update(context.Background(), owner, locator, "B", record.WGQuickText); !errors.Is(err, errWireHushDeviceBusy) {
+	state := TunnelStarting
+	mutations.control.state = func(conf.TunnelServiceLocator) (TunnelState, error) { return state, nil }
+	mutations.control.stop = func(conf.TunnelServiceLocator) error { return nil }
+	mutations.control.waitForStop = func(conf.TunnelServiceLocator) error { return nil }
+	mutations.control.start = func(conf.TunnelServiceLocator) error { state = TunnelStarted; return nil }
+	if err := mutations.Update(context.Background(), owner, locator, "B", record.WGQuickText); err != nil {
 		t.Fatal(err)
+	}
+	updated, err := mutations.control.loadRecord(record.Scope, record.OwnerSID, record.TunnelID)
+	if err != nil || updated.Name != "B" || state != TunnelStarted {
+		t.Fatalf("transitional update did not save and reconnect: record=%+v state=%v err=%v", updated, state, err)
 	}
 	mutations.closing = true
 	if err := mutations.Stop(context.Background(), owner, locator); !errors.Is(err, errWireHushClosing) {

@@ -132,8 +132,6 @@ func wireHushRPCError(err error) error {
 		return status.Error(codes.AlreadyExists, "A tunnel with that name already exists in this access scope")
 	case errors.Is(err, errWireHushDeviceBusy):
 		return status.Error(codes.FailedPrecondition, "WireHush is currently active; stop the active tunnel first")
-	case errors.Is(err, errWireHushTunnelActive):
-		return status.Error(codes.FailedPrecondition, "Stop this tunnel before editing it")
 	case errors.Is(err, errWireHushClosing):
 		return status.Error(codes.Unavailable, "WireHush is closing")
 	case errors.Is(err, errWireHushCleanupFailed):

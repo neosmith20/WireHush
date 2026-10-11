@@ -15,7 +15,6 @@ import (
 
 var (
 	errWireHushDeviceBusy      = errors.New("WireHush is currently active; stop the active tunnel first")
-	errWireHushTunnelActive    = errors.New("stop the tunnel before editing its configuration")
 	errWireHushReconnectFailed = errors.New("configuration saved, but reconnect failed; the updated configuration was retained")
 	errWireHushClosing         = errors.New("WireHush is closing")
 )
@@ -151,7 +150,11 @@ func (mutations *wireHushMutations) Update(ctx context.Context, caller wireHushC
 	if err != nil {
 		return err
 	}
-	if state != TunnelStopped && state != TunnelStarted {
+	// The editor is always available. A tunnel that is connected, connecting, or
+	// disconnecting is the user's active tunnel, so normalize it through a full
+	// stop before replacing its record and then reconnect it after the save.
+	wasActive := state != TunnelStopped
+	if state != TunnelStopped && state != TunnelStarted && state != TunnelStarting && state != TunnelStopping {
 		return errWireHushDeviceBusy
 	}
 	record.Name, record.WGQuickText = name, text
@@ -164,7 +167,6 @@ func (mutations *wireHushMutations) Update(ctx context.Context, caller wireHushC
 		return err
 	}
 	control := mutations.control.withContext(ctx)
-	wasActive := state == TunnelStarted
 	if wasActive {
 		if err := control.stopAndWait(canonical); err != nil {
 			return err

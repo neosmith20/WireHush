@@ -117,6 +117,17 @@ internal sealed class GrpcManagerClient : IManagerClient
         await RefreshAsync(cancellationToken);
         return created.Tunnel.TunnelId;
     }
+    public async Task<EditableTunnel> GetEditableTunnelAsync(string id, CancellationToken cancellationToken)
+    {
+        // Refresh first so the editor is anchored to the current selected tunnel,
+        // then read the stored record rather than deriving edit values from runtime data.
+        await RefreshAsync(cancellationToken);
+        var tunnel = Find(id);
+        var configuration = (await Rpc.ReadConfigurationAsync(tunnel.Tunnel, deadline: Deadline, cancellationToken: cancellationToken)).WgQuickText;
+        if (string.IsNullOrWhiteSpace(tunnel.Name) || string.IsNullOrWhiteSpace(configuration))
+            throw new InvalidOperationException("The stored tunnel record could not be loaded. No blank editor was opened.");
+        return new EditableTunnel(tunnel.Name, configuration);
+    }
     public async Task<string> ExportAsync(string id, CancellationToken cancellationToken) => (await Rpc.ReadConfigurationAsync(Find(id).Tunnel, deadline: Deadline, cancellationToken: cancellationToken)).WgQuickText;
     public async Task UpdateAsync(string id, string name, string configuration, CancellationToken cancellationToken)
     {

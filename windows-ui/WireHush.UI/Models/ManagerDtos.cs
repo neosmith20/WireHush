@@ -45,6 +45,10 @@ public sealed record BootstrapResolver(
     bool Enabled,
     bool Custom);
 
+public sealed record EditableTunnel(
+    string Name,
+    string Configuration);
+
 public sealed record ManagerError(
     string Code,
     string Message);
