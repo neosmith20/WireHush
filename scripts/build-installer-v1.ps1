@@ -51,7 +51,6 @@ $source=@"
 <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer WireHush version is installed." Schedule="afterInstallExecute" />
 <Property Id="DELETE_WIREHUSH_DATA" Value="0" Secure="yes" />
 <Property Id="MSIRESTARTMANAGERCONTROL" Value="Disable" />
-<Property Id="REINSTALLMODE" Value="amus" />
 <Property Id="BeginMaintenance" Hidden="yes" /><Property Id="RollbackMaintenance" Hidden="yes" /><Property Id="ProvisionAccess" Hidden="yes" /><Property Id="CommitProvisionAccess" Hidden="yes" />
 <Icon Id="WireHush.exe" SourceFile="$(Esc "$Payload/WireHush.exe")" /><Property Id="ARPPRODUCTICON" Value="WireHush.exe" />
 <Property Id="WINDOWSBUILDNUMBER" Secure="yes"><RegistrySearch Id="BuildNumberSearch" Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion" Name="CurrentBuildNumber" Type="raw" Win64="yes" /></Property>
@@ -60,6 +59,7 @@ $source=@"
 <Feature Id="Main" Title="WireHush" Level="1">$references</Feature>
 <Binary Id="InstallerActions" SourceFile="$(Esc "$out/v1-customactions.dll")" />
 <Binary Id="InstallerManager" SourceFile="$(Esc "$Payload/WireHush-Manager.exe")" />
+<CustomAction Id="ForceOwnerTestReinstallMode" Property="REINSTALLMODE" Value="amus" />
 <CustomAction Id="CaptureMaintenance" BinaryKey="InstallerActions" DllEntry="CaptureMaintenance" Return="check" />
 <CustomAction Id="RollbackMaintenance" BinaryKey="InstallerActions" DllEntry="RollbackMaintenance" Execute="rollback" Impersonate="no" HideTarget="yes" Return="check" />
 <CustomAction Id="BeginMaintenance" BinaryKey="InstallerActions" DllEntry="BeginMaintenance" Execute="deferred" Impersonate="no" HideTarget="yes" Return="check" />
@@ -74,6 +74,7 @@ $source=@"
 <CustomAction Id="CommitMaintenance" BinaryKey="InstallerActions" DllEntry="CommitMaintenance" Execute="commit" Impersonate="no" Return="check" />
 <CustomAction Id="DeleteOwnedData" BinaryKey="InstallerActions" DllEntry="DeleteOwnedData" Execute="deferred" Impersonate="no" Return="check" />
 <InstallExecuteSequence>
+ <Custom Action="ForceOwnerTestReinstallMode" After="FindRelatedProducts">WIX_UPGRADE_DETECTED</Custom>
  <Custom Action="CaptureMaintenance" Before="InstallInitialize">NOT UPGRADINGPRODUCTCODE</Custom>
  <Custom Action="RollbackMaintenance" After="InstallInitialize">NOT UPGRADINGPRODUCTCODE</Custom>
  <Custom Action="OwnershipPreflight" After="RollbackMaintenance">NOT UPGRADINGPRODUCTCODE</Custom>
