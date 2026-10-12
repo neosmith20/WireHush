@@ -46,6 +46,7 @@ try {
     if ($installerBuilder -match '\bWindowsBuild\b') { throw 'Legacy WindowsBuild MSI property must not gate V1 installation' }
     if (!$installerBuilder.Contains('<UI Id="WireHush_FixedPath">') -or !$installerBuilder.Contains('<UIRef Id="WixUI_Common" />') -or !$installerBuilder.Contains('<Dialog Id="RemoveDataChoiceDlg"')) { throw 'Installer fixed-path UI regression' }
     if (!$installerBuilder.Contains('<Property Id="MSIRESTARTMANAGERCONTROL" Value="Disable" />')) { throw 'Installer must disable Restart Manager so WireHush-owned tunnel workers can be stopped by the privileged maintenance action before files are removed' }
+    if (!$installerBuilder.Contains('<Shortcut Id="StartMenu" Directory="ProgramMenuFolder" Name="WireHush" WorkingDirectory="INSTALLFOLDER" Advertise="no" />') -or $installerBuilder.Contains('Advertise="yes"')) { throw 'Start Menu shortcut must be a normal file-target shortcut so Windows can use the WireHush executable icon reliably' }
     if ($installerBuilder -match 'WixUI_InstallDir|WIXUI_INSTALLDIR|InstallDirDlg') { throw 'V1 installer must not expose a mutable installation path' }
     $buildScript = Get-Content -LiteralPath "$repo/scripts/build-v1.ps1" -Raw
     if (!$buildScript.Contains('git status --porcelain --untracked-files=normal') -or !$buildScript.Contains('Owner-test builds require a clean Git working tree')) { throw 'Artifact provenance clean-tree guard regression' }
