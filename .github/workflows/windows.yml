@@ -1,34 +1,107 @@
-name: WireHush V1 candidate
+name: WireHush Windows owner-test builds
+
 on:
   push:
-    branches: [main, blueprint/wirehush-v1]
+    branches: [main]
   pull_request:
-    branches: [main, blueprint/wirehush-v1]
+    branches: [main]
   workflow_dispatch:
+
 permissions:
   contents: read
+
 jobs:
-  validate-and-package:
+  validate:
+    name: Validate candidate
     runs-on: windows-latest
     timeout-minutes: 60
+
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
       - name: Fetch checksum-pinned build tools
         shell: pwsh
         run: ./scripts/bootstrap-v1.ps1
+
       - name: Run V1 regression and safety checks
         shell: pwsh
         run: ./scripts/test-v1.ps1 -Race
-      - name: Package x64 and ARM64 owner-test candidates
-        shell: pwsh
-        run: ./scripts/build-v1.ps1 -SkipBootstrap -Installer
-      - name: Upload unsigned candidates and validation evidence
+
+      - name: Upload validation evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: wirehush-v1-owner-test
-          path: |
-            .artifacts/v1/*/*/*.msi
-            .artifacts/v1/*/*/*SHA256SUMS.txt
-            .artifacts/v1/*/latest.json
-            .artifacts/v1/validation.txt
+          name: wirehush-validation-${{ github.sha }}
+          path: .artifacts/v1/validation.txt
+          if-no-files-found: warn
+          retention-days: 90
+
+  build:
+    name: Build ${{ matrix.architecture }}
+    needs: validate
+    runs-on: windows-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        architecture: [x64, arm64]
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Fetch checksum-pinned build tools
+        shell: pwsh
+        run: ./scripts/bootstrap-v1.ps1
+
+      - name: Build ${{ matrix.architecture }} owner-test installer
+        shell: pwsh
+        run: ./scripts/build-v1.ps1 -Architecture ${{ matrix.architecture }} -SkipBootstrap -Installer
+
+      - name: Stage downloadable artifact
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $arch = '${{ matrix.architecture }}'
+          $latestPath = ".artifacts/v1/$arch/latest.json"
+          $latest = Get-Content -LiteralPath $latestPath -Raw | ConvertFrom-Json
+
+          if ($latest.Commit.Trim() -ne '${{ github.sha }}') {
+            throw "Artifact provenance mismatch: latest.json says $($latest.Commit), workflow SHA is ${{ github.sha }}"
+          }
+
+          $runRoot = Split-Path -Parent $latest.App
+          $msi = @(Get-ChildItem -LiteralPath $runRoot -Filter "WireHush-*-$arch-test.msi" -File)
+          if ($msi.Count -ne 1) {
+            throw "Expected exactly one $arch MSI under $runRoot; found $($msi.Count)"
+          }
+
+          $dist = ".artifacts/dist/$arch"
+          New-Item -ItemType Directory -Path $dist -Force | Out-Null
+          Copy-Item -LiteralPath $msi[0].FullName -Destination $dist
+          Copy-Item -LiteralPath $latestPath -Destination "$dist/latest.json"
+          Copy-Item -LiteralPath "$runRoot/INSTALLER-SHA256SUMS.txt" -Destination "$dist/INSTALLER-SHA256SUMS.txt"
+
+          @(
+            'WireHush GitHub Actions owner-test build'
+            "Architecture: $arch"
+            "Commit: ${{ github.sha }}"
+            "Ref: ${{ github.ref }}"
+            "Run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          ) | Set-Content -LiteralPath "$dist/BUILD-PROVENANCE.txt" -Encoding ascii
+
+          $hash = (Get-FileHash -LiteralPath $msi[0].FullName -Algorithm SHA256).Hash
+          "### WireHush $arch owner-test build" | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
+          "" | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
+          "| File | SHA-256 |" | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
+          "| --- | --- |" | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
+          "| $($msi[0].Name) | `$hash` |" | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
+
+      - name: Upload ${{ matrix.architecture }} installer
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: wirehush-${{ matrix.architecture }}-${{ github.sha }}
+          path: .artifacts/dist/${{ matrix.architecture }}/*
           if-no-files-found: error
+          retention-days: 90
+          compression-level: 0
