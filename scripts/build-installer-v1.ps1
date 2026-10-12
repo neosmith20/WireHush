@@ -28,7 +28,7 @@ function DirectoryXml($path, $relative, $directoryId, $name) {
         $component=Id 'C' $rel; $components.Add($component)
         $fileId=if($rel -eq 'WireHush-Manager.exe'){'ManagerExe'}elseif($rel -eq 'WireHush.exe'){'UiExe'}else{Id 'F' $rel}
         $xml+='<Component Id="'+$component+'" Guid="'+(ComponentGuid $rel)+'" Win64="yes"><File Id="'+$fileId+'" Source="'+(Esc $file.FullName)+'" KeyPath="yes">'
-        if($fileId -eq 'UiExe'){$xml+='<Shortcut Id="StartMenu" Directory="ProgramMenuFolder" Name="WireHush" WorkingDirectory="INSTALLFOLDER" Advertise="yes" />'}
+        if($fileId -eq 'UiExe'){$xml+='<Shortcut Id="StartMenu" Directory="ProgramMenuFolder" Name="WireHush" WorkingDirectory="INSTALLFOLDER" Advertise="yes" Icon="WireHush.exe" IconIndex="0" />'}
         $xml+='</File>'
         if($fileId -eq 'ManagerExe'){$xml+='<ServiceInstall Id="ManagerInstall" Name="WireHushManager" DisplayName="WireHush Manager" Type="ownProcess" Account="LocalSystem" Start="demand" ErrorControl="normal" Arguments="/managerservice" Vital="yes" /><ServiceControl Id="ManagerControl" Name="WireHushManager" Stop="both" Remove="uninstall" Wait="yes" />'}
         $xml+='</Component>'
@@ -52,13 +52,14 @@ $source=@"
 <Property Id="DELETE_WIREHUSH_DATA" Value="0" Secure="yes" />
 <Property Id="MSIRESTARTMANAGERCONTROL" Value="Disable" />
 <Property Id="BeginMaintenance" Hidden="yes" /><Property Id="RollbackMaintenance" Hidden="yes" /><Property Id="ProvisionAccess" Hidden="yes" /><Property Id="CommitProvisionAccess" Hidden="yes" />
-<Icon Id="ProductIcon" SourceFile="$(Esc "$repo/windows-ui/WireHush.UI/Assets/WireHush.ico")" /><Property Id="ARPPRODUCTICON" Value="ProductIcon" />
+<Icon Id="WireHush.exe" SourceFile="$(Esc "$Payload/WireHush.exe")" /><Property Id="ARPPRODUCTICON" Value="WireHush.exe" />
 <Property Id="WINDOWSBUILDNUMBER" Secure="yes"><RegistrySearch Id="BuildNumberSearch" Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion" Name="CurrentBuildNumber" Type="raw" Win64="yes" /></Property>
 <Condition Message="WireHush requires Windows 10 1809 or later.">Installed OR (VersionNT64 AND WINDOWSBUILDNUMBER AND WINDOWSBUILDNUMBER &gt;= 17763)</Condition>
 <Directory Id="TARGETDIR" Name="SourceDir"><Directory Id="ProgramFiles64Folder">$directory</Directory><Directory Id="ProgramMenuFolder" /></Directory>
 <Feature Id="Main" Title="WireHush" Level="1">$references</Feature>
 <Binary Id="InstallerActions" SourceFile="$(Esc "$out/v1-customactions.dll")" />
 <Binary Id="InstallerManager" SourceFile="$(Esc "$Payload/WireHush-Manager.exe")" />
+<CustomAction Id="ForceOwnerTestReinstallMode" Property="REINSTALLMODE" Value="amus" />
 <CustomAction Id="CaptureMaintenance" BinaryKey="InstallerActions" DllEntry="CaptureMaintenance" Return="check" />
 <CustomAction Id="RollbackMaintenance" BinaryKey="InstallerActions" DllEntry="RollbackMaintenance" Execute="rollback" Impersonate="no" HideTarget="yes" Return="check" />
 <CustomAction Id="BeginMaintenance" BinaryKey="InstallerActions" DllEntry="BeginMaintenance" Execute="deferred" Impersonate="no" HideTarget="yes" Return="check" />
@@ -73,6 +74,7 @@ $source=@"
 <CustomAction Id="CommitMaintenance" BinaryKey="InstallerActions" DllEntry="CommitMaintenance" Execute="commit" Impersonate="no" Return="check" />
 <CustomAction Id="DeleteOwnedData" BinaryKey="InstallerActions" DllEntry="DeleteOwnedData" Execute="deferred" Impersonate="no" Return="check" />
 <InstallExecuteSequence>
+ <Custom Action="ForceOwnerTestReinstallMode" After="FindRelatedProducts">WIX_UPGRADE_DETECTED</Custom>
  <Custom Action="CaptureMaintenance" Before="InstallInitialize">NOT UPGRADINGPRODUCTCODE</Custom>
  <Custom Action="RollbackMaintenance" After="InstallInitialize">NOT UPGRADINGPRODUCTCODE</Custom>
  <Custom Action="OwnershipPreflight" After="RollbackMaintenance">NOT UPGRADINGPRODUCTCODE</Custom>

@@ -113,7 +113,8 @@ internal sealed class GrpcManagerClient : IManagerClient
     public async Task DeleteTunnelAsync(string id, CancellationToken cancellationToken) { await Rpc.DeleteTunnelAsync(Find(id).Tunnel, deadline: Deadline, cancellationToken: cancellationToken); await RefreshAsync(cancellationToken); }
     public async Task<string> ImportTunnelAsync(string name, string content, CancellationToken cancellationToken, bool shared = false)
     {
-        var created = await Rpc.CreateTunnelAsync(new P.CreateTunnelRequest { Name = name, Scope = shared ? P.Scope.Shared : P.Scope.Private, WgQuickText = content }, deadline: Deadline, cancellationToken: cancellationToken);
+        var normalized = ConfigurationText.NormalizeLineEndings(content);
+        var created = await Rpc.CreateTunnelAsync(new P.CreateTunnelRequest { Name = name, Scope = shared ? P.Scope.Shared : P.Scope.Private, WgQuickText = normalized }, deadline: Deadline, cancellationToken: cancellationToken);
         await RefreshAsync(cancellationToken);
         return created.Tunnel.TunnelId;
     }
@@ -131,7 +132,8 @@ internal sealed class GrpcManagerClient : IManagerClient
     public async Task<string> ExportAsync(string id, CancellationToken cancellationToken) => (await Rpc.ReadConfigurationAsync(Find(id).Tunnel, deadline: Deadline, cancellationToken: cancellationToken)).WgQuickText;
     public async Task UpdateAsync(string id, string name, string configuration, CancellationToken cancellationToken)
     {
-        await Rpc.UpdateTunnelAsync(new P.UpdateTunnelRequest { Tunnel = Find(id).Tunnel, Name = name, WgQuickText = configuration }, deadline: Deadline, cancellationToken: cancellationToken);
+        var normalized = ConfigurationText.NormalizeLineEndings(configuration);
+        await Rpc.UpdateTunnelAsync(new P.UpdateTunnelRequest { Tunnel = Find(id).Tunnel, Name = name, WgQuickText = normalized }, deadline: Deadline, cancellationToken: cancellationToken);
         await RefreshAsync(cancellationToken);
     }
     public async Task<IReadOnlyList<BootstrapResolver>> GetBootstrapAsync(CancellationToken cancellationToken) => (await Rpc.ReadBootstrapAsync(new P.Empty(), deadline: Deadline, cancellationToken: cancellationToken)).Resolvers.Select(r => new BootstrapResolver(r.Address, r.Enabled, r.Custom)).ToArray();
