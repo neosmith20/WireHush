@@ -3,6 +3,7 @@ using WireHush.UI.Services;
 
 static long Tick(double seconds) => (long)(seconds * Stopwatch.Frequency);
 static void Require(bool condition, string message) { if (!condition) throw new Exception(message); }
+Require(ConfigurationText.NormalizeLineEndings("a\rb\r\nc\nd") == "a\nb\nc\nd", "Configuration text must normalize WinUI CR-only line endings before manager validation.");
 var history = new TrafficHistory();
 history.Add(100, 50, Tick(0));
 Require(history.Current is null, "A single counter reading cannot establish a rate.");

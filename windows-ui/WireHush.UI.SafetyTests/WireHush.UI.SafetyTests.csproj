@@ -8,5 +8,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../WireHush.UI/Services/TrafficHistory.cs" Link="TrafficHistory.cs" />
+    <Compile Include="../WireHush.UI/Services/ConfigurationText.cs" Link="ConfigurationText.cs" />
   </ItemGroup>
 </Project>
