@@ -28,6 +28,7 @@ public sealed partial class MainWindow : Window
     private StackPanel? _tunnelList;
     private ContentControl? _detailHost;
     private InfoBar? _managerInfo;
+    private Ellipse? _connectionStatusDot;
     private TextBlock? _connectionStatus;
     private Button? _railDelete;
     private AutoSuggestBox? _search;
@@ -100,7 +101,7 @@ public sealed partial class MainWindow : Window
         rail.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); rail.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); rail.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }); rail.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         rail.Children.Add(Text("Connections", 27, true)); _search = new AutoSuggestBox { Height = 48, PlaceholderText = "Search tunnels...", QueryIcon = new SymbolIcon(Symbol.Find), FontSize = 16, Margin = new Thickness(0, 0, 0, 14) }; _search.TextChanged += (_, _) => RenderTunnelList(); Grid.SetRow(_search, 1); rail.Children.Add(_search);
         _tunnelList = new StackPanel { Spacing = 6 }; var scroll = new ScrollViewer { Content = _tunnelList, VerticalScrollBarVisibility = ScrollBarVisibility.Auto }; Grid.SetRow(scroll, 2); rail.Children.Add(scroll);
-        var commands = new StackPanel { Spacing = 12 }; commands.Children.Add(ActionButton("Add Tunnel", "\uE710", true, async (_, _) => await AddTunnelAsync())); commands.Children.Add(ActionButton("Import Tunnel(s)", "\uE8A5", false, async (_, _) => await ImportTunnelAsync())); _railDelete = ActionButton("Delete", "\uE74D", false, async (_, _) => { if (_selectedTunnel is not null) await DeleteTunnelAsync(_selectedTunnel); }); _railDelete.IsEnabled = false; commands.Children.Add(_railDelete); _connectionStatus = Text("Connecting to WireHush Manager…", 13, false, Brush("WireHushMutedBrush")); commands.Children.Add(_connectionStatus); Grid.SetRow(commands, 3); rail.Children.Add(commands); return rail;
+        var commands = new StackPanel { Spacing = 12 }; commands.Children.Add(ActionButton("Add Tunnel", "\uE710", true, async (_, _) => await AddTunnelAsync())); commands.Children.Add(ActionButton("Import Tunnel(s)", "\uE8A5", false, async (_, _) => await ImportTunnelAsync())); _railDelete = ActionButton("Delete", "\uE74D", false, async (_, _) => { if (_selectedTunnel is not null) await DeleteTunnelAsync(_selectedTunnel); }); _railDelete.IsEnabled = false; commands.Children.Add(_railDelete); var managerStatus = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 7, VerticalAlignment = VerticalAlignment.Center }; _connectionStatusDot = new Ellipse { Width = 8, Height = 8, Fill = Brush("WireHushMutedBrush"), VerticalAlignment = VerticalAlignment.Center }; _connectionStatus = Text("Connecting to WireHush Manager…", 13, false, Brush("WireHushMutedBrush")); managerStatus.Children.Add(_connectionStatusDot); managerStatus.Children.Add(_connectionStatus); commands.Children.Add(managerStatus); Grid.SetRow(commands, 3); rail.Children.Add(commands); return rail;
     }
 
     private static TextBlock Text(string text, double size, bool strong = false, Brush? foreground = null) => new() { Text = text, FontSize = size, FontWeight = strong ? Microsoft.UI.Text.FontWeights.SemiBold : Microsoft.UI.Text.FontWeights.Normal, Foreground = foreground ?? Brush("WireHushTextBrush"), TextWrapping = TextWrapping.Wrap, FontFamily = new FontFamily("Segoe UI Variable Text") };
@@ -452,7 +453,9 @@ public sealed partial class MainWindow : Window
     private void ShowNotice(string message) { SetConnectionStatus(message); }
     private void SetConnectionStatus(string message)
     {
-        if (_connectionStatus is not null) { _connectionStatus.Text = message; _connectionStatus.Foreground = Brush(message.StartsWith("Connected", StringComparison.Ordinal) ? "WireHushGreenBrush" : "WireHushMutedBrush"); }
+        var connected = message.StartsWith("Connected", StringComparison.Ordinal);
+        if (_connectionStatus is not null) { _connectionStatus.Text = message; _connectionStatus.Foreground = Brush("WireHushMutedBrush"); }
+        if (_connectionStatusDot is not null) _connectionStatusDot.Fill = Brush(connected ? "WireHushGreenBrush" : "WireHushMutedBrush");
         if (_managerInfo is not null)
         {
             _managerInfo.Message = message;
