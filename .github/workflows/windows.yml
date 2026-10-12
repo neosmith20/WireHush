@@ -106,7 +106,7 @@ jobs:
           retention-days: 90
           compression-level: 0
 
-release:
+  release:
     name: Publish GitHub release
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
@@ -119,13 +119,13 @@ release:
       - name: Download x64 build
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: wirehush-x64-\${{ github.sha }}
+          name: wirehush-x64-${{ github.sha }}
           path: .release-input/x64
 
       - name: Download ARM64 build
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: wirehush-arm64-\${{ github.sha }}
+          name: wirehush-arm64-${{ github.sha }}
           path: .release-input/arm64
 
       - name: Stage permanent release assets
@@ -196,7 +196,7 @@ release:
       - name: Publish full GitHub release
         shell: pwsh
         env:
-          GH_TOKEN: \${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $false
