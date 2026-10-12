@@ -46,6 +46,7 @@ try {
     if ($installerBuilder -match '\bWindowsBuild\b') { throw 'Legacy WindowsBuild MSI property must not gate V1 installation' }
     if (!$installerBuilder.Contains('<UI Id="WireHush_FixedPath">') -or !$installerBuilder.Contains('<UIRef Id="WixUI_Common" />') -or !$installerBuilder.Contains('<Dialog Id="RemoveDataChoiceDlg"')) { throw 'Installer fixed-path UI regression' }
     if (!$installerBuilder.Contains('<Property Id="MSIRESTARTMANAGERCONTROL" Value="Disable" />')) { throw 'Installer must disable Restart Manager so WireHush-owned tunnel workers can be stopped by the privileged maintenance action before files are removed' }
+    if (!$installerBuilder.Contains('<Property Id="REINSTALLMODE" Value="amus" />')) { throw 'Same-version owner-test upgrades must force payload refresh instead of retaining equal-version predecessor files' }
     if (!$installerBuilder.Contains('<Shortcut Id="StartMenu" Directory="ProgramMenuFolder" Name="WireHush" WorkingDirectory="INSTALLFOLDER" Advertise="yes" Icon="WireHush.exe" IconIndex="0" />') -or !$installerBuilder.Contains('<Icon Id="WireHush.exe" SourceFile="$(Esc "$Payload/WireHush.exe")" /><Property Id="ARPPRODUCTICON" Value="WireHush.exe" />')) { throw 'Start Menu and ARP entries must explicitly use the packaged WireHush executable icon' }
     if ($installerBuilder -match 'WixUI_InstallDir|WIXUI_INSTALLDIR|InstallDirDlg') { throw 'V1 installer must not expose a mutable installation path' }
     $buildScript = Get-Content -LiteralPath "$repo/scripts/build-v1.ps1" -Raw
