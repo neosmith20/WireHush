@@ -1,3 +1,4 @@
+# CodeQL is enabled with GitHub Default Setup; a second Advanced Setup is rejected.
 name: WireHush code quality and security
 
 on:
@@ -94,32 +95,3 @@ jobs:
           python3 -m venv .quality-venv
           .quality-venv/bin/pip install --disable-pip-version-check zizmor==1.30.1
           .quality-venv/bin/zizmor --min-severity medium .github/workflows
-
-  codeql:
-    name: CodeQL (${{ matrix.language }})
-    runs-on: windows-latest
-    timeout-minutes: 60
-    permissions:
-      contents: read
-      security-events: write
-      actions: read
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - language: go
-            build_mode: autobuild
-          - language: csharp
-            build_mode: none
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          persist-credentials: false
-      - name: CodeQL initialize
-        uses: github/codeql-action/init@cf12ceefebab2c867b9c35d7f907e059681d37ab # v3
-        with:
-          languages: ${{ matrix.language }}
-          build-mode: ${{ matrix.build_mode }}
-          queries: +security-and-quality
-      - name: CodeQL analyze
-        uses: github/codeql-action/analyze@cf12ceefebab2c867b9c35d7f907e059681d37ab # v3
