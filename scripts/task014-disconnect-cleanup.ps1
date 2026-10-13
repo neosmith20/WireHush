@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [string] $ResultPath = 'C:\TunnelMint-Test\task014-disconnect-cleanup.json'
 )
@@ -76,7 +76,8 @@ try {
         throw 'WireHush adapter routes remain after disconnect.'
     }
 
-    $result.postDisconnect.tcpConnected = [bool] (Test-NetConnection -ComputerName '1.1.1.1' -Port 443 -InformationLevel Quiet -WarningAction SilentlyContinue)
+    $wireHushProbeHost = '1.1.1.1'
+    $result.postDisconnect.tcpConnected = [bool] (Test-NetConnection -ComputerName $wireHushProbeHost -Port 443 -InformationLevel Quiet -WarningAction SilentlyContinue)
     try {
         Resolve-DnsName -Name 'example.com' -Type A -DnsOnly -ErrorAction Stop | Out-Null
         $result.postDisconnect.dnsResolved = $true

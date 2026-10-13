@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [string] $ResultPath = 'C:\TunnelMint-Test\task014-doh-connectivity.json'
 )
@@ -122,7 +122,8 @@ try {
     $before = Get-AdapterCounters -Names $aliases
     $result.tcp443.attempted = $true
     try {
-        $result.tcp443.connected = [bool] (Test-NetConnection -ComputerName 'cloudflare-dns.com' -Port 443 -InformationLevel Quiet -WarningAction SilentlyContinue)
+        $wireHushProbeHost = 'cloudflare-dns.com'
+        $result.tcp443.connected = [bool] (Test-NetConnection -ComputerName $wireHushProbeHost -Port 443 -InformationLevel Quiet -WarningAction SilentlyContinue)
     }
     catch {
         $result.tcp443.connected = $false

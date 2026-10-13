@@ -106,7 +106,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [go, csharp]
+        include:
+          - language: go
+            build_mode: autobuild
+          - language: csharp
+            build_mode: none
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -115,7 +119,7 @@ jobs:
         uses: github/codeql-action/init@cf12ceefebab2c867b9c35d7f907e059681d37ab # v3
         with:
           languages: ${{ matrix.language }}
-          build-mode: none
+          build-mode: ${{ matrix.build_mode }}
           queries: +security-and-quality
       - name: CodeQL analyze
         uses: github/codeql-action/analyze@cf12ceefebab2c867b9c35d7f907e059681d37ab # v3

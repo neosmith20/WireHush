@@ -25,6 +25,8 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - name: Fetch checksum-pinned build tools
         shell: pwsh
@@ -55,6 +57,8 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - name: Fetch checksum-pinned build tools
         shell: pwsh
@@ -72,8 +76,8 @@ jobs:
           $latestPath = ".artifacts/v1/$arch/latest.json"
           $latest = Get-Content -LiteralPath $latestPath -Raw | ConvertFrom-Json
 
-          if ($latest.Commit.Trim() -ne '${{ github.sha }}') {
-            throw "Artifact provenance mismatch: latest.json says $($latest.Commit), workflow SHA is ${{ github.sha }}"
+          if ($latest.Commit.Trim() -ne $env:GITHUB_SHA) {
+            throw "Artifact provenance mismatch: latest.json says $($latest.Commit), workflow SHA is $env:GITHUB_SHA"
           }
 
           $runRoot = Split-Path -Parent $latest.App
@@ -91,9 +95,9 @@ jobs:
           @(
             'WireHush GitHub Actions owner-test build'
             "Architecture: $arch"
-            "Commit: ${{ github.sha }}"
-            "Ref: ${{ github.ref }}"
-            "Run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            "Commit: $env:GITHUB_SHA"
+            "Ref: $env:GITHUB_REF"
+            "Run: https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
           ) | Set-Content -LiteralPath "$dist/BUILD-PROVENANCE.txt" -Encoding ascii
 
           $hash = (Get-FileHash -LiteralPath $msi[0].FullName -Algorithm SHA256).Hash
