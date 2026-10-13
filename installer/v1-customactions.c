@@ -175,12 +175,23 @@ __declspec(dllexport) UINT __stdcall ProvisionAccess(MSIHANDLE session) {
         status = NetLocalGroupAddMembers(NULL, WH_GROUP_NAME, 0, (BYTE *)&member, 1);
         if (status != NERR_Success && status != ERROR_MEMBER_IN_ALIAS) { LocalFree(caller_sid); return fail(session, L"installer user could not be granted access"); }
     }
-    LocalFree(caller_sid);
-    WCHAR *sid_text = NULL, sddl[512];
+    // Group membership is added during this install, but the current Windows
+    // logon token cannot acquire the new group SID until the user signs in again.
+    // Grant just SERVICE_QUERY_STATUS, SERVICE_START and READ_CONTROL to this
+    // validated installing-user SID so WireHush can start immediately.
+    WCHAR *sid_text = NULL, *caller_sid_text = NULL, sddl[1024];
     PSECURITY_DESCRIPTOR sd = NULL;
-    if (!ConvertSidToStringSidW(group_sid, &sid_text)) return fail(session, L"local group security could not be prepared");
-    bool ok = SUCCEEDED(StringCchPrintfW(sddl, ARRAY_SIZE(sddl), L"O:SYG:SYD:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;LCRPRC;;;%s)", sid_text)) && ConvertStringSecurityDescriptorToSecurityDescriptorW(sddl, SDDL_REVISION_1, &sd, NULL);
+    if (!ConvertSidToStringSidW(group_sid, &sid_text) || !ConvertSidToStringSidW(caller_sid, &caller_sid_text)) {
+        if (sid_text) LocalFree(sid_text);
+        if (caller_sid_text) LocalFree(caller_sid_text);
+        LocalFree(caller_sid);
+        return fail(session, L"service security identity could not be prepared");
+    }
+    bool ok = SUCCEEDED(StringCchPrintfW(sddl, ARRAY_SIZE(sddl), L"O:SYG:SYD:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;LCRPRC;;;%s)(A;;LCRPRC;;;%s)", sid_text, caller_sid_text))
+        && ConvertStringSecurityDescriptorToSecurityDescriptorW(sddl, SDDL_REVISION_1, &sd, NULL);
     LocalFree(sid_text);
+    LocalFree(caller_sid_text);
+    LocalFree(caller_sid);
     SC_HANDLE scm = OpenSCManagerW(NULL, NULL, SC_MANAGER_CONNECT | SC_MANAGER_CREATE_SERVICE);
     SC_HANDLE service = scm ? OpenServiceW(scm, SERVICE_NAME, SERVICE_QUERY_CONFIG | SERVICE_CHANGE_CONFIG | WRITE_DAC | WRITE_OWNER) : NULL;
     PWSTR program_files = NULL;
