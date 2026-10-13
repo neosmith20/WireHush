@@ -121,9 +121,9 @@ public sealed partial class MainWindow
                     row.Children.Add(enabled); Grid.SetColumn(address, 1); row.Children.Add(address);
                     if (editable)
                     {
-                        var up = SmallButton("↑", (_, _) => { if (i > 0) { (entries[i-1], entries[i]) = (entries[i], entries[i-1]); Render(); } });
+                        var up = SmallButton("↑", (_, _) => { if (i > 0) { (entries[i - 1], entries[i]) = (entries[i], entries[i - 1]); Render(); } });
                         Grid.SetColumn(up, 2); row.Children.Add(up);
-                        var down = SmallButton("↓", (_, _) => { if (i+1 < entries.Count) { (entries[i+1], entries[i]) = (entries[i], entries[i+1]); Render(); } });
+                        var down = SmallButton("↓", (_, _) => { if (i + 1 < entries.Count) { (entries[i + 1], entries[i]) = (entries[i], entries[i + 1]); Render(); } });
                         Grid.SetColumn(down, 3); row.Children.Add(down);
                         if (entries[i].Custom) { var remove = SmallButton("Remove", (_, _) => { entries.RemoveAt(i); Render(); }); Grid.SetColumn(remove, 4); row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); row.Children.Add(remove); }
                     }

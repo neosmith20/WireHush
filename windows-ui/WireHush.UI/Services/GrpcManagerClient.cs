@@ -72,8 +72,11 @@ internal sealed class GrpcManagerClient : IManagerClient
 
     private static string State(P.TunnelState state) => state switch
     {
-        P.TunnelState.Connected => "connected", P.TunnelState.Stopped => "disconnected",
-        P.TunnelState.Starting => "connecting", P.TunnelState.Stopping => "disconnecting", _ => "unknown"
+        P.TunnelState.Connected => "connected",
+        P.TunnelState.Stopped => "disconnected",
+        P.TunnelState.Starting => "connecting",
+        P.TunnelState.Stopping => "disconnecting",
+        _ => "unknown"
     };
     private P.TunnelSnapshot Find(string id)
     {

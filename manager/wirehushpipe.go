@@ -86,7 +86,7 @@ func listenWireHushPipe() (net.Listener, *windows.SID, error) {
 type wireHushPipeCredentials struct{ group *windows.SID }
 
 func (c wireHushPipeCredentials) Info() credentials.ProtocolInfo {
-	return credentials.ProtocolInfo{SecurityProtocol: "windows-named-pipe", SecurityVersion: "1"}
+	return credentials.ProtocolInfo{SecurityProtocol: "windows-named-pipe"}
 }
 func (c wireHushPipeCredentials) Clone() credentials.TransportCredentials {
 	return wireHushPipeCredentials{group: c.group}

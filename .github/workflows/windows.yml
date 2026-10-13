@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      publish_release:
+        description: "Publish the approved main-branch installers as a GitHub release"
+        type: boolean
+        required: true
+        default: false
 
 permissions:
   contents: read
@@ -109,7 +115,7 @@ jobs:
   release:
     name: Publish GitHub release
     needs: build
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && inputs.publish_release == true
     runs-on: windows-latest
     timeout-minutes: 20
     permissions:

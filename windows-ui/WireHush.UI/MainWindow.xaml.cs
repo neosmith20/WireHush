@@ -148,7 +148,7 @@ public sealed partial class MainWindow : Window
             SetConnectionStatus("Manager connection was lost — reconnecting.");
             await _managerClient.DisposeAsyncIfPresent();
             _managerClient = null;
-			_traffic.Clear();
+            _traffic.Clear();
             for (var i = 0; i < _tunnels.Count; i++) _tunnels[i] = _tunnels[i] with { State = "unknown" };
             RenderTunnelList();
             _selectedDetails = _selectedDetails is null ? null : _selectedDetails with { State = "unknown", MetricsAvailable = false };
@@ -179,7 +179,8 @@ public sealed partial class MainWindow : Window
     private async Task LoadSelectedTunnelAsync(string name)
     {
         if (_managerClient is null || name != _selectedTunnel) return; var summary = _tunnels.FirstOrDefault(t => t.Id == name);
-        _selectedDetails = NormalizeDetails(summary?.State == "connected" ? await GetRuntimeOrStoredAsync(name) : await _managerClient.GetTunnelAsync(name, _lifetime.Token)); if (_selectedDetails.MetricsAvailable) AddTrafficSample(_selectedDetails); else _traffic.Clear(); RenderDetails(); }
+        _selectedDetails = NormalizeDetails(summary?.State == "connected" ? await GetRuntimeOrStoredAsync(name) : await _managerClient.GetTunnelAsync(name, _lifetime.Token)); if (_selectedDetails.MetricsAvailable) AddTrafficSample(_selectedDetails); else _traffic.Clear(); RenderDetails();
+    }
     private async Task<TunnelDetails> GetRuntimeOrStoredAsync(string name) { try { return await _managerClient!.GetRuntimeAsync(name, _lifetime.Token); } catch (InvalidOperationException) { return await _managerClient!.GetTunnelAsync(name, _lifetime.Token); } }
     private static TunnelDetails NormalizeDetails(TunnelDetails details)
     {
@@ -293,7 +294,8 @@ public sealed partial class MainWindow : Window
             heading.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         }
         else heading.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        var title = new StackPanel { Spacing = 4 }; title.Children.Add(Text(_selectedDetails!.Name, 32, true)); var status = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 }; status.Children.Add(new Ellipse { Width = 10, Height = 10, Fill = StateBrush(_selectedDetails.State, _selectedDetails.LatestHandshakeUtc), VerticalAlignment = VerticalAlignment.Center }); status.Children.Add(Text(StateText(_selectedDetails.State, _selectedDetails.LatestHandshakeUtc), 16, false, StateBrush(_selectedDetails.State, _selectedDetails.LatestHandshakeUtc))); if (_selectedDetails.State == "connected" && HasUptime()) { status.Children.Add(Text("|", 16, false, Brush("WireHushMutedBrush"))); status.Children.Add(Text(Uptime(_selectedDetails.StartedAtUtc), 16, false, Brush("WireHushMutedBrush"))); } title.Children.Add(status); heading.Children.Add(title);
+        var title = new StackPanel { Spacing = 4 }; title.Children.Add(Text(_selectedDetails!.Name, 32, true)); var status = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 }; status.Children.Add(new Ellipse { Width = 10, Height = 10, Fill = StateBrush(_selectedDetails.State, _selectedDetails.LatestHandshakeUtc), VerticalAlignment = VerticalAlignment.Center }); status.Children.Add(Text(StateText(_selectedDetails.State, _selectedDetails.LatestHandshakeUtc), 16, false, StateBrush(_selectedDetails.State, _selectedDetails.LatestHandshakeUtc))); if (_selectedDetails.State == "connected" && HasUptime()) { status.Children.Add(Text("|", 16, false, Brush("WireHushMutedBrush"))); status.Children.Add(Text(Uptime(_selectedDetails.StartedAtUtc), 16, false, Brush("WireHushMutedBrush"))); }
+        title.Children.Add(status); heading.Children.Add(title);
         var actionText = _tunnelActionPending ? _selectedDetails.State == "connected" ? "Disconnecting…" : "Connecting…" : _selectedDetails.State == "connected" ? "Disconnect" : "Connect";
         var toggle = ActionButton(actionText, _selectedDetails.State == "connected" ? "" : "\uE768", _selectedDetails.State != "connected", async (_, _) => await ToggleTunnelAsync()); toggle.Tag = "action:connect"; toggle.IsEnabled = (_selectedDetails.State == "connected" || _managerClient?.DeviceBusyForAnotherUser != true) && _managerClient?.Connected == true && !_tunnelActionPending && _selectedDetails.State is ("connected" or "disconnected"); toggle.Width = compact ? double.NaN : 255; toggle.HorizontalAlignment = compact ? HorizontalAlignment.Stretch : HorizontalAlignment.Right; toggle.Height = 68;
         if (compact) Grid.SetRow(toggle, 1); else Grid.SetColumn(toggle, 1);

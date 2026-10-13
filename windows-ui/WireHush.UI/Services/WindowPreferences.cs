@@ -61,8 +61,8 @@ internal sealed class WindowPreferences : IDisposable
     public void Dispose() => RemoveWindowSubclass(_window, _procedure, 1);
     [StructLayout(LayoutKind.Sequential)] private struct MinMaxInfo { internal PointInt32 Reserved, MaximumSize, MaximumPosition, MinimumTrackSize, MaximumTrackSize; }
     private delegate IntPtr SubclassProcedure(IntPtr window, uint message, UIntPtr wParam, IntPtr lParam, UIntPtr id, UIntPtr data);
-    [DllImport("comctl32.dll", SetLastError = true)] [return: MarshalAs(UnmanagedType.Bool)] private static extern bool SetWindowSubclass(IntPtr window, SubclassProcedure callback, nuint id, UIntPtr data);
-    [DllImport("comctl32.dll")] [return: MarshalAs(UnmanagedType.Bool)] private static extern bool RemoveWindowSubclass(IntPtr window, SubclassProcedure callback, nuint id);
+    [DllImport("comctl32.dll", SetLastError = true)][return: MarshalAs(UnmanagedType.Bool)] private static extern bool SetWindowSubclass(IntPtr window, SubclassProcedure callback, nuint id, UIntPtr data);
+    [DllImport("comctl32.dll")][return: MarshalAs(UnmanagedType.Bool)] private static extern bool RemoveWindowSubclass(IntPtr window, SubclassProcedure callback, nuint id);
     [DllImport("comctl32.dll")] private static extern IntPtr DefSubclassProc(IntPtr window, uint message, UIntPtr wParam, IntPtr lParam);
     [DllImport("user32.dll")] private static extern uint GetDpiForWindow(IntPtr window);
 }
