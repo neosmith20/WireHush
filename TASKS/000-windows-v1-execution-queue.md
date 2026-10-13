@@ -45,7 +45,7 @@ If an external/manual verification is unavailable but later engineering work can
 
 ## Global requirements
 
-- KISS. Prefer the smallest robust implementation.
+- Prefer the smallest robust implementation.
 - Normal `DNS = <IP>` behavior must remain compatible.
 - `DNS = https://...` means DoH and must fail closed; no silent plaintext downgrade.
 - Production TLS certificate validation must never be bypassed.
