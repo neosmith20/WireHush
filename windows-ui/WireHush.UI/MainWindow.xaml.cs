@@ -263,17 +263,22 @@ public sealed partial class MainWindow : Window
         }
         if (_railDelete is not null) _railDelete.IsEnabled = _selectedTunnel is not null && _managerClient?.Connected == true && _tunnels.FirstOrDefault(t => t.Id == _selectedTunnel)?.MayEdit == true; if (_compactDelete is not null) _compactDelete.IsEnabled = _railDelete?.IsEnabled == true;
     }
-    private Brush StateBrush(string state, DateTimeOffset? latestHandshake = null) => state == "connected"
-        ? Brush(latestHandshake is null ? "WireHushCyanBrush" : "WireHushGreenBrush")
-        : state is "connecting" or "disconnecting" ? Brush("WireHushCyanBrush") : Brush("WireHushMutedBrush");
-    private static string StateText(string state, DateTimeOffset? latestHandshake = null) => state switch
+    private Brush StateBrush(string state, DateTimeOffset? latestHandshake = null)
     {
-        "connected" => latestHandshake is null ? "Tunnel active — awaiting handshake" : "Tunnel active — handshake received",
-        "connecting" => "Starting tunnel",
-        "disconnecting" => "Disconnecting",
-        "disconnected" => "Disconnected",
-        _ => "Status unavailable"
-    };
+        var health = TunnelHealthStatus.Classify(state, latestHandshake, DateTimeOffset.UtcNow);
+        return health switch
+        {
+            TunnelHealth.RecentHandshake => Brush("WireHushGreenBrush"),
+            TunnelHealth.Starting or TunnelHealth.Disconnecting or TunnelHealth.AwaitingHandshake
+                or TunnelHealth.StaleHandshake or TunnelHealth.ClockDifference
+                => Brush("WireHushCyanBrush"),
+            _ => Brush("WireHushMutedBrush")
+        };
+    }
+
+    private static string StateText(string state, DateTimeOffset? latestHandshake = null)
+        => TunnelHealthStatus.Label(TunnelHealthStatus.Classify(
+            state, latestHandshake, DateTimeOffset.UtcNow));
 
     private void BindLiveField(string key, TextBlock block)
     {
@@ -299,7 +304,8 @@ public sealed partial class MainWindow : Window
         if (previous is null) return false;
         return previous.Id == current.Id && previous.Name == current.Name &&
             previous.State == current.State &&
-            (previous.LatestHandshakeUtc is null) == (current.LatestHandshakeUtc is null) &&
+            TunnelHealthStatus.Classify(previous.State, previous.LatestHandshakeUtc, DateTimeOffset.UtcNow) ==
+                TunnelHealthStatus.Classify(current.State, current.LatestHandshakeUtc, DateTimeOffset.UtcNow) &&
             previous.MetricsAvailable == current.MetricsAvailable &&
             previous.MayEdit == current.MayEdit &&
             previous.LastFailure == current.LastFailure &&
@@ -410,8 +416,25 @@ public sealed partial class MainWindow : Window
         var toggle = ActionButton(actionText, _selectedDetails.State == "connected" ? "" : "\uE768", _selectedDetails.State != "connected", async (_, _) => await ToggleTunnelAsync()); toggle.Tag = "action:connect"; toggle.IsEnabled = (_selectedDetails.State == "connected" || _managerClient?.DeviceBusyForAnotherUser != true) && _managerClient?.Connected == true && !_tunnelActionPending && _selectedDetails.State is ("connected" or "disconnected"); toggle.Width = compact ? double.NaN : 255; toggle.HorizontalAlignment = compact ? HorizontalAlignment.Stretch : HorizontalAlignment.Right; toggle.Height = 68;
         if (compact) Grid.SetRow(toggle, 1); else Grid.SetColumn(toggle, 1);
         heading.Children.Add(toggle); stack.Children.Add(heading);
-        if (_selectedDetails.State == "connected" && _selectedDetails.LatestHandshakeUtc is null)
-            stack.Children.Add(new InfoBar { IsOpen = true, Severity = InfoBarSeverity.Warning, Title = "Waiting for WireGuard handshake", Message = "The tunnel interface is running, but no peer handshake has completed. VPN traffic may not work. Verify the endpoint address and port, peer keys, firewall, and network reachability." });
+        var handshakeHealth = TunnelHealthStatus.Classify(_selectedDetails.State,
+            _selectedDetails.LatestHandshakeUtc, DateTimeOffset.UtcNow);
+        if (handshakeHealth is TunnelHealth.AwaitingHandshake or TunnelHealth.StaleHandshake
+            or TunnelHealth.ClockDifference)
+            stack.Children.Add(new InfoBar
+            {
+                IsOpen = true,
+                Severity = InfoBarSeverity.Warning,
+                Title = handshakeHealth == TunnelHealth.AwaitingHandshake
+                    ? "Waiting for WireGuard handshake"
+                    : handshakeHealth == TunnelHealth.StaleHandshake
+                        ? "Last handshake is stale"
+                        : "Peer clock difference detected",
+                Message = handshakeHealth == TunnelHealth.AwaitingHandshake
+                    ? "The tunnel interface is running, but no peer handshake has completed. Check the endpoint, port, keys, firewall and network reachability."
+                    : handshakeHealth == TunnelHealth.StaleHandshake
+                        ? "The interface remains running, but its last observed handshake is over three minutes old. This can happen during inactivity; verify traffic before assuming a fault."
+                        : "The peer handshake timestamp appears to be in the future. Verify Windows clock synchronization."
+            });
         var failureMessage = !string.IsNullOrWhiteSpace(_selectedDetails.LastFailure)
             ? _selectedDetails.LastFailure
             : _actionFailures.GetValueOrDefault(_selectedDetails.Id);
