@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [string] $ResultPath = 'C:\TunnelMint-Test\task014-live-tunnel-state.json'
 )
@@ -71,7 +71,8 @@ try {
     try {
         # This bounded TCP attempt is used only to create ordinary client
         # traffic. The result does not claim which route policy selected it.
-        $result.trafficProbe.tcpConnected = [bool] (Test-NetConnection -ComputerName '1.1.1.1' -Port 443 -InformationLevel Quiet -WarningAction SilentlyContinue)
+        $wireHushProbeHost = '1.1.1.1'
+        $result.trafficProbe.tcpConnected = [bool] (Test-NetConnection -ComputerName $wireHushProbeHost -Port 443 -InformationLevel Quiet -WarningAction SilentlyContinue)
     }
     catch {
         $result.trafficProbe.tcpConnected = $false

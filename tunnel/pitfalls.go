@@ -62,7 +62,7 @@ func pitfallVirtioNetworkDriver() {
 		case windows.STATUS_INFO_LENGTH_MISMATCH:
 			continue
 		case nil:
-			break
+			// Successful query; decode the module buffer below.
 		default:
 			return
 		}

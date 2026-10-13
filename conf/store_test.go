@@ -25,7 +25,8 @@ func TestStorage(t *testing.T) {
 		cachedRootDir, cachedConfigFileDir = previousRootDir, previousConfigFileDir
 		atomic.StorePointer(&encryptedFileSd, previousEncryptedFileSd)
 	})
-	token, err := windows.OpenCurrentProcessToken()
+	var token windows.Token
+	err := windows.OpenProcessToken(windows.CurrentProcess(), windows.TOKEN_QUERY, &token)
 	if err != nil {
 		t.Fatalf("Unable to open current process token: %s", err.Error())
 	}
