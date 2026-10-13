@@ -12,7 +12,7 @@ Review all changes from Tasks 003 through 011 together, not only Task 011.
 
 Confirm that the final design still obeys:
 
-- KISS;
+- a straightforward connection workflow;
 - normal `DNS = <IP>` compatibility;
 - `DNS = https://...` encrypted-DNS semantics;
 - no silent plaintext fallback;

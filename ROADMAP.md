@@ -103,4 +103,4 @@ Unless explicitly added later, initial scope excludes:
 - Tracking or analytics
 - Unrelated network-management features
 
-**KISS: make the common path simple, automatic, and reliable.**
+The common connection and DNS workflows should be straightforward and reliable.

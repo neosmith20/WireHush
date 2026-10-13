@@ -2,7 +2,7 @@
 
 **A simple, user-friendly WireGuard-based VPN client with smarter DNS.**
 
-WireHush is an independent VPN client built around WireGuard with one core goal: **keep it simple and make the software do the work.**
+WireHush is an independent VPN client built around WireGuard, designed to handle everyday VPN and DNS setup with minimal manual configuration.
 
 The first release is being developed for Windows, with Android planned after the Windows client is stable and polished.
 
@@ -50,9 +50,7 @@ WireHush ships with multiple bootstrap resolvers for reliability, while allowing
 
 Bootstrap DNS is only intended to locate the encrypted DNS endpoint. Normal DNS queries should then use the configured encrypted resolver.
 
-## Project Philosophy
-
-**KISS — Keep It Simple.**
+## Basic workflow
 
 The user should be able to:
 

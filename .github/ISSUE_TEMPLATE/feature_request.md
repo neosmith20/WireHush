@@ -16,7 +16,7 @@ Describe the simplest user-facing behavior you want.
 
 ## Why It Fits WireHush
 
-Explain how this supports WireHush's KISS philosophy and core VPN/DNS purpose.
+Explain which VPN/DNS user need this addresses and why it belongs in WireHush.
 
 ## Additional Context
 
