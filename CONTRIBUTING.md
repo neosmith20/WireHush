@@ -2,7 +2,7 @@
 
 Thanks for helping improve WireHush.
 
-WireHush is intentionally focused on a small, reliable user experience. Contributions should follow the project's KISS principle: solve the problem with the smallest safe change that preserves compatibility and security.
+WireHush is intentionally focused on a small, reliable user experience. Contributions should solve clearly defined problems with the smallest safe change that preserves compatibility and security.
 
 ## Licensing and contribution policy
 
