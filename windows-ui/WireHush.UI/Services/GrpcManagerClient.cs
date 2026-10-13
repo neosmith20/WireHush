@@ -82,7 +82,7 @@ internal sealed class GrpcManagerClient : IManagerClient
     public Task<IReadOnlyList<TunnelSummary>> ListTunnelsAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        lock (_gate) return Task.FromResult<IReadOnlyList<TunnelSummary>>(_snapshot.Tunnels.Select(t => new TunnelSummary(t.Name, State(t.State), t.Tunnel.TunnelId, t.MayEdit, t.Tunnel.Scope == P.Scope.Private ? "Private" : "Shared")).ToArray());
+        lock (_gate) return Task.FromResult<IReadOnlyList<TunnelSummary>>(_snapshot.Tunnels.Select(t => new TunnelSummary(t.Name, State(t.State), t.Tunnel.TunnelId, t.MayEdit, t.Tunnel.Scope == P.Scope.Private ? "Private" : "Shared", t.HasLatestHandshakeUnix ? DateTimeOffset.FromUnixTimeSeconds(t.LatestHandshakeUnix) : null)).ToArray());
     }
     public Task<TunnelDetails> GetTunnelAsync(string id, CancellationToken cancellationToken) => GetRuntimeAsync(id, cancellationToken);
     public Task<TunnelDetails> GetRuntimeAsync(string id, CancellationToken cancellationToken)
