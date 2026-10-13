@@ -6,7 +6,7 @@
 package version
 
 const (
-	Number = "0.1.0"
+	Number = "0.1.1"
 )
 
 // SourceCommit is supplied by the reproducible V1 build. Unstamped local
