@@ -6,7 +6,7 @@ WireHush is a simple, user-friendly VPN client. The first target is Windows. And
 
 WireHush uses WireGuard as the underlying tunnel technology. Everything else in this document refers to WireHush itself.
 
-The project follows one rule above all others: **KISS — Keep It Simple.**
+Prioritize focused implementation, safe defaults, and maintainable code.
 
 Do not add complexity unless it is required for correctness, security, compatibility, or a clearly approved user-facing feature.
 
