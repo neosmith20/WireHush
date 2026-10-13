@@ -707,10 +707,20 @@ public sealed partial class MainWindow : Window
     private void InitializeTray()
     {
         var iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "WireHush.ico");
-        _trayIcon = new TrayIcon(
-            WindowNative.GetWindowHandle(this), iconPath, DispatcherQueue,
-            ShowFromTray, () => _appWindow.Hide(),
-            async () => { ShowFromTray(); await ConfirmExitAsync(); });
+        try
+        {
+            _trayIcon = new TrayIcon(
+                WindowNative.GetWindowHandle(this), iconPath, DispatcherQueue,
+                ShowFromTray, () => _appWindow.Hide(),
+                async () => { ShowFromTray(); await ConfirmExitAsync(); });
+        }
+        catch (Exception)
+        {
+            // A missing tray icon must not block the entire VPN interface.
+            // X falls back to the confirmed exit dialog until tray repair.
+            _trayIcon = null;
+            UiStartupLog.Write("tray-unavailable");
+        }
     }
     private async Task ConfirmExitAsync()
     {
