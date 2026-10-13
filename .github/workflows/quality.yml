@@ -22,7 +22,7 @@ jobs:
           persist-credentials: false
       - name: Fetch pinned Go build dependencies
         shell: pwsh
-        run: ./scripts/bootstrap-v1.ps1
+        run: ./scripts/bootstrap-v1.ps1 -Scope Go
       - name: Verify Go formatting, vet and Staticcheck
         shell: pwsh
         run: ./scripts/check-go-quality.ps1
@@ -37,7 +37,7 @@ jobs:
           persist-credentials: false
       - name: Fetch pinned .NET build dependencies
         shell: pwsh
-        run: ./scripts/bootstrap-v1.ps1
+        run: ./scripts/bootstrap-v1.ps1 -Scope DotNet
       - name: Verify formatting and analyzers
         shell: pwsh
         run: |
@@ -57,6 +57,9 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+      - name: Verify pinned downloads fail safely and retry transient errors
+        shell: pwsh
+        run: ./scripts/test-pinned-download.ps1
       - name: Parse scripts and run static analysis
         shell: pwsh
         run: |
