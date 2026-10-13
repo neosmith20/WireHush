@@ -39,7 +39,7 @@ Changes should apply predictably to subsequent tunnel activation. If safe live r
 
 ## UX
 
-Keep it simple and consistent with the existing Windows UI. Advanced details may be tucked behind the Settings page, but the user should not need to visit Settings for normal default operation.
+Keep the Settings experience consistent with the existing Windows UI. Advanced details may be tucked behind the Settings page, but the user should not need to visit Settings for normal default operation.
 
 ## Tests
 
