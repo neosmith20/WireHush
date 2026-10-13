@@ -284,7 +284,11 @@ public sealed partial class MainWindow : Window
         var border = new Border { Style = (Style)Application.Current.Resources["WireHushCardStyle"], Padding = new Thickness(22), Margin = new Thickness(0, 0, 0, 0) };
         var stack = new StackPanel { Spacing = 20 }; var heading = new Grid { RowSpacing = 12 }; var compact = DetailWidth < 730;
         heading.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        if (compact) heading.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        if (compact)
+        {
+            heading.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            heading.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        }
         else heading.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         var title = new StackPanel { Spacing = 4 }; title.Children.Add(Text(_selectedDetails!.Name, 32, true)); var status = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 }; status.Children.Add(new Ellipse { Width = 10, Height = 10, Fill = StateBrush(_selectedDetails.State, _selectedDetails.LatestHandshakeUtc), VerticalAlignment = VerticalAlignment.Center }); status.Children.Add(Text(StateText(_selectedDetails.State, _selectedDetails.LatestHandshakeUtc), 16, false, StateBrush(_selectedDetails.State, _selectedDetails.LatestHandshakeUtc))); if (_selectedDetails.State == "connected" && HasUptime()) { status.Children.Add(Text("|", 16, false, Brush("WireHushMutedBrush"))); status.Children.Add(Text(Uptime(_selectedDetails.StartedAtUtc), 16, false, Brush("WireHushMutedBrush"))); } title.Children.Add(status); heading.Children.Add(title);
         var actionText = _tunnelActionPending ? _selectedDetails.State == "connected" ? "Disconnecting…" : "Connecting…" : _selectedDetails.State == "connected" ? "Disconnect" : "Connect";
