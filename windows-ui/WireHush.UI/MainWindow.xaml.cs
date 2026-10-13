@@ -473,7 +473,8 @@ public sealed partial class MainWindow : Window
     private UIElement EmptyDetails() { var s = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Spacing = 10 }; s.Children.Add(Text("No tunnel selected", 28, true)); s.Children.Add(Text("Add or import a WireGuard tunnel to begin.", 16, false, Brush("WireHushMutedBrush"))); return s; }
     private UIElement OverviewPage()
     {
-        var columns = DetailWidth >= 1360 ? 4 : DetailWidth >= 620 ? 2 : 1;
+        // A narrow window gets full-width stacked cards, not unreadable half-width panels.
+        var columns = DetailWidth >= 1360 ? 4 : DetailWidth >= 760 ? 2 : 1;
         var grid = new Grid { ColumnSpacing = 16, RowSpacing = 16 };
         for (var i = 0; i < columns; i++)
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });

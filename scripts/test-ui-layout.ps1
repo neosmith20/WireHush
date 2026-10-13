@@ -70,11 +70,12 @@ function Get-DetailsScroll {
 }
 
 $sections = @('Overview', 'Network', 'DNS', 'Peer', 'Allowed IPs')
-$widths = @(1100, 1280, 1560, 1900)
+$widths = @(900, 1100, 1280, 1560, 1900)
 $results = @()
 try {
     foreach ($width in $widths) {
-        if (-not [WireHushUiLayoutWin32]::MoveWindow($hwnd, 90, 70, $width, 680, $true)) {
+        $height = if ($width -eq 900) { 560 } else { 680 }
+        if (-not [WireHushUiLayoutWin32]::MoveWindow($hwnd, 90, 70, $width, $height, $true)) {
             throw "Window resize failed at $width pixels."
         }
         [WireHushUiLayoutWin32]::SetForegroundWindow($hwnd) | Out-Null
@@ -98,6 +99,48 @@ try {
         $expectedRailMode = if ($width -lt 1380) { 'compact' } else { 'expanded' }
         if ($railMode -ne $expectedRailMode) {
             throw "Navigation rail did not adapt: width=$width, expected=$expectedRailMode, actual=$railMode."
+        }
+        # The header actions must remain present and accessible at minimum size.
+        foreach ($heading in @('Settings', 'Log', 'Help')) {
+            $buttonText = $root.FindFirst(
+                [System.Windows.Automation.TreeScope]::Descendants,
+                [System.Windows.Automation.PropertyCondition]::new(
+                    [System.Windows.Automation.AutomationElement]::NameProperty,
+                    $heading))
+            if ($null -eq $buttonText -or $buttonText.Current.IsOffscreen) {
+                throw "Header control inaccessible at width=${width}: $heading."
+            }
+        }
+        if ($width -in @(900, 1100, 1900)) {
+            (Get-NamedTabButton 'Overview').GetCurrentPattern(
+                [System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+            $initialScroll = Get-DetailsScroll
+            if ($initialScroll.Current.VerticallyScrollable) {
+                $initialScroll.SetScrollPercent(-1, 50)
+            }
+            Start-Sleep -Milliseconds 250
+            $cardHeadings = $root.FindAll(
+                [System.Windows.Automation.TreeScope]::Descendants, $predicate)
+            $connection = $null
+            $dns = $null
+            for ($i = 0; $i -lt $cardHeadings.Count; $i++) {
+                $candidate = $cardHeadings.Item($i)
+                if ($candidate.Current.ControlType -ne [System.Windows.Automation.ControlType]::Text -or
+                    $candidate.Current.IsOffscreen) { continue }
+                if ($candidate.Current.Name -eq 'Connection') { $connection = $candidate.Current.BoundingRectangle }
+                if ($candidate.Current.Name -eq 'DNS') { $dns = $candidate.Current.BoundingRectangle }
+            }
+            if ($null -eq $connection -or $null -eq $dns) {
+                throw "Overview card headings could not be inspected at width=$width."
+            }
+            $sameColumn = [Math]::Abs($connection.X - $dns.X) -lt 12
+            $sameRow = [Math]::Abs($connection.Y - $dns.Y) -lt 12
+            if ($width -eq 900 -and (-not $sameColumn -or $sameRow)) {
+                throw 'At 900px, Overview cards must be stacked in one column.'
+            }
+            if ($width -ne 900 -and ($sameColumn -or -not $sameRow)) {
+                throw "At width=$width, Overview cards should share a row."
+            }
         }
         foreach ($section in $sections) {
             (Get-NamedTabButton $section).GetCurrentPattern(
