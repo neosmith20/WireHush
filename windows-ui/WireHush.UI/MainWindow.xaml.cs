@@ -39,8 +39,11 @@ public sealed partial class MainWindow : Window
     private string _section = "Overview";
     private bool _connecting;
     private bool _tunnelActionPending;
+    private readonly Dictionary<string, string> _actionFailures = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _dismissedFailures = new(StringComparer.Ordinal);
     private bool _allowClose;
     private bool _exiting;
+    private TrayIcon? _trayIcon;
     private bool _refreshing;
 
     private double DetailWidth => Math.Max(0, (_detailHost?.ActualWidth ?? 0) - 72);
@@ -55,7 +58,7 @@ public sealed partial class MainWindow : Window
             var hwnd = WindowNative.GetWindowHandle(this);
             _appWindow = AppWindow.GetFromWindowId(Win32Interop.GetWindowIdFromWindow(hwnd));
             _appWindow.SetIcon(System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "WireHush.ico"));
-            _windowPreferences = new WindowPreferences(hwnd, _appWindow); ConfigureTitleBar(); _appWindow.Closing += OnAppWindowClosing; Closed += OnClosed;
+            _windowPreferences = new WindowPreferences(hwnd, _appWindow); ConfigureTitleBar(); InitializeTray(); _appWindow.Closing += OnAppWindowClosing; Closed += OnClosed;
             RootGrid.SizeChanged += (_, _) => { if (!_exiting) RenderDetails(); };
             BuildLiveShell(); _refreshTimer.Interval = TimeSpan.FromSeconds(1); _refreshTimer.Tick += async (_, _) =>
             {
@@ -297,6 +300,26 @@ public sealed partial class MainWindow : Window
         heading.Children.Add(toggle); stack.Children.Add(heading);
         if (_selectedDetails.State == "connected" && _selectedDetails.LatestHandshakeUtc is null)
             stack.Children.Add(new InfoBar { IsOpen = true, Severity = InfoBarSeverity.Warning, Title = "Waiting for WireGuard handshake", Message = "The tunnel interface is running, but no peer handshake has completed. VPN traffic may not work. Verify the endpoint address and port, peer keys, firewall, and network reachability." });
+        var failureMessage = !string.IsNullOrWhiteSpace(_selectedDetails.LastFailure)
+            ? _selectedDetails.LastFailure
+            : _actionFailures.GetValueOrDefault(_selectedDetails.Id);
+        if (!string.IsNullOrWhiteSpace(failureMessage))
+        {
+            var failureKey = _selectedDetails.Id + "\n" + failureMessage;
+            if (!_dismissedFailures.Contains(failureKey))
+            {
+                var notice = new InfoBar
+                {
+                    IsOpen = true,
+                    IsClosable = true,
+                    Severity = InfoBarSeverity.Error,
+                    Title = "Last connection attempt failed",
+                    Message = failureMessage + " Open Diagnostics for more information."
+                };
+                notice.Closed += (_, _) => _dismissedFailures.Add(failureKey);
+                stack.Children.Add(notice);
+            }
+        }
         var columns = DetailWidth < 900 ? 2 : 4; var tiles = new Grid(); for (var i = 0; i < columns; i++) tiles.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); for (var i = 0; i < (4 + columns - 1) / columns; i++) tiles.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         var values = new[] { ("VPN IP (IPv4)", _selectedDetails.Ipv4Addresses.Count == 0 ? "Unavailable" : _selectedDetails.Ipv4Addresses[0]), ("VPN IP (IPv6)", _selectedDetails.Ipv6Addresses.Count == 0 ? "Unavailable" : _selectedDetails.Ipv6Addresses[0]), ("Endpoint", string.IsNullOrWhiteSpace(_selectedDetails.EndpointDisplay) ? "Unavailable" : _selectedDetails.EndpointDisplay), ("Latest Handshake", _selectedDetails.LatestHandshakeUtc is null ? "Not Reported" : RelativeTime(_selectedDetails.LatestHandshakeUtc)) };
         for (var i = 0; i < values.Length; i++)
@@ -411,8 +434,24 @@ public sealed partial class MainWindow : Window
     {
         if (_managerClient is null || _selectedDetails is null || _tunnelActionPending) return;
         _tunnelActionPending = true; RenderDetails();
-        try { if (_selectedDetails.State == "connected") await _managerClient.StopTunnelAsync(_selectedDetails.Id, _lifetime.Token); else await _managerClient.StartTunnelAsync(_selectedDetails.Id, _lifetime.Token); await Task.Delay(500, _lifetime.Token); await LoadTunnelsAsync(); }
-        catch (Exception ex) { ShowNotice(SafeError(ex)); }
+        var id = _selectedDetails.Id;
+        _actionFailures.Remove(id);
+        _dismissedFailures.RemoveWhere(key => key.StartsWith(id + "\n", StringComparison.Ordinal));
+        try
+        {
+            if (_selectedDetails.State == "connected")
+                await _managerClient.StopTunnelAsync(id, _lifetime.Token);
+            else
+                await _managerClient.StartTunnelAsync(id, _lifetime.Token);
+            await Task.Delay(500, _lifetime.Token);
+            await LoadTunnelsAsync();
+        }
+        catch (Exception ex)
+        {
+            var message = SafeError(ex);
+            _actionFailures[id] = message;
+            ShowNotice(message);
+        }
         finally { _tunnelActionPending = false; RenderDetails(); }
     }
     private void ShowTunnelMenu(string name, FrameworkElement anchor) { var menu = new MenuFlyout(); var action = new MenuFlyoutItem { Text = _tunnels.FirstOrDefault(t => t.Id == name)?.State == "connected" ? "Disconnect" : "Connect" }; action.IsEnabled = _managerClient?.Connected == true && (_tunnels.FirstOrDefault(t => t.Id == name)?.State == "connected" || _managerClient?.DeviceBusyForAnotherUser != true); action.Click += async (_, _) => { try { _selectedTunnel = name; _section = "Overview"; await LoadSelectedTunnelAsync(name); await ToggleTunnelAsync(); } catch (Exception ex) { ShowNotice(SafeError(ex)); } }; menu.Items.Add(action); var delete = new MenuFlyoutItem { Text = "Delete", Foreground = new SolidColorBrush(Colors.IndianRed) }; delete.Click += async (_, _) => await DeleteTunnelAsync(name); delete.IsEnabled = _tunnels.FirstOrDefault(t => t.Id == name)?.MayEdit == true && _managerClient?.Connected == true; menu.Items.Add(delete); var edit = new MenuFlyoutItem { Text = "Edit", IsEnabled = delete.IsEnabled }; edit.Click += async (_, _) => await EditTunnelAsync(name); menu.Items.Add(edit); var export = new MenuFlyoutItem { Text = "Export", IsEnabled = delete.IsEnabled }; export.Click += async (_, _) => await ExportTunnelAsync(name); menu.Items.Add(export); menu.ShowAt(anchor, new Microsoft.UI.Xaml.Controls.Primitives.FlyoutShowOptions { Placement = Microsoft.UI.Xaml.Controls.Primitives.FlyoutPlacementMode.Right }); }
@@ -501,11 +540,31 @@ public sealed partial class MainWindow : Window
             _managerInfo.IsOpen = !message.StartsWith("Connected", StringComparison.Ordinal);
         }
     }
-    private async void OnAppWindowClosing(AppWindow sender, AppWindowClosingEventArgs args)
+    // Hiding the UI is not an ExitSession and must never tear down an active VPN.
+    private void OnAppWindowClosing(AppWindow sender, AppWindowClosingEventArgs args)
     {
         if (_allowClose) return;
         args.Cancel = true;
-        await ConfirmExitAsync();
+        if (_trayIcon is null)
+        {
+            _ = ConfirmExitAsync();
+            return;
+        }
+        _appWindow.Hide();
+    }
+    internal void ShowFromTray()
+    {
+        if (_exiting) return;
+        _appWindow.Show();
+        Activate();
+    }
+    private void InitializeTray()
+    {
+        var iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "WireHush.ico");
+        _trayIcon = new TrayIcon(
+            WindowNative.GetWindowHandle(this), iconPath, DispatcherQueue,
+            ShowFromTray, () => _appWindow.Hide(),
+            async () => { ShowFromTray(); await ConfirmExitAsync(); });
     }
     private async Task ConfirmExitAsync()
     {
@@ -533,7 +592,18 @@ public sealed partial class MainWindow : Window
             else { _exiting = false; ShowNotice("Cleanup unverified — active tunnels may still be running."); }
         }
     }
-    private void OnClosed(object sender, WindowEventArgs args) { _windowPreferences.Dispose(); _refreshTimer.Stop(); _lifetime.Cancel(); _ = _managerClient.DisposeAsyncIfPresent(); }
+    private void OnClosed(object sender, WindowEventArgs args)
+    {
+        if (_trayIcon is not null)
+        {
+            _trayIcon.Dispose();
+            _trayIcon = null;
+        }
+        _windowPreferences.Dispose();
+        _refreshTimer.Stop();
+        _lifetime.Cancel();
+        _ = _managerClient.DisposeAsyncIfPresent();
+    }
     private static string Join(IReadOnlyList<string> values) => values.Count == 0 ? "—" : string.Join(", ", values); private static string Value(string? value) => string.IsNullOrWhiteSpace(value) ? "—" : value; private static string RelativeTime(DateTimeOffset? time) => time is null ? "—" : time.Value > DateTimeOffset.UtcNow ? "Clock difference detected" : $"{Math.Max(0, (int)(DateTimeOffset.UtcNow - time.Value).TotalSeconds)} seconds ago"; private static string Uptime(DateTimeOffset? time) => time is null ? "—" : (DateTimeOffset.UtcNow - time.Value).ToString("d' days 'h' hours 'm' minutes'"); private static string FormatBytes(ulong value) => value < 1024 ? $"{value} B" : value < 1024 * 1024 ? $"{value / 1024d:F1} KiB" : $"{value / 1024d / 1024d:F1} MiB"; private static string FormatRate(double value) => value < 1024 ? $"{value:F0} bps" : value < 1024 * 1024 ? $"{value / 1024:F1} Kbps" : $"{value / 1024 / 1024:F1} Mbps";
 
 }

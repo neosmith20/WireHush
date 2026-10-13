@@ -32,7 +32,7 @@ namespace WireHush.Protocol {
             "IAMoDjIXLndpcmVodXNoLnYxLkNhcGFiaWxpdHkSEwoLaW5zdGFuY2VfaWQY",
             "BSABKAkSFwoPbWF5X2VkaXRfc2hhcmVkGAYgASgIEiEKGW1heV9lZGl0X21h",
             "Y2hpbmVfc2V0dGluZ3MYByABKAgiQQoJVHVubmVsUmVmEhEKCXR1bm5lbF9p",
-            "ZBgBIAEoCRIhCgVzY29wZRgCIAEoDjISLndpcmVodXNoLnYxLlNjb3BlIoUD",
+            "ZBgBIAEoCRIhCgVzY29wZRgCIAEoDjISLndpcmVodXNoLnYxLlNjb3BlIpsD",
             "Cg5UdW5uZWxTbmFwc2hvdBImCgZ0dW5uZWwYASABKAsyFi53aXJlaHVzaC52",
             "MS5UdW5uZWxSZWYSDAoEbmFtZRgCIAEoCRInCgVzdGF0ZRgDIAEoDjIYLndp",
             "cmVodXNoLnYxLlR1bm5lbFN0YXRlEhUKDWVuY3J5cHRlZF9kbnMYBCABKAgS",
@@ -40,63 +40,64 @@ namespace WireHush.Protocol {
             "EiIKFWxhdGVzdF9oYW5kc2hha2VfdW5peBgHIAEoA0gCiAEBEhAKCG1heV9l",
             "ZGl0GAggASgIEhIKCm1heV9leHBvcnQYCSABKAgSFgoJZG5zX3JlYWR5GAog",
             "ASgISAOIAQESKwoHbmV0d29yaxgLIAEoCzIaLndpcmVodXNoLnYxLlR1bm5l",
-            "bE5ldHdvcmtCCwoJX3J4X2J5dGVzQgsKCV90eF9ieXRlc0IYChZfbGF0ZXN0",
-            "X2hhbmRzaGFrZV91bml4QgwKCl9kbnNfcmVhZHki7QEKDVR1bm5lbE5ldHdv",
-            "cmsSFgoOaXB2NF9hZGRyZXNzZXMYASADKAkSFgoOaXB2Nl9hZGRyZXNzZXMY",
-            "AiADKAkSEwoLYWxsb3dlZF9pcHMYAyADKAkSGAoQZW5kcG9pbnRfZGlzcGxh",
-            "eRgEIAEoCRIYCgtsaXN0ZW5fcG9ydBgFIAEoDUgAiAEBEhYKDmludGVyZmFj",
-            "ZV9uYW1lGAYgASgJEhMKC2Ruc19zZXJ2ZXJzGAcgAygJEiYKBXBlZXJzGAgg",
-            "AygLMhcud2lyZWh1c2gudjEuVHVubmVsUGVlckIOCgxfbGlzdGVuX3BvcnQi",
-            "iwIKClR1bm5lbFBlZXISEgoKcHVibGljX2tleRgBIAEoCRIYChBlbmRwb2lu",
-            "dF9kaXNwbGF5GAIgASgJEhMKC2FsbG93ZWRfaXBzGAMgAygJEh4KEWtlZXBh",
-            "bGl2ZV9zZWNvbmRzGAQgASgNSACIAQESFQoIcnhfYnl0ZXMYBSABKARIAYgB",
-            "ARIVCgh0eF9ieXRlcxgGIAEoBEgCiAEBEiIKFWxhdGVzdF9oYW5kc2hha2Vf",
-            "dW5peBgHIAEoA0gDiAEBQhQKEl9rZWVwYWxpdmVfc2Vjb25kc0ILCglfcnhf",
-            "Ynl0ZXNCCwoJX3R4X2J5dGVzQhgKFl9sYXRlc3RfaGFuZHNoYWtlX3VuaXgi",
-            "owEKDVNuYXBzaG90UmVwbHkSEwoLaW5zdGFuY2VfaWQYASABKAkSEAoIcmV2",
-            "aXNpb24YAiABKAQSLAoHdHVubmVscxgDIAMoCzIbLndpcmVodXNoLnYxLlR1",
-            "bm5lbFNuYXBzaG90EiQKHGRldmljZV9idXN5X2Zvcl9hbm90aGVyX3VzZXIY",
-            "BCABKAgSFwoPbWFuYWdlcl9jbG9zaW5nGAUgASgIIisKEkNvbmZpZ3VyYXRp",
-            "b25SZXBseRIVCg13Z19xdWlja190ZXh0GAEgASgJIl0KE0NyZWF0ZVR1bm5l",
-            "bFJlcXVlc3QSIQoFc2NvcGUYASABKA4yEi53aXJlaHVzaC52MS5TY29wZRIM",
-            "CgRuYW1lGAIgASgJEhUKDXdnX3F1aWNrX3RleHQYAyABKAkiYgoTVXBkYXRl",
-            "VHVubmVsUmVxdWVzdBImCgZ0dW5uZWwYASABKAsyFi53aXJlaHVzaC52MS5U",
-            "dW5uZWxSZWYSDAoEbmFtZRgCIAEoCRIVCg13Z19xdWlja190ZXh0GAMgASgJ",
-            "IkUKEUJvb3RzdHJhcFJlc29sdmVyEg8KB2FkZHJlc3MYASABKAkSDwoHZW5h",
-            "YmxlZBgCIAEoCBIOCgZjdXN0b20YAyABKAgiRgoRQm9vdHN0cmFwU2V0dGlu",
-            "Z3MSMQoJcmVzb2x2ZXJzGAEgAygLMh4ud2lyZWh1c2gudjEuQm9vdHN0cmFw",
-            "UmVzb2x2ZXIiPwoJRXhpdFJlcGx5EhgKEGNsZWFudXBfY29tcGxldGUYASAB",
-            "KAgSGAoQbWFuYWdlcl9zdG9wcGluZxgCIAEoCCpDCgVTY29wZRIVChFTQ09Q",
-            "RV9VTlNQRUNJRklFRBAAEhEKDVNDT1BFX1BSSVZBVEUQARIQCgxTQ09QRV9T",
-            "SEFSRUQQAiqTAQoLVHVubmVsU3RhdGUSGAoUVFVOTkVMX1NUQVRFX1VOS05P",
-            "V04QABIYChRUVU5ORUxfU1RBVEVfU1RPUFBFRBABEhkKFVRVTk5FTF9TVEFU",
-            "RV9TVEFSVElORxACEhoKFlRVTk5FTF9TVEFURV9DT05ORUNURUQQAxIZChVU",
-            "VU5ORUxfU1RBVEVfU1RPUFBJTkcQBCrqAQoKQ2FwYWJpbGl0eRIaChZDQVBB",
-            "QklMSVRZX1VOU1BFQ0lGSUVEEAASFgoSQ0FQQUJJTElUWV9UVU5ORUxTEAES",
-            "HAoYQ0FQQUJJTElUWV9FTkNSWVBURURfRE5TEAISIQodQ0FQQUJJTElUWV9C",
-            "T09UU1RSQVBfU0VUVElOR1MQAxIVChFDQVBBQklMSVRZX0VWRU5UUxAEEhUK",
-            "EUNBUEFCSUxJVFlfRVhQT1JUEAUSHAoYQ0FQQUJJTElUWV9TSEFSRURfQ1JF",
-            "QVRFEAYSGwoXQ0FQQUJJTElUWV9TRVNTSU9OX0VYSVQQBzKmBgoHTWFuYWdl",
-            "chJHCglIYW5kc2hha2USHS53aXJlaHVzaC52MS5IYW5kc2hha2VSZXF1ZXN0",
-            "Ghsud2lyZWh1c2gudjEuSGFuZHNoYWtlUmVwbHkSOgoIU25hcHNob3QSEi53",
-            "aXJlaHVzaC52MS5FbXB0eRoaLndpcmVodXNoLnYxLlNuYXBzaG90UmVwbHkS",
-            "TAoRUmVhZENvbmZpZ3VyYXRpb24SFi53aXJlaHVzaC52MS5UdW5uZWxSZWYa",
-            "Hy53aXJlaHVzaC52MS5Db25maWd1cmF0aW9uUmVwbHkSTQoMQ3JlYXRlVHVu",
-            "bmVsEiAud2lyZWh1c2gudjEuQ3JlYXRlVHVubmVsUmVxdWVzdBobLndpcmVo",
-            "dXNoLnYxLlR1bm5lbFNuYXBzaG90EkQKDFVwZGF0ZVR1bm5lbBIgLndpcmVo",
-            "dXNoLnYxLlVwZGF0ZVR1bm5lbFJlcXVlc3QaEi53aXJlaHVzaC52MS5FbXB0",
-            "eRI6CgxEZWxldGVUdW5uZWwSFi53aXJlaHVzaC52MS5UdW5uZWxSZWYaEi53",
-            "aXJlaHVzaC52MS5FbXB0eRI5CgtTdGFydFR1bm5lbBIWLndpcmVodXNoLnYx",
-            "LlR1bm5lbFJlZhoSLndpcmVodXNoLnYxLkVtcHR5EjgKClN0b3BUdW5uZWwS",
-            "Fi53aXJlaHVzaC52MS5UdW5uZWxSZWYaEi53aXJlaHVzaC52MS5FbXB0eRJD",
-            "Cg1SZWFkQm9vdHN0cmFwEhIud2lyZWh1c2gudjEuRW1wdHkaHi53aXJlaHVz",
-            "aC52MS5Cb290c3RyYXBTZXR0aW5ncxJDCg1TYXZlQm9vdHN0cmFwEh4ud2ly",
-            "ZWh1c2gudjEuQm9vdHN0cmFwU2V0dGluZ3MaEi53aXJlaHVzaC52MS5FbXB0",
-            "eRI9CglTdWJzY3JpYmUSEi53aXJlaHVzaC52MS5FbXB0eRoaLndpcmVodXNo",
-            "LnYxLlNuYXBzaG90UmVwbHkwARI5CgtFeGl0U2Vzc2lvbhISLndpcmVodXNo",
-            "LnYxLkVtcHR5GhYud2lyZWh1c2gudjEuRXhpdFJlcGx5QkpaNGdvbGFuZy56",
-            "eDJjNC5jb20vd2lyZWd1YXJkL3dpbmRvd3MvcHJvdG9jb2w7cHJvdG9jb2yq",
-            "AhFXaXJlSHVzaC5Qcm90b2NvbGIGcHJvdG8z"));
+            "bE5ldHdvcmsSFAoMbGFzdF9mYWlsdXJlGAwgASgJQgsKCV9yeF9ieXRlc0IL",
+            "CglfdHhfYnl0ZXNCGAoWX2xhdGVzdF9oYW5kc2hha2VfdW5peEIMCgpfZG5z",
+            "X3JlYWR5Iu0BCg1UdW5uZWxOZXR3b3JrEhYKDmlwdjRfYWRkcmVzc2VzGAEg",
+            "AygJEhYKDmlwdjZfYWRkcmVzc2VzGAIgAygJEhMKC2FsbG93ZWRfaXBzGAMg",
+            "AygJEhgKEGVuZHBvaW50X2Rpc3BsYXkYBCABKAkSGAoLbGlzdGVuX3BvcnQY",
+            "BSABKA1IAIgBARIWCg5pbnRlcmZhY2VfbmFtZRgGIAEoCRITCgtkbnNfc2Vy",
+            "dmVycxgHIAMoCRImCgVwZWVycxgIIAMoCzIXLndpcmVodXNoLnYxLlR1bm5l",
+            "bFBlZXJCDgoMX2xpc3Rlbl9wb3J0IosCCgpUdW5uZWxQZWVyEhIKCnB1Ymxp",
+            "Y19rZXkYASABKAkSGAoQZW5kcG9pbnRfZGlzcGxheRgCIAEoCRITCgthbGxv",
+            "d2VkX2lwcxgDIAMoCRIeChFrZWVwYWxpdmVfc2Vjb25kcxgEIAEoDUgAiAEB",
+            "EhUKCHJ4X2J5dGVzGAUgASgESAGIAQESFQoIdHhfYnl0ZXMYBiABKARIAogB",
+            "ARIiChVsYXRlc3RfaGFuZHNoYWtlX3VuaXgYByABKANIA4gBAUIUChJfa2Vl",
+            "cGFsaXZlX3NlY29uZHNCCwoJX3J4X2J5dGVzQgsKCV90eF9ieXRlc0IYChZf",
+            "bGF0ZXN0X2hhbmRzaGFrZV91bml4IqMBCg1TbmFwc2hvdFJlcGx5EhMKC2lu",
+            "c3RhbmNlX2lkGAEgASgJEhAKCHJldmlzaW9uGAIgASgEEiwKB3R1bm5lbHMY",
+            "AyADKAsyGy53aXJlaHVzaC52MS5UdW5uZWxTbmFwc2hvdBIkChxkZXZpY2Vf",
+            "YnVzeV9mb3JfYW5vdGhlcl91c2VyGAQgASgIEhcKD21hbmFnZXJfY2xvc2lu",
+            "ZxgFIAEoCCIrChJDb25maWd1cmF0aW9uUmVwbHkSFQoNd2dfcXVpY2tfdGV4",
+            "dBgBIAEoCSJdChNDcmVhdGVUdW5uZWxSZXF1ZXN0EiEKBXNjb3BlGAEgASgO",
+            "MhIud2lyZWh1c2gudjEuU2NvcGUSDAoEbmFtZRgCIAEoCRIVCg13Z19xdWlj",
+            "a190ZXh0GAMgASgJImIKE1VwZGF0ZVR1bm5lbFJlcXVlc3QSJgoGdHVubmVs",
+            "GAEgASgLMhYud2lyZWh1c2gudjEuVHVubmVsUmVmEgwKBG5hbWUYAiABKAkS",
+            "FQoNd2dfcXVpY2tfdGV4dBgDIAEoCSJFChFCb290c3RyYXBSZXNvbHZlchIP",
+            "CgdhZGRyZXNzGAEgASgJEg8KB2VuYWJsZWQYAiABKAgSDgoGY3VzdG9tGAMg",
+            "ASgIIkYKEUJvb3RzdHJhcFNldHRpbmdzEjEKCXJlc29sdmVycxgBIAMoCzIe",
+            "LndpcmVodXNoLnYxLkJvb3RzdHJhcFJlc29sdmVyIj8KCUV4aXRSZXBseRIY",
+            "ChBjbGVhbnVwX2NvbXBsZXRlGAEgASgIEhgKEG1hbmFnZXJfc3RvcHBpbmcY",
+            "AiABKAgqQwoFU2NvcGUSFQoRU0NPUEVfVU5TUEVDSUZJRUQQABIRCg1TQ09Q",
+            "RV9QUklWQVRFEAESEAoMU0NPUEVfU0hBUkVEEAIqkwEKC1R1bm5lbFN0YXRl",
+            "EhgKFFRVTk5FTF9TVEFURV9VTktOT1dOEAASGAoUVFVOTkVMX1NUQVRFX1NU",
+            "T1BQRUQQARIZChVUVU5ORUxfU1RBVEVfU1RBUlRJTkcQAhIaChZUVU5ORUxf",
+            "U1RBVEVfQ09OTkVDVEVEEAMSGQoVVFVOTkVMX1NUQVRFX1NUT1BQSU5HEAQq",
+            "6gEKCkNhcGFiaWxpdHkSGgoWQ0FQQUJJTElUWV9VTlNQRUNJRklFRBAAEhYK",
+            "EkNBUEFCSUxJVFlfVFVOTkVMUxABEhwKGENBUEFCSUxJVFlfRU5DUllQVEVE",
+            "X0ROUxACEiEKHUNBUEFCSUxJVFlfQk9PVFNUUkFQX1NFVFRJTkdTEAMSFQoR",
+            "Q0FQQUJJTElUWV9FVkVOVFMQBBIVChFDQVBBQklMSVRZX0VYUE9SVBAFEhwK",
+            "GENBUEFCSUxJVFlfU0hBUkVEX0NSRUFURRAGEhsKF0NBUEFCSUxJVFlfU0VT",
+            "U0lPTl9FWElUEAcypgYKB01hbmFnZXISRwoJSGFuZHNoYWtlEh0ud2lyZWh1",
+            "c2gudjEuSGFuZHNoYWtlUmVxdWVzdBobLndpcmVodXNoLnYxLkhhbmRzaGFr",
+            "ZVJlcGx5EjoKCFNuYXBzaG90EhIud2lyZWh1c2gudjEuRW1wdHkaGi53aXJl",
+            "aHVzaC52MS5TbmFwc2hvdFJlcGx5EkwKEVJlYWRDb25maWd1cmF0aW9uEhYu",
+            "d2lyZWh1c2gudjEuVHVubmVsUmVmGh8ud2lyZWh1c2gudjEuQ29uZmlndXJh",
+            "dGlvblJlcGx5Ek0KDENyZWF0ZVR1bm5lbBIgLndpcmVodXNoLnYxLkNyZWF0",
+            "ZVR1bm5lbFJlcXVlc3QaGy53aXJlaHVzaC52MS5UdW5uZWxTbmFwc2hvdBJE",
+            "CgxVcGRhdGVUdW5uZWwSIC53aXJlaHVzaC52MS5VcGRhdGVUdW5uZWxSZXF1",
+            "ZXN0GhIud2lyZWh1c2gudjEuRW1wdHkSOgoMRGVsZXRlVHVubmVsEhYud2ly",
+            "ZWh1c2gudjEuVHVubmVsUmVmGhIud2lyZWh1c2gudjEuRW1wdHkSOQoLU3Rh",
+            "cnRUdW5uZWwSFi53aXJlaHVzaC52MS5UdW5uZWxSZWYaEi53aXJlaHVzaC52",
+            "MS5FbXB0eRI4CgpTdG9wVHVubmVsEhYud2lyZWh1c2gudjEuVHVubmVsUmVm",
+            "GhIud2lyZWh1c2gudjEuRW1wdHkSQwoNUmVhZEJvb3RzdHJhcBISLndpcmVo",
+            "dXNoLnYxLkVtcHR5Gh4ud2lyZWh1c2gudjEuQm9vdHN0cmFwU2V0dGluZ3MS",
+            "QwoNU2F2ZUJvb3RzdHJhcBIeLndpcmVodXNoLnYxLkJvb3RzdHJhcFNldHRp",
+            "bmdzGhIud2lyZWh1c2gudjEuRW1wdHkSPQoJU3Vic2NyaWJlEhIud2lyZWh1",
+            "c2gudjEuRW1wdHkaGi53aXJlaHVzaC52MS5TbmFwc2hvdFJlcGx5MAESOQoL",
+            "RXhpdFNlc3Npb24SEi53aXJlaHVzaC52MS5FbXB0eRoWLndpcmVodXNoLnYx",
+            "LkV4aXRSZXBseUJKWjRnb2xhbmcuengyYzQuY29tL3dpcmVndWFyZC93aW5k",
+            "b3dzL3Byb3RvY29sO3Byb3RvY29sqgIRV2lyZUh1c2guUHJvdG9jb2xiBnBy",
+            "b3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::WireHush.Protocol.Scope), typeof(global::WireHush.Protocol.TunnelState), typeof(global::WireHush.Protocol.Capability), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -104,7 +105,7 @@ namespace WireHush.Protocol {
             new pbr::GeneratedClrTypeInfo(typeof(global::WireHush.Protocol.HandshakeRequest), global::WireHush.Protocol.HandshakeRequest.Parser, new[]{ "ProtocolMajor", "ProtocolMinor" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::WireHush.Protocol.HandshakeReply), global::WireHush.Protocol.HandshakeReply.Parser, new[]{ "ProtocolMajor", "ProtocolMinor", "ProductVersion", "Capabilities", "InstanceId", "MayEditShared", "MayEditMachineSettings" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::WireHush.Protocol.TunnelRef), global::WireHush.Protocol.TunnelRef.Parser, new[]{ "TunnelId", "Scope" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::WireHush.Protocol.TunnelSnapshot), global::WireHush.Protocol.TunnelSnapshot.Parser, new[]{ "Tunnel", "Name", "State", "EncryptedDns", "RxBytes", "TxBytes", "LatestHandshakeUnix", "MayEdit", "MayExport", "DnsReady", "Network" }, new[]{ "RxBytes", "TxBytes", "LatestHandshakeUnix", "DnsReady" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::WireHush.Protocol.TunnelSnapshot), global::WireHush.Protocol.TunnelSnapshot.Parser, new[]{ "Tunnel", "Name", "State", "EncryptedDns", "RxBytes", "TxBytes", "LatestHandshakeUnix", "MayEdit", "MayExport", "DnsReady", "Network", "LastFailure" }, new[]{ "RxBytes", "TxBytes", "LatestHandshakeUnix", "DnsReady" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::WireHush.Protocol.TunnelNetwork), global::WireHush.Protocol.TunnelNetwork.Parser, new[]{ "Ipv4Addresses", "Ipv6Addresses", "AllowedIps", "EndpointDisplay", "ListenPort", "InterfaceName", "DnsServers", "Peers" }, new[]{ "ListenPort" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::WireHush.Protocol.TunnelPeer), global::WireHush.Protocol.TunnelPeer.Parser, new[]{ "PublicKey", "EndpointDisplay", "AllowedIps", "KeepaliveSeconds", "RxBytes", "TxBytes", "LatestHandshakeUnix" }, new[]{ "KeepaliveSeconds", "RxBytes", "TxBytes", "LatestHandshakeUnix" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::WireHush.Protocol.SnapshotReply), global::WireHush.Protocol.SnapshotReply.Parser, new[]{ "InstanceId", "Revision", "Tunnels", "DeviceBusyForAnotherUser", "ManagerClosing" }, null, null, null, null),
@@ -1238,6 +1239,7 @@ namespace WireHush.Protocol {
       mayExport_ = other.mayExport_;
       dnsReady_ = other.dnsReady_;
       network_ = other.network_ != null ? other.network_.Clone() : null;
+      lastFailure_ = other.lastFailure_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -1446,6 +1448,21 @@ namespace WireHush.Protocol {
       }
     }
 
+    /// <summary>Field number for the "last_failure" field.</summary>
+    public const int LastFailureFieldNumber = 12;
+    private string lastFailure_ = "";
+    /// <summary>
+    /// Sanitized last startup failure. Never contains configuration, keys or endpoints.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string LastFailure {
+      get { return lastFailure_; }
+      set {
+        lastFailure_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -1472,6 +1489,7 @@ namespace WireHush.Protocol {
       if (MayExport != other.MayExport) return false;
       if (DnsReady != other.DnsReady) return false;
       if (!object.Equals(Network, other.Network)) return false;
+      if (LastFailure != other.LastFailure) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -1490,6 +1508,7 @@ namespace WireHush.Protocol {
       if (MayExport != false) hash ^= MayExport.GetHashCode();
       if (HasDnsReady) hash ^= DnsReady.GetHashCode();
       if (network_ != null) hash ^= Network.GetHashCode();
+      if (LastFailure.Length != 0) hash ^= LastFailure.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -1552,6 +1571,10 @@ namespace WireHush.Protocol {
         output.WriteRawTag(90);
         output.WriteMessage(Network);
       }
+      if (LastFailure.Length != 0) {
+        output.WriteRawTag(98);
+        output.WriteString(LastFailure);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1606,6 +1629,10 @@ namespace WireHush.Protocol {
         output.WriteRawTag(90);
         output.WriteMessage(Network);
       }
+      if (LastFailure.Length != 0) {
+        output.WriteRawTag(98);
+        output.WriteString(LastFailure);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1648,6 +1675,9 @@ namespace WireHush.Protocol {
       }
       if (network_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(Network);
+      }
+      if (LastFailure.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(LastFailure);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1699,6 +1729,9 @@ namespace WireHush.Protocol {
           Network = new global::WireHush.Protocol.TunnelNetwork();
         }
         Network.MergeFrom(other.Network);
+      }
+      if (other.LastFailure.Length != 0) {
+        LastFailure = other.LastFailure;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -1769,6 +1802,10 @@ namespace WireHush.Protocol {
             input.ReadMessage(Network);
             break;
           }
+          case 98: {
+            LastFailure = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -1836,6 +1873,10 @@ namespace WireHush.Protocol {
               Network = new global::WireHush.Protocol.TunnelNetwork();
             }
             input.ReadMessage(Network);
+            break;
+          }
+          case 98: {
+            LastFailure = input.ReadString();
             break;
           }
         }

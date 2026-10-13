@@ -100,7 +100,7 @@ internal sealed class GrpcManagerClient : IManagerClient
             tunnel.HasLatestHandshakeUnix ? DateTimeOffset.FromUnixTimeSeconds(tunnel.LatestHandshakeUnix) : null,
             tunnel.RxBytes, tunnel.TxBytes,
             new DnsDetails(tunnel.EncryptedDns ? "DNS over HTTPS (DoH)" : network is null ? "Unavailable" : network.DnsServers.Count > 0 ? "DNS" : "Not configured", string.Join(", ", network?.DnsServers.ToArray() ?? []), "", [], false, tunnel.HasDnsReady && tunnel.DnsReady),
-            peers, id, tunnel.MayEdit, tunnel.HasRxBytes && tunnel.HasTxBytes);
+            peers, id, tunnel.MayEdit, tunnel.HasRxBytes && tunnel.HasTxBytes, string.IsNullOrWhiteSpace(tunnel.LastFailure) ? null : tunnel.LastFailure);
         return Task.FromResult(details);
     }
     private async Task RefreshAsync(CancellationToken cancellationToken)

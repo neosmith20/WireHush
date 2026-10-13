@@ -439,7 +439,9 @@ type TunnelSnapshot struct {
 	DnsReady *bool `protobuf:"varint,10,opt,name=dns_ready,json=dnsReady,proto3,oneof" json:"dns_ready,omitempty"`
 	// Configuration-derived details require configuration-read authorization.
 	// Shared ordinary members receive basic metadata/runtime totals only.
-	Network       *TunnelNetwork `protobuf:"bytes,11,opt,name=network,proto3" json:"network,omitempty"`
+	Network *TunnelNetwork `protobuf:"bytes,11,opt,name=network,proto3" json:"network,omitempty"`
+	// Sanitized last startup failure. Never contains configuration, keys or endpoints.
+	LastFailure   string `protobuf:"bytes,12,opt,name=last_failure,json=lastFailure,proto3" json:"last_failure,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -549,6 +551,13 @@ func (x *TunnelSnapshot) GetNetwork() *TunnelNetwork {
 		return x.Network
 	}
 	return nil
+}
+
+func (x *TunnelSnapshot) GetLastFailure() string {
+	if x != nil {
+		return x.LastFailure
+	}
+	return ""
 }
 
 type TunnelNetwork struct {
@@ -1160,7 +1169,7 @@ const file_protocol_wirehush_proto_rawDesc = "" +
 	"\x19may_edit_machine_settings\x18\a \x01(\bR\x16mayEditMachineSettings\"R\n" +
 	"\tTunnelRef\x12\x1b\n" +
 	"\ttunnel_id\x18\x01 \x01(\tR\btunnelId\x12(\n" +
-	"\x05scope\x18\x02 \x01(\x0e2\x12.wirehush.v1.ScopeR\x05scope\"\xf6\x03\n" +
+	"\x05scope\x18\x02 \x01(\x0e2\x12.wirehush.v1.ScopeR\x05scope\"\x99\x04\n" +
 	"\x0eTunnelSnapshot\x12.\n" +
 	"\x06tunnel\x18\x01 \x01(\v2\x16.wirehush.v1.TunnelRefR\x06tunnel\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12.\n" +
@@ -1174,7 +1183,8 @@ const file_protocol_wirehush_proto_rawDesc = "" +
 	"may_export\x18\t \x01(\bR\tmayExport\x12 \n" +
 	"\tdns_ready\x18\n" +
 	" \x01(\bH\x03R\bdnsReady\x88\x01\x01\x124\n" +
-	"\anetwork\x18\v \x01(\v2\x1a.wirehush.v1.TunnelNetworkR\anetworkB\v\n" +
+	"\anetwork\x18\v \x01(\v2\x1a.wirehush.v1.TunnelNetworkR\anetwork\x12!\n" +
+	"\flast_failure\x18\f \x01(\tR\vlastFailureB\v\n" +
 	"\t_rx_bytesB\v\n" +
 	"\t_tx_bytesB\x18\n" +
 	"\x16_latest_handshake_unixB\f\n" +

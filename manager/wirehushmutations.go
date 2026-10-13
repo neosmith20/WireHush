@@ -97,7 +97,12 @@ func (mutations *wireHushMutations) Start(ctx context.Context, caller wireHushCa
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	return mutations.control.withContext(ctx).start(canonical)
+	setWireHushTunnelFailure(canonical.TunnelID, "")
+	if err := mutations.control.withContext(ctx).start(canonical); err != nil {
+		setWireHushTunnelFailure(canonical.TunnelID, "Tunnel startup could not be completed. Check WireHush diagnostics.")
+		return err
+	}
+	return nil
 }
 
 func (mutations *wireHushMutations) Stop(ctx context.Context, caller wireHushCaller, locator conf.TunnelServiceLocator) error {
@@ -207,5 +212,9 @@ func (mutations *wireHushMutations) Delete(ctx context.Context, caller wireHushC
 		return err
 	}
 	defer mutations.leave()
-	return mutations.control.withContext(ctx).DeleteTunnelRecord(caller, locator)
+	if err := mutations.control.withContext(ctx).DeleteTunnelRecord(caller, locator); err != nil {
+		return err
+	}
+	setWireHushTunnelFailure(locator.TunnelID, "")
+	return nil
 }

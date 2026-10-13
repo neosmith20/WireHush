@@ -38,7 +38,7 @@ public sealed record TunnelDetails(
     ulong RxBytes,
     ulong TxBytes,
     DnsDetails Dns,
-    IReadOnlyList<PeerDetails> Peers, string Id, bool MayEdit, bool MetricsAvailable);
+    IReadOnlyList<PeerDetails> Peers, string Id, bool MayEdit, bool MetricsAvailable, string? LastFailure = null);
 
 public sealed record BootstrapResolver(
     string Address,
