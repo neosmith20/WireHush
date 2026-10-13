@@ -28,6 +28,7 @@ type wireHushTrackedTunnel struct {
 var (
 	wireHushTrackedTunnels           = make(map[conf.TunnelID]wireHushTrackedTunnel)
 	wireHushTrackedTunnelsLock       sync.Mutex
+	wireHushTunnelFailures           = make(map[conf.TunnelID]string)
 	errWireHushTunnelLocatorConflict = errors.New("WireHush TunnelID is already tracked with a different locator")
 )
 
@@ -63,6 +64,51 @@ func removeWireHushTrackedTunnel(id conf.TunnelID) {
 	wireHushTrackedTunnelsLock.Lock()
 	defer wireHushTrackedTunnelsLock.Unlock()
 	delete(wireHushTrackedTunnels, id)
+}
+
+// Failure text is a fixed diagnostic category derived from the worker's
+// Windows service exit code. Do not forward untrusted endpoint/config/log text.
+func wireHushServiceFailureMessage(status svc.Status) string {
+	if wireHushTunnelServiceExitError(status) == nil {
+		return ""
+	}
+	if status.Win32ExitCode == uint32(windows.ERROR_SERVICE_SPECIFIC_ERROR) {
+		switch services.Error(status.ServiceSpecificExitCode) {
+		case services.ErrorDNSLookup:
+			return "Endpoint hostname resolution failed. Check the hostname, network connection and DNS settings."
+		case services.ErrorLoadConfiguration, services.ErrorDeviceSetConfig:
+			return "WireGuard configuration could not be applied. Check tunnel settings and peer keys."
+		case services.ErrorCreateNetworkAdapter, services.ErrorDeviceBringUp:
+			return "WireGuard network adapter could not start. Check the driver and Windows networking."
+		case services.ErrorFirewall:
+			return "Windows firewall setup failed. Check security software and firewall permissions."
+		case services.ErrorBindSocketsToDefaultRoutes, services.ErrorMonitorMTUChanges, services.ErrorSetNetConfig:
+			return "Network route or adapter setup failed. Check the interface and routing configuration."
+		case services.ErrorRunScript:
+			return "A configured tunnel script failed. Check the script and permissions in diagnostics."
+		case services.ErrorStartupBeforeNetwork:
+			return "Tunnel startup failed before network activation. Check the configuration and retry."
+		default:
+			return "The tunnel service stopped with a startup error. Check WireHush diagnostics."
+		}
+	}
+	return "Windows could not start the tunnel service. Check the service and WireHush diagnostics."
+}
+
+func setWireHushTunnelFailure(id conf.TunnelID, message string) {
+	wireHushTrackedTunnelsLock.Lock()
+	defer wireHushTrackedTunnelsLock.Unlock()
+	if message == "" {
+		delete(wireHushTunnelFailures, id)
+	} else {
+		wireHushTunnelFailures[id] = message
+	}
+}
+
+func wireHushTunnelFailure(id conf.TunnelID) string {
+	wireHushTrackedTunnelsLock.Lock()
+	defer wireHushTrackedTunnelsLock.Unlock()
+	return wireHushTunnelFailures[id]
 }
 
 func wireHushTrackedTunnelsGlobalState() (state TunnelState) {
@@ -154,6 +200,9 @@ func trackWireHushTunnelService(locator conf.TunnelServiceLocator, service *mgr.
 		if state == TunnelStopped {
 			if serviceStatus, queryErr := service.Query(); queryErr == nil {
 				tunnelError = wireHushTunnelServiceExitError(serviceStatus)
+				if tunnelError != nil {
+					setWireHushTunnelFailure(locator.TunnelID, wireHushServiceFailureMessage(serviceStatus))
+				}
 			}
 			// Failed worker services retain their exit code until an administrator
 			// repairs networking; deleting them would erase cleanup evidence.

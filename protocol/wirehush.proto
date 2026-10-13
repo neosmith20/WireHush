@@ -79,6 +79,8 @@ message TunnelSnapshot {
   // Configuration-derived details require configuration-read authorization.
   // Shared ordinary members receive basic metadata/runtime totals only.
   TunnelNetwork network = 11;
+  // Sanitized last startup failure. Never contains configuration, keys or endpoints.
+  string last_failure = 12;
 }
 message TunnelNetwork {
   repeated string ipv4_addresses = 1;

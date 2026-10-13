@@ -82,7 +82,7 @@ internal sealed class GrpcManagerClient : IManagerClient
     public Task<IReadOnlyList<TunnelSummary>> ListTunnelsAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        lock (_gate) return Task.FromResult<IReadOnlyList<TunnelSummary>>(_snapshot.Tunnels.Select(t => new TunnelSummary(t.Name, State(t.State), t.Tunnel.TunnelId, t.MayEdit, t.Tunnel.Scope == P.Scope.Private ? "Private" : "Shared")).ToArray());
+        lock (_gate) return Task.FromResult<IReadOnlyList<TunnelSummary>>(_snapshot.Tunnels.Select(t => new TunnelSummary(t.Name, State(t.State), t.Tunnel.TunnelId, t.MayEdit, t.Tunnel.Scope == P.Scope.Private ? "Private" : "Shared", t.HasLatestHandshakeUnix ? DateTimeOffset.FromUnixTimeSeconds(t.LatestHandshakeUnix) : null)).ToArray());
     }
     public Task<TunnelDetails> GetTunnelAsync(string id, CancellationToken cancellationToken) => GetRuntimeAsync(id, cancellationToken);
     public Task<TunnelDetails> GetRuntimeAsync(string id, CancellationToken cancellationToken)
@@ -100,7 +100,7 @@ internal sealed class GrpcManagerClient : IManagerClient
             tunnel.HasLatestHandshakeUnix ? DateTimeOffset.FromUnixTimeSeconds(tunnel.LatestHandshakeUnix) : null,
             tunnel.RxBytes, tunnel.TxBytes,
             new DnsDetails(tunnel.EncryptedDns ? "DNS over HTTPS (DoH)" : network is null ? "Unavailable" : network.DnsServers.Count > 0 ? "DNS" : "Not configured", string.Join(", ", network?.DnsServers.ToArray() ?? []), "", [], false, tunnel.HasDnsReady && tunnel.DnsReady),
-            peers, id, tunnel.MayEdit, tunnel.HasRxBytes && tunnel.HasTxBytes);
+            peers, id, tunnel.MayEdit, tunnel.HasRxBytes && tunnel.HasTxBytes, string.IsNullOrWhiteSpace(tunnel.LastFailure) ? null : tunnel.LastFailure);
         return Task.FromResult(details);
     }
     private async Task RefreshAsync(CancellationToken cancellationToken)

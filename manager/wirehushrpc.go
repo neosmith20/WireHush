@@ -236,7 +236,12 @@ func (server *wireHushRPCServer) Snapshot(ctx context.Context, _ *protocol.Empty
 			if err != nil {
 				return nil, err
 			}
+			// A failure belongs only to the authorized tunnel in this snapshot.
+			// It is not cleared merely because the worker stopped asynchronously.
 			tunnel := &protocol.TunnelSnapshot{Tunnel: wireHushProtocolReference(locator), Name: entry.Name, State: wireHushProtocolState(state), EncryptedDns: len(config.Interface.DNSOverHTTPS) > 0, MayEdit: scope == conf.TunnelScopePrivate || caller.Administrator, MayExport: scope == conf.TunnelScopePrivate || caller.Administrator}
+			if state == TunnelStopped || state == TunnelUnknown {
+				tunnel.LastFailure = wireHushTunnelFailure(entry.TunnelID)
+			}
 			if tunnel.MayExport {
 				tunnel.Network = wireHushNetworkDetails(config, locator)
 			}

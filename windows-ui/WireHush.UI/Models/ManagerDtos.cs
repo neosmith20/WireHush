@@ -4,7 +4,7 @@ namespace WireHush.UI.Models;
 
 public sealed record TunnelSummary(
     string Name,
-    string State, string Id, bool MayEdit, string ScopeLabel);
+    string State, string Id, bool MayEdit, string ScopeLabel, DateTimeOffset? LatestHandshakeUtc = null);
 
 public sealed record PeerDetails(
     string PublicKeyDisplay,
@@ -38,7 +38,7 @@ public sealed record TunnelDetails(
     ulong RxBytes,
     ulong TxBytes,
     DnsDetails Dns,
-    IReadOnlyList<PeerDetails> Peers, string Id, bool MayEdit, bool MetricsAvailable);
+    IReadOnlyList<PeerDetails> Peers, string Id, bool MayEdit, bool MetricsAvailable, string? LastFailure = null);
 
 public sealed record BootstrapResolver(
     string Address,

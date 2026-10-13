@@ -37,7 +37,7 @@ public partial class App : Application
                 return;
             }
             MainWindowInstance = new MainWindow();
-            _instance.Activated += (_, _) => MainWindowInstance.DispatcherQueue.TryEnqueue(() => MainWindowInstance.Activate());
+            _instance.Activated += (_, _) => MainWindowInstance.DispatcherQueue.TryEnqueue(() => MainWindowInstance.ShowFromTray());
             MainWindowInstance.Closed += (_, _) => _instance.UnregisterKey();
             MainWindowInstance.Activate();
         }
