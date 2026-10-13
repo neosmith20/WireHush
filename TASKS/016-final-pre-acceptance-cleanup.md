@@ -78,7 +78,7 @@ The parser currently accepts a single `DNS =` list containing both plain DNS IP 
 
 For Windows v1, do not leave this ambiguous. TunnelMint's stated encrypted-DNS behavior is fail-closed with no silent plaintext fallback.
 
-Use the KISS rule for v1:
+For Windows v1:
 
 - Reject a configuration that mixes one or more plain DNS server IPs with a DoH URL in the same interface configuration.
 - Continue allowing DNS search suffixes alongside DoH.
