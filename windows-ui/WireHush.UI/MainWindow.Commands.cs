@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using WinRT.Interop;
 using WireHush.UI.Models;
+using WireHush.UI.Services;
 
 namespace WireHush.UI;
 
@@ -90,16 +91,58 @@ public sealed partial class MainWindow
 
     private async Task ShowSettingsAsync()
     {
-        if (_managerClient is null || !_managerClient.Connected) { ShowNotice("WireHush Manager is unavailable."); return; }
         try
         {
-            var editable = _managerClient.MayEditMachineSettings;
-            var entries = (await _managerClient.GetBootstrapAsync(_lifetime.Token)).ToList();
+            var manager = _managerClient;
+            var connected = manager?.Connected == true;
+            var editable = connected && manager!.MayEditMachineSettings;
+            var entries = connected
+                ? (await manager!.GetBootstrapAsync(_lifetime.Token)).ToList()
+                : new List<BootstrapResolver>();
             var rows = new StackPanel { Spacing = 12 };
             var error = new InfoBar { Severity = InfoBarSeverity.Error };
             var panel = new StackPanel { Spacing = 16, MinWidth = 520 };
+            panel.Children.Add(Text("Window & System Tray", 20, true));
+            var closeChoice = new ComboBox
+            {
+                Header = "Close button (X) behavior",
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+            closeChoice.Items.Add(new ComboBoxItem { Content = "Minimize to system tray (default)" });
+            closeChoice.Items.Add(new ComboBoxItem { Content = "Exit WireHush (with confirmation)" });
+            closeChoice.SelectedIndex = _closeAction == UserWindowBehavior.CloseAction.Exit ? 1 : 0;
+            closeChoice.SelectionChanged += (_, _) =>
+            {
+                var selected = closeChoice.SelectedIndex == 1
+                    ? UserWindowBehavior.CloseAction.Exit
+                    : UserWindowBehavior.CloseAction.MinimizeToTray;
+                if (selected == _closeAction) return;
+                try
+                {
+                    UserWindowBehavior.Save(selected);
+                    _closeAction = selected;
+                }
+                catch (Exception)
+                {
+                    closeChoice.SelectedIndex = _closeAction == UserWindowBehavior.CloseAction.Exit ? 1 : 0;
+                    error.Message = "Window preference could not be saved. Check access to your user profile.";
+                    error.IsOpen = true;
+                }
+            };
+            panel.Children.Add(closeChoice);
+            panel.Children.Add(Text(
+                "The setting is saved immediately for this Windows account. " +
+                "Closing to the tray preserves active VPN connections. " +
+                "Exiting uses the existing secure disconnect and confirmation procedure.",
+                14, false, Brush("WireHushMutedBrush")));
+            panel.Children.Add(new Microsoft.UI.Xaml.Controls.Border { Height = 1, Background = Brush("WireHushBorderBrush") });
             panel.Children.Add(Text("Bootstrap resolvers", 20, true));
-            panel.Children.Add(Text(editable ? "These IP addresses are used only while establishing encrypted DNS. Changes are saved for the whole device." : "An administrator can change these device settings.", 14, false, Brush("WireHushMutedBrush")));
+            panel.Children.Add(Text(!connected
+                ? "The WireHush Manager is unavailable; DNS settings cannot be changed right now."
+                : editable
+                    ? "These IP addresses are used only while establishing encrypted DNS. Changes are saved for the whole device."
+                    : "An administrator can change these device settings.",
+                14, false, Brush("WireHushMutedBrush")));
             panel.Children.Add(rows); panel.Children.Add(error);
             void Render()
             {
@@ -137,7 +180,7 @@ public sealed partial class MainWindow
             dialog.PrimaryButtonClick += async (_, args) =>
             {
                 var deferral = args.GetDeferral();
-                try { await _managerClient.SaveBootstrapAsync(entries, _lifetime.Token); }
+                try { await manager!.SaveBootstrapAsync(entries, _lifetime.Token); }
                 catch (Exception ex) { args.Cancel = true; error.Message = SafeError(ex); error.IsOpen = true; }
                 finally { deferral.Complete(); }
             };

@@ -47,6 +47,7 @@ public sealed partial class MainWindow : Window
     private bool _tunnelActionPending;
     private readonly Dictionary<string, string> _actionFailures = new(StringComparer.Ordinal);
     private readonly HashSet<string> _dismissedFailures = new(StringComparer.Ordinal);
+    private UserWindowBehavior.CloseAction _closeAction = UserWindowBehavior.Load();
     private bool _allowClose;
     private bool _exiting;
     private TrayIcon? _trayIcon;
@@ -667,7 +668,7 @@ public sealed partial class MainWindow : Window
     {
         if (_allowClose) return;
         args.Cancel = true;
-        if (_trayIcon is null)
+        if (_closeAction == UserWindowBehavior.CloseAction.Exit || _trayIcon is null)
         {
             _ = ConfirmExitAsync();
             return;
