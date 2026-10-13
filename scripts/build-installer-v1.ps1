@@ -45,8 +45,8 @@ $upgrade=if($Architecture -eq 'x64'){'a9fd3e3c-7e5b-4d6d-9a6b-6d7f497ba1de'}else
 $source=@"
 <?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-<Product Id="*" Name="WireHush V1 Test Candidate" Language="1033" Version="$Version" Manufacturer="WireHush contributors" UpgradeCode="$upgrade">
-<Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" Description="WireHush owner-test candidate" />
+<Product Id="*" Name="WireHush" Language="1033" Version="$Version" Manufacturer="WireHush contributors" UpgradeCode="$upgrade">
+<Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" Description="WireHush VPN client" />
 <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
 <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer WireHush version is installed." Schedule="afterInstallExecute" />
 <Property Id="DELETE_WIREHUSH_DATA" Value="0" Secure="yes" />
